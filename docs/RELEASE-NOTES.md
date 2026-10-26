@@ -1,15 +1,18 @@
-Beyond the Fence **0.2.0-rc.2 · in-world controls**
+Beyond the Fence **0.3.0-rc.1 · Farm Fortress**
 
-- Correct rain/fog background opacity and improve disabled-control label contrast.
-- Play on one immersive board: choose illustrated seed cards, tap soil to plant, and tap golden ripe tiles to harvest.
-- Tap defense lanes in the world to focus the rifle; selected lanes show a gold outline/checkmark, threat counts and recharge time.
-- Compact resource/pause/options HUD and bottom Build/Plant all/Harvest/Start night dock. Tap the fence badge to repair.
-- Buy upgrades in a paused overlay; locked soil opens expansion without spending. Closing upgrades stays paused. Start night explicitly starts play; free rebuilding stays paused.
-- Responsive portrait/landscape layouts, accessible native buttons, shared artwork/touch geometry, retained seed/overlay after rotation and scroll fallback for large fonts.
-- Existing crops, economy, weather, enemies, upgrades and schema1 saves remain compatible with rc.2.
+A top-down castle-defense direction with original colorful arcade artwork.
 
-**Install Preview.apk** on Android8.0+. Unsigned.apk needs production signing and does not install directly. This preview uses debug test signing: export a `.btfs` save before replacing an installed version. A signing mismatch requires export→uninstall→install→import. Persistent production signing is not configured.
+- Crops and three constructible buildings inside the perimeter: timber mill, market and barracks.
+- Harvest coins and timber; build missing fence sides, reinforce tiers and repair fortress strength.
+- Hire up to6 blue mercenaries. They patrol the actual fence boundary and fire only at spatially nearby zombies.
+- Zombies approach from north/east/south/west. A watchtower provides automatic baseline defense; rally a border from Squad.
+- Tap map plots and wall markers; manage Fence/Farm/Squad/Gear through a paused panel. Compact seed picker and portrait/landscape layout, with native accessible controls and large-font scroll fallback.
+- Day/night, weather, crop/weapon upgrades, free defeat recovery, local checkpoints and backups remain.
 
-Candidate gates: full builds, JVM suites, lint, package/signature checks, native pointer planting/harvesting/seed/lane/upgrade checks, portrait/landscape recreation, 200% system font, lifecycle pause and checkpoint corruption recovery on Android26/35 emulators. Source/provenance/checksums/test evidence accompany this release. Run-specific observed results are in VERIFICATION.txt. Physical-phone endurance, TalkBack, measured performance and production signing/upgrade checks remain BLOCKED; this is a prerelease.
+**Install Preview.apk** (Android8.0+). This is a debug-test-signed prerelease; Unsigned.apk requires signing. Export your existing save before replacing/uninstalling. Fresh CI certificates may require export→uninstall→install→import.
 
-No internet permission, accounts, ads, purchases, cloud sync, audio or background crop growth. Backups remain schema1. For rollback retain rc.2 and an exported backup; a downgrade/signature conflict may require uninstall/reinstall before import.
+**Save upgrade:** schema1 from0.2 is migrated, retaining coins, crops, progression and upgrades. Migrated farms get a complete matching perimeter and24 timber. Schema2 includes buildings/guards and cannot be loaded by older apps. Keep a pre-upgrade schema1 export and0.2 APK for rollback.
+
+Validation: builds, lint, package/signature checks, JVM economy/migration/spatial patrol tests and exact-artifact API26/35 native pointer/construction/recruitment/lifecycle/rotation/font/checkpoint checks gate publication. Check VERIFICATION.txt for observed results and screenshots. Physical-phone endurance, measured performance, TalkBack and production signing remain BLOCKED. Economy values need player feedback.
+
+Limits: one farm;6 immortal/no-upkeep guards; whole-fortress shared health modified by each attacked side's wall tier; fixed building sites rather than free placement; no audio, cloud sync, multiplayer or offline progress. No copied game assets or new runtime libraries.

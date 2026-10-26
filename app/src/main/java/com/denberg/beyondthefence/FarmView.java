@@ -6,238 +6,165 @@ import android.os.SystemClock;
 import android.view.View;
 import java.util.function.Supplier;
 
-/**
- * Original board artwork. Native action tiles are laid over matching shared pixel bounds.
- */
-@android.annotation.SuppressLint("ViewConstructor") // Programmatic view requires explicit model and pause suppliers.
+/** Original chunky arcade artwork, viewed from above. All actions have native overlays. */
+@android.annotation.SuppressLint("ViewConstructor")
 final class FarmView extends View {
-  private final Paint p = new Paint(3);
-  private final LinearGradient daySky = new LinearGradient(0, 0, 0, 680, 0xffc8dfcf, 0xff97bb80, Shader.TileMode.CLAMP);
-  private final LinearGradient nightSky = new LinearGradient(0, 0, 0, 680, 0xff162d3b, 0xff3c6553, Shader.TileMode.CLAMP);
-  private static final int[] COATS = {0xff687b69, 0xffa4775b, 0xff60717b, 0xff9c8d5d};
-  private static final Typeface LETTERING = Typeface.create("sans-serif-medium", Typeface.NORMAL);
+  private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final RectF rect = new RectF();
   private final Supplier<Game> model;
   private final Supplier<Boolean> paused;
-  private final Path path = new Path();
   private final BoardGeometry geometry;
+  private static final int[] COATS = {0xff8a6246, 0xffa64e3c, 0xff687d8b, 0xff9a933f};
 
   FarmView(Context context, Supplier<Game> model, Supplier<Boolean> paused, BoardGeometry geometry) {
     super(context);
-    this.model = model;
-    this.paused = paused;
-    this.geometry = geometry;
+    this.model = model; this.paused = paused; this.geometry = geometry;
     setLayerType(View.LAYER_TYPE_HARDWARE, null);
   }
-
-  private void color(int c) {
-    p.setColor(c);
-    p.setStyle(Paint.Style.FILL);
-    p.setShader(null);
+  private void color(int value) { p.setShader(null); p.setColor(value); p.setStyle(Paint.Style.FILL); }
+  private void box(Canvas c, float x, float y, float w, float h, float radius, int value) {
+    color(value); rect.set(x, y, x + w, y + h); c.drawRoundRect(rect, radius, radius, p);
   }
-
-  private void box(Canvas c, float x, float y, float w, float h, float r, int color) {
-    color(color);
-    rect.set(x, y, x + w, y + h);
-    c.drawRoundRect(rect, r, r, p);
+  private void circle(Canvas c, float x, float y, float r, int value) { color(value); c.drawCircle(x, y, r, p); }
+  private void line(Canvas c, float x, float y, float xx, float yy, int value, float width) {
+    color(value); p.setStrokeWidth(width); p.setStrokeCap(Paint.Cap.SQUARE); c.drawLine(x, y, xx, yy, p);
   }
-
-  private void circle(Canvas c, float x, float y, float r, int color) {
-    color(color);
-    c.drawCircle(x, y, r, p);
-  }
-
-  private void line(Canvas c, float x, float y, float xx, float yy, int color, float width) {
-    color(color);
-    p.setStrokeWidth(width);
-    p.setStrokeCap(Paint.Cap.ROUND);
-    c.drawLine(x, y, xx, yy, p);
-  }
-
-  private void label(Canvas c, String s, float x, float y, int size, int color) {
-    color(color);
-    p.setTextSize(size * getResources().getDisplayMetrics().density);
-    p.setTypeface(LETTERING);
-    c.drawText(s, x, y, p);
-  }
-
-  @Override
-  protected void onDraw(Canvas c) {
+  @Override protected void onDraw(Canvas c) {
     super.onDraw(c);
-    Game g = model.get();
-    if (g == null || getHeight() == 0) return;
-    float d = geometry.density;
-    if (d == 0) return;
-    boolean night = g.night;
-    p.setAlpha(255); // Weather overlays must not carry translucency into the next sky frame.
-    p.setShader(night ? nightSky : daySky);
+    Game g = model.get(); float d = geometry.density;
+    if (g == null || d == 0 || getHeight() == 0) return;
+    // Every frame starts opaque; weather cannot leak alpha into subsequent backgrounds.
+    color(g.night ? 0xff213e32 : 0xff4b793a);
     c.drawRect(0, 0, getWidth(), getHeight(), p);
-    p.setShader(null);
-    String cropLabel = "HOMESTEAD · TAP SOIL TO PLANT";
-    String laneLabel = night ? "NIGHT WATCH · TAP A LANE" : "BEYOND THE FENCE";
-    label(c, geometry.wide ? cropLabel : laneLabel, 10 * d,
-        geometry.wide ? geometry.cropLabelY : geometry.laneLabelY, 10, night ? CREAM_COLOR : 0xff203e36);
-    if (geometry.wide)
-      label(c, laneLabel, geometry.lanes[0].left, geometry.laneLabelY, 10, night ? CREAM_COLOR : 0xff203e36);
-    else label(c, cropLabel, 10 * d, geometry.cropLabelY, 10, night ? CREAM_COLOR : 0xff203e36);
-    for (int i = 0; i < 3; i++) {
-      BoardGeometry.Box lane = geometry.lanes[i];
-      box(c, lane.left, lane.top, lane.width(), lane.height(), 12 * d,
-          night ? 0xff3a5741 : 0xffafc888);
-      for (int tile = 0; tile < 5; tile++)
-        box(c, lane.left + tile * lane.width() / 5f, lane.top, lane.width() / 5f,
-            lane.height(), 8 * d, tile % 2 == 0 ? 0x12526c3e : 0x127f995b);
-      // A watch post marks the protected end of each horizontal approach lane.
-      float x = lane.left + 16 * d, y = lane.top + lane.height() * .43f;
-      circle(c, x, y, 10 * d, night ? 0xffd6b67f : 0xff54734e);
-      line(c, x + 4 * d, y, x + 15 * d, y - 3 * d, 0xff2b4135, 4 * d);
-      line(c, lane.left + 3 * d, lane.top + 6 * d, lane.left + 3 * d,
-          lane.bottom - 6 * d, g.health < g.maxHealth() * .3f ? 0xffce8a5d : 0xffe4c797, 5 * d);
+    float l = geometry.fortLeft, t = geometry.fortTop, r = geometry.fortRight, b = geometry.fortBottom;
+    for (int i = 0; i < 50; i++) {
+      float x = ((i * 131 + 19) * d) % getWidth(), y = ((i * 97 + 7) * d) % getHeight();
+      if (x > l - 12 * d && x < r + 12 * d && y > t - 12 * d && y < b + 12 * d) continue;
+      if (i % 3 == 0) {
+        circle(c, x + d, y + 3 * d, 10 * d, 0x44312c20);
+        circle(c, x, y, 9 * d, g.night ? 0xff294d35 : 0xff37632e);
+        circle(c, x - 2 * d, y - 2 * d, 5 * d, g.night ? 0xff365b3c : 0xff668e43);
+      } else box(c, x, y, 3 * d, 2 * d, d, i % 2 == 0 ? 0xff8a9a59 : 0xff335b32);
     }
+    box(c, l, t, r - l, b - t, 3 * d, g.night ? 0xff486444 : 0xff8eb45a);
+    // Courtyard grid and path stay behind every building and soil tile.
+    for (float x = l + 8 * d; x < r; x += 18 * d)
+      for (float y = t + 8 * d; y < b; y += 18 * d)
+        box(c, x, y, 3 * d, 2 * d, 0, 0x2479a353);
     for (int i = 0; i < 9; i++) {
       BoardGeometry.Box tile = geometry.plots[i];
-      boolean unlocked = i < g.plots();
-      box(c, tile.left, tile.top, tile.width(), tile.height(), 12 * d,
-          unlocked ? 0xff654a35 : 0xff486247);
-      if (!unlocked) continue;
-      for (int row = 0; row < 3; row++)
-        line(c, tile.left + 10 * d, tile.top + tile.height() * (.2f + row * .2f),
-            tile.right - 10 * d, tile.top + tile.height() * (.2f + row * .2f), 0xff836344, 2 * d);
+      boolean open = i < g.plots();
+      box(c, tile.left, tile.top, tile.width(), tile.height(), 3 * d, open ? 0xff755132 : 0xff668e48);
+      if (!open) continue;
+      for (int row = 0; row < 4; row++)
+        line(c, tile.left + 7 * d, tile.top + tile.height() * (.15f + row * .18f),
+            tile.right - 7 * d, tile.top + tile.height() * (.15f + row * .18f), 0xff997044, 2 * d);
       if (g.crop[i] >= 0) {
-        c.save();
-        c.translate(tile.left + tile.width() * .5f, tile.top + tile.height() * .4f);
-        float scale = Math.min(tile.width(), tile.height()) / 66f;
-        c.scale(scale, scale);
-        crop(c, 0, 0, g.crop[i], g.growth[i]);
-        c.restore();
-        box(c, tile.left + 8 * d, tile.bottom - 5 * d, tile.width() - 16 * d, 2 * d, d, 0xff3b3928);
-        box(c, tile.left + 8 * d, tile.bottom - 5 * d,
-            (tile.width() - 16 * d) * g.growth[i], 2 * d, d, 0xffedcc75);
+        for (int plant = 0; plant < 3; plant++)
+          crop(c, tile.left + tile.width() * (.25f + plant * .25f), tile.top + tile.height() * .35f,
+              g.crop[i], g.growth[i], Math.min(tile.width() / 105f, tile.height() / 75f));
+        box(c, tile.left + 5 * d, tile.bottom - 4 * d, tile.width() - 10 * d, 2 * d, 0, 0xff3f3c27);
+        box(c, tile.left + 5 * d, tile.bottom - 4 * d, (tile.width() - 10 * d) * g.growth[i], 2 * d, 0, 0xfff4d36c);
       }
     }
-    float time = g.reducedMotion || paused.get() ? 0 : SystemClock.uptimeMillis() / 200f;
-    for (Game.Enemy enemy : g.enemies) {
-      BoardGeometry.Box lane = geometry.lanes[enemy.lane];
-      float x = lane.left + 28 * d + enemy.x * (lane.width() - 55 * d);
-      float y = lane.top + lane.height() * .53f;
-      float size = Math.min(1.5f * d, lane.height() / 90f);
-      c.save();
-      c.translate(x, y);
-      c.scale(size, size);
-      zombie(c, 0, 0, enemy.type, (float) Math.sin(time + enemy.lane) * 2);
-      box(c, -22, -59, 44, 4, 2, 0xff203e36);
-      box(c, -22, -59, 44 * enemy.hp / enemy.maxHp, 4, 2, 0xffedcc75);
-      c.restore();
+    for (int i = 0; i < 3; i++) building(c, geometry.buildings[i], i, g.buildings[i], d);
+    for (int side = 0; side < 4; side++) {
+      float x = side == 1 ? r : l, y = side == 2 ? b : t;
+      float xx = side == 3 ? l : r, yy = side == 0 ? t : b;
+      int tier = g.walls[side];
+      int tone = tier == 0 ? 0x669b8a56 : tier == 1 ? 0xff9d683b : tier == 2 ? 0xff87939c : 0xffb5c4cb;
+      line(c, x, y, xx, yy, 0x44302d25, 12 * d);
+      if (tier == 0) {
+        float length = (float) Math.hypot(xx - x, yy - y);
+        for (float at = 0; at < length; at += 18 * d) {
+          float end = Math.min(length, at + 6 * d);
+          line(c, x + (xx - x) * at / length, y + (yy - y) * at / length,
+              x + (xx - x) * end / length, y + (yy - y) * end / length, tone, 4 * d);
+        }
+      } else {
+        line(c, x, y, xx, yy, tone, 8 * d);
+        float length = (float) Math.hypot(xx - x, yy - y);
+        for (float at = 0; at <= length; at += 14 * d) {
+          float px = x + (xx - x) * at / length, py = y + (yy - y) * at / length;
+          box(c, px - 3 * d, py - 3 * d, 6 * d, 6 * d, 0, tier == 1 ? 0xffd1a265 : 0xffd8dfce);
+        }
+      }
     }
-    if (night && g.shotClock > .55f && !g.enemies.isEmpty() && !g.reducedMotion && !paused.get()) {
+    tower(c, l, t, d); tower(c, r, t, d); tower(c, l, b, d); tower(c, r, b, d);
+    for (Game.Enemy enemy : g.enemies) {
+      float x = geometry.worldX(Game.enemyX(enemy)), y = geometry.worldY(Game.enemyY(enemy));
+      float size = d * (enemy.type == 2 ? 1.25f : 1);
+      fighter(c, x, y, size, false, enemy.type, 0);
+      box(c, x - 8 * d, y - 13 * d, 16 * d, 2 * d, 0, 0xff172e26);
+      box(c, x - 8 * d, y - 13 * d, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
+    }
+    for (Game.Mercenary merc : g.mercenaries) {
+      float x = geometry.worldX(Game.patrolX(merc.progress)), y = geometry.worldY(Game.patrolY(merc.progress));
+      float angle = (float) Math.atan2(geometry.worldY(merc.targetY) - y, geometry.worldX(merc.targetX) - x);
+      if (merc.shotClock > .72f && !paused.get() && !g.reducedMotion)
+        line(c, x, y, geometry.worldX(merc.targetX), geometry.worldY(merc.targetY), 0xb3ffe48c, d);
+      fighter(c, x, y, d, true, 0, angle);
+    }
+    if (g.night && g.shotClock > .55f && !g.enemies.isEmpty() && !paused.get() && !g.reducedMotion) {
       Game.Enemy target = null;
       for (Game.Enemy enemy : g.enemies)
         if (target == null || (enemy.lane == g.lane && target.lane != g.lane)
             || (enemy.lane == target.lane && enemy.x < target.x)) target = enemy;
-      BoardGeometry.Box lane = geometry.lanes[target.lane];
-      line(c, lane.left + 25 * d, lane.top + lane.height() * .43f,
-          lane.left + 28 * d + target.x * (lane.width() - 55 * d),
-          lane.top + lane.height() * .53f, 0x99ffe6a6, d);
+      line(c, r, t, geometry.worldX(Game.enemyX(target)), geometry.worldY(Game.enemyY(target)), 0x88ffe48c, d);
     }
     if (g.weather == 1)
-      for (int i = 0; i < 35; i++) {
+      for (int i = 0; i < 30; i++) {
         float x = (i * 79 * d) % getWidth();
-        float y = ((i * 53 * d) + (g.reducedMotion || paused.get() ? 0 : SystemClock.uptimeMillis() / 12)) % getHeight();
-        line(c, x, y, x - 3 * d, y + 10 * d, 0x339fced8, d);
+        float y = (i * 53 * d + (g.reducedMotion || paused.get() ? 0 : SystemClock.uptimeMillis() / 14)) % getHeight();
+        line(c, x, y, x - 3 * d, y + 8 * d, 0x449fced8, d);
       }
-    if (g.weather == 2) box(c, 0, 32 * d, getWidth(), getHeight() * .22f, 16 * d, 0x22e7eadb);
+    if (g.weather == 2) box(c, 0, 0, getWidth(), getHeight() * .3f, 0, 0x22e5eadb);
   }
-
-  private static final int CREAM_COLOR = 0xfff5f2e9;
-
-  private void cloud(Canvas c, float x, float y, float scale) {
-    c.save();
-    c.translate(x, y);
-    c.scale(scale, scale);
-    circle(c, 0, 0, 23, 0xffe5eddb);
-    circle(c, 33, -15, 35, 0xffe5eddb);
-    circle(c, 70, 1, 24, 0xffe5eddb);
-    box(c, -5, 0, 80, 23, 11, 0xffe5eddb);
-    c.restore();
+  private void tower(Canvas c, float x, float y, float d) {
+    box(c, x - 9 * d, y - 9 * d, 18 * d, 18 * d, 2 * d, 0xff39443b);
+    box(c, x - 7 * d, y - 8 * d, 14 * d, 14 * d, d, 0xffa3ac9d);
+    box(c, x - 5 * d, y - 6 * d, 10 * d, 10 * d, 0, 0xff526b80);
+    box(c, x - 2 * d, y - 3 * d, 4 * d, 5 * d, 0, 0xffd7c894);
   }
-
-  private void tree(Canvas c, float x, float y, float size, boolean night) {
-    c.save();
-    c.translate(x, y);
-    c.scale(size, size);
-    box(c, -7, -2, 14, 64, 4, 0xff715f43);
-    circle(c, -18, -13, 30, night ? 0xff274d40 : 0xff527d5c);
-    circle(c, 15, -25, 40, night ? 0xff2c5444 : 0xff648e60);
-    circle(c, -6, -48, 31, night ? 0xff345e49 : 0xff749e66);
-    c.restore();
-  }
-
-  private void house(Canvas c, float x, float y, boolean night) {
-    box(c, x + 10, y + 21, 253, 113, 7, 0x25343125);
-    box(c, x, y + 14, 249, 112, 6, 0xffd5ba86);
-    path.reset();
-    path.moveTo(x - 17, y + 27);
-    path.lineTo(x + 120, y - 65);
-    path.lineTo(x + 267, y + 27);
-    path.close();
-    color(0xffa65f4d);
-    c.drawPath(path, p);
-    for (int i = 0; i < 6; i++) line(c, x + 32 + i * 31, y + 3, x + 120, y - 52, 0xffbf7960, 2);
-    box(c, x + 100, y + 52, 48, 74, 5, 0xff3c5a4c);
-    circle(c, x + 136, y + 91, 3, 0xffe9c986);
-    for (int k = 0; k < 2; k++) {
-      float xx = x + 24 + k * 157;
-      box(c, xx, y + 51, 43, 43, 4, night ? 0xffffd47f : 0xffadc9b5);
-      line(c, xx + 22, y + 51, xx + 22, y + 94, 0xfff3ddb0, 4);
-      line(c, xx, y + 72, xx + 43, y + 72, 0xfff3ddb0, 4);
-    }
-    box(c, x + 176, y - 44, 25, 45, 3, 0xff8c6951);
-    box(c, x + 171, y - 48, 35, 10, 3, 0xff735641);
-  }
-
-  private void crop(Canvas c, float x, float y, int type, float growth) {
-    float size = .35f + growth * .65f;
-    c.save();
-    c.translate(x, y);
-    c.scale(size, size);
-    line(c, 0, 10, 0, -12, 0xff86ae69, 4);
-    circle(c, -7, -6, 6, 0xff7d9c49);
-    circle(c, 6, -12, 7, 0xff9dbf6c);
-    if (growth > .45f) {
-      if (type == 0) {
-        circle(c, 0, 8, 10, 0xffe3d7af);
-        circle(c, 0, 13, 6, 0xffb698b4);
-      } else if (type == 1) {
-        box(c, -5, -5, 12, 23, 5, 0xfff3ce6d);
-        line(c, -11, 17, -6, 0, 0xff92af5e, 4);
+  private void building(Canvas c, BoardGeometry.Box tile, int kind, boolean built, float d) {
+    box(c, tile.left, tile.top, tile.width(), tile.height(), 3 * d, built ? 0xffc0a66a : 0xff739a53);
+    float x = tile.left + tile.width() * .5f, y = tile.top + tile.height() * .32f;
+    float size = Math.min(tile.width() / 50f, tile.height() / 65f);
+    c.save(); c.translate(x, y); c.scale(size, size);
+    if (!built) {
+      box(c, -12, -9, 24, 20, 1, 0xffa0b67d);
+      line(c, -7, 1, 7, 1, 0xff4b6e4d, 3); line(c, 0, -6, 0, 8, 0xff4b6e4d, 3);
+    } else {
+      box(c, -15, -12, 30, 27, 1, 0xff4b4933);
+      box(c, -13, -13, 26, 24, 1, kind == 0 ? 0xffceaa6a : kind == 1 ? 0xffc4583e : 0xff4d79a2);
+      line(c, -13, -1, 13, -1, kind == 0 ? 0xff987441 : 0xfff2d68e, 3);
+      if (kind == 0) {
+        circle(c, 0, -1, 4, 0xff554c36);
+        line(c, -17, -13, 17, 11, 0xffeee1aa, 4); line(c, 17, -13, -17, 11, 0xffeee1aa, 4);
+      } else if (kind == 1) {
+        for (int i = 0; i < 4; i++) box(c, -12 + i * 7, -12, 3, 22, 0, 0xffeedca4);
       } else {
-        circle(c, 0, 7, 15, 0xffd98b42);
-        line(c, -3, -4, -3, 20, 0xffbd7134, 2);
-        line(c, 5, -4, 5, 20, 0xffedab53, 2);
+        box(c, -4, -7, 8, 9, 0, 0xffc7dfe4);
+        line(c, 15, -18, 15, 5, 0xff4c4b35, 2); box(c, 15, -18, 11, 7, 0, 0xffedc75e);
       }
     }
     c.restore();
   }
-
-  private void zombie(Canvas c, float x, float y, int type, float bob) {
-    c.save();
-    c.translate(x, y + bob);
-    float scale = type == 2 ? 1.3f : 1;
-    c.scale(scale, scale);
-    box(c, -21, 15, 43, 10, 6, 0x30202d26);
-    int coat = COATS[type];
-    line(c, -8, 5, -10, 20, 0xff394d46, 8);
-    line(c, 7, 5, 11, 20, 0xff394d46, 8);
-    box(c, -15, -23, 30, 33, 6, coat);
-    line(c, -14, -18, -24, 0, 0xff94ac78, 7);
-    line(c, 15, -18, 24, -2, 0xff94ac78, 7);
-    box(c, -15, -48, 31, 29, 9, 0xffa5b97f);
-    box(c, -13, -48, 26, 7, 4, 0xff485c48);
-    circle(c, -6, -34, 3, 0xff233e34);
-    circle(c, 7, -34, 3, 0xff233e34);
-    line(c, -3, -25, 8, -26, 0xff506547, 2);
-    if (type == 2) box(c, -20, -27, 40, 12, 4, 0xff829290);
-    if (type == 3) circle(c, 24, -3, 7, 0xffc8cd77);
+  private void crop(Canvas c, float x, float y, int type, float growth, float size) {
+    c.save(); c.translate(x, y); c.scale(size * (.4f + growth * .6f), size * (.4f + growth * .6f));
+    circle(c, 0, 0, type == 2 ? 7 : 5, type == 0 ? 0xffdec9d7 : type == 1 ? 0xfff4d05d : 0xffe5923e);
+    box(c, -6, -8, 5, 7, 1, 0xff9fca61); box(c, 0, -9, 6, 8, 1, 0xffbbd978);
     c.restore();
+  }
+  private void fighter(Canvas c, float x, float y, float d, boolean friendly, int type, float angle) {
+    circle(c, x, y + 4 * d, 8 * d, 0x44302922);
+    box(c, x - 6 * d, y - 2 * d, 12 * d, 11 * d, 2 * d, friendly ? 0xff2e6596 : COATS[type]);
+    circle(c, x, y - 5 * d, 5 * d, friendly ? 0xffe2b878 : 0xffa5c06e);
+    box(c, x - 5 * d, y - 10 * d, 10 * d, 4 * d, 1, friendly ? 0xff264c78 : 0xff557044);
+    if (friendly) {
+      line(c, x + 3 * d, y, x + (float) Math.cos(angle) * 12 * d,
+          y + (float) Math.sin(angle) * 12 * d, 0xff2c3029, 3 * d);
+      box(c, x - d, y - 8 * d, 2 * d, 2 * d, 0, 0xfff4d26e);
+    }
   }
 }

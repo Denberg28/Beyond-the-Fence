@@ -1,9 +1,8 @@
-# Known limitations
+# Candidate limitations
 
-- First candidate: no physical Android phone validation or player study is claimed. Stable promotion is blocked pending the procedure in TESTING.md.
-- Debug test signing is not a production identity; fresh CI runners may require backup/uninstall/reinstall rather than an in-place upgrade. Configure a persistent private release signing secret before stable builds.
-- English UI only, no audio/music, no free roaming, no cloud sync or offline growth. Fog is visual; all lanes retain native buttons and numerical threat status.
-- Very large fonts or short windows can require scrolling to reach the dock; native world targets retain their minimum size. TalkBack and 200% font need handset validation.
-- Sudden process termination can lose the last three active seconds plus pending disk writes. Failed disk writes are shown; export a backup before reinstalling. CRC detects accidental corruption, not intentional modification.
-- A `.btfs` backup replaces the current farm after explicit confirmation. Import from newer schemas is rejected. Android cloud backup is disabled to keep storage local.
-- Published0.1.0-rc.2 at545a5bb is the rollback APK/source baseline. Retain it and a schema1 backup; Android downgrade/signature rules may require reinstall before import.
+- Physical-phone endurance, TalkBack, measured performance and production signing/upgrade continuity are not validated; stable promotion remains blocked.
+- Preview is test-signed. A different certificate can require export/uninstall/install/import. Export before replacing any installed preview.
+- Schema1 migrates to schema2. New schema2 saves cannot downgrade to0.2; retain the old schema1 export and APK for rollback.
+- Fortress uses shared health with per-side wall mitigation; fixed building sites, maximum6 guards, no mercenary death/upkeep, and initial untested-by-players balance. No free building placement/pathfinding or individual wall HP in this iteration.
+- English only; no audio/music, cloud, multiplayer or offline growth. Short screens/large fonts may require scrolling.
+- Sudden termination may lose the last3 active seconds plus pending writes; recovery/visible save failure and manual backups remain. CRC detects corruption rather than intentional editing.

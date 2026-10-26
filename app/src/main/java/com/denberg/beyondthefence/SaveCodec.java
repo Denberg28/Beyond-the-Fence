@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 1;
+  private static final int MAGIC = 0x42544653, VERSION = 2;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -48,6 +48,16 @@ public final class SaveCodec {
       d.writeFloat(e.x);
       d.writeFloat(e.hp);
       d.writeFloat(e.maxHp);
+      d.writeFloat(e.offset);
+    }
+    d.writeInt(g.wood);
+    for (int wall : g.walls) d.writeInt(wall);
+    for (boolean built : g.buildings) d.writeBoolean(built);
+    d.writeFloat(g.productionClock);
+    d.writeInt(g.mercenaries.size());
+    for (Game.Mercenary merc : g.mercenaries) {
+      d.writeFloat(merc.progress); d.writeFloat(merc.shotClock);
+      d.writeFloat(merc.targetX); d.writeFloat(merc.targetY);
     }
     d.flush();
     CRC32 crc = new CRC32();
@@ -62,8 +72,9 @@ public final class SaveCodec {
     CRC32 crc = new CRC32();
     crc.update(bytes, 0, bytes.length - 8);
     DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
-    if (in.readInt() != MAGIC || in.readInt() != VERSION)
-      throw new IOException("Unsupported save format");
+    if (in.readInt() != MAGIC) throw new IOException("Unsupported save format");
+    int version = in.readInt();
+    if (version != 1 && version != VERSION) throw new IOException("Unsupported save format");
     Game g = new Game();
     g.revision = in.readLong();
     g.day = in.readInt();
@@ -101,7 +112,7 @@ public final class SaveCodec {
     integer(g.kills, 0, Integer.MAX_VALUE);
     integer(g.harvested, 0, Integer.MAX_VALUE);
     integer(g.spawned, 0, g.quota());
-    integer(g.lane, 0, 2);
+    integer(g.lane, 0, version == 1 ? 2 : 3);
     number(g.health, 0, g.maxHealth());
     number(g.elapsed, 0, 75.2f);
     number(g.shotClock, -.2f, 1);
@@ -120,17 +131,37 @@ public final class SaveCodec {
       int t = in.readInt(), lane = in.readInt();
       float x = in.readFloat(), hp = in.readFloat(), max = in.readFloat();
       integer(t, 0, 3);
-      integer(lane, 0, 2);
+      integer(lane, 0, version == 1 ? 2 : 3);
       number(x, 0, 1);
       number(max, 1, 200);
       number(hp, .001f, max);
-      g.enemies.add(new Game.Enemy(t, lane, x, hp, max));
+      float offset = version == 1 ? .5f : in.readFloat();
+      number(offset, 0, 1);
+      g.enemies.add(new Game.Enemy(t, lane, x, hp, max, offset));
+    }
+    if (version >= 2) {
+      g.wood = in.readInt(); integer(g.wood, 0, 10_000_000);
+      for (int i = 0; i < 4; i++) { g.walls[i] = in.readInt(); integer(g.walls[i], 0, 3); }
+      for (int i = 0; i < 3; i++) g.buildings[i] = in.readBoolean();
+      g.productionClock = in.readFloat(); number(g.productionClock, 0, 12);
+      int mercs = in.readInt(); integer(mercs, 0, Game.MAX_MERCS);
+      range(mercs == 0 || g.buildings[2]);
+      for (int i = 0; i < mercs; i++) {
+        float progress = in.readFloat(), clock = in.readFloat(), tx = in.readFloat(), ty = in.readFloat();
+        number(progress, 0, 3.9999998f); number(clock, 0, .9f);
+        number(tx, 0, 1); number(ty, 0, 1);
+        g.mercenaries.add(new Game.Mercenary(progress, clock, tx, ty));
+      }
+    } else {
+      // Preserve existing investments; old farms arrive with a complete matching perimeter.
+      java.util.Arrays.fill(g.walls, Math.min(3, g.fence + 1));
     }
     range(g.night || count == 0);
     range(!g.defeated || g.health == 0);
     range(in.readLong() == crc.getValue());
     range(in.available() == 0);
-    g.notice = "Farm restored. Take your time; resume when ready.";
+    g.notice = version == 1 ? "Farm upgraded to fortress format. Existing crops and upgrades kept."
+        : "Fortress restored. Resume when ready.";
     return g;
   }
 

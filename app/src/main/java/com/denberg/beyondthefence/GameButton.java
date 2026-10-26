@@ -21,7 +21,7 @@ final class GameButton extends Button {
     setMinHeight(Math.round(48 * d));
     setMinimumWidth(0);
     setPadding(Math.round(6 * d), Math.round(4 * d), Math.round(6 * d), Math.round(4 * d));
-    shape.setCornerRadius(12 * d);
+    shape.setCornerRadius(5 * d);
     setBackground(new RippleDrawable(ColorStateList.valueOf(0x44ffffff), shape, null));
     colors(0xffe9e5d3, 0xffd2cba9, 0xff203e36);
   }

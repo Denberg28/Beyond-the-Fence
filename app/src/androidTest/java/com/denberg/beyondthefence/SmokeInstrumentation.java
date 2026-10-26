@@ -137,8 +137,8 @@ public final class SmokeInstrumentation extends Instrumentation {
     runOnMainSync(() -> {
       View field = control(a, "field");
       float min = 48 * a.getResources().getDisplayMetrics().density - 1;
-      for (String prefix : new String[] {"plot", "lane"}) {
-        int count = prefix.equals("plot") ? 9 : 3;
+      for (String prefix : new String[] {"plot", "wall", "building"}) {
+        int count = prefix.equals("plot") ? 9 : prefix.equals("wall") ? 4 : 3;
         for (int i = 0; i < count; i++) {
           View tile = control(a, prefix + i);
           check(tile.getParent() == field, "Native action belongs to the game board");
@@ -199,32 +199,43 @@ public final class SmokeInstrumentation extends Instrumentation {
       runOnMainSync(() -> a.paused = true);
       awaitUi(a::hasWindowFocus, "Game window ready");
       checkBoard(a);
+      touch(a, "seeds");
       check(!control(a, "seed1").isEnabled(), "Locked seed is visibly unavailable");
+      touch(a, "seed0");
       touch(a, "plot6");
-      check(onUi(() -> a.paused && a.game.coins == 80 && control(a, "closeBuild").isShown()),
-          "Locked soil opens upgrades without spending or running time");
+      check(onUi(() -> a.paused && a.game.coins == 80 && control(a, "upgrade3").isShown()), "Locked soil opens expansion without spending");
       touch(a, "closeBuild");
       touch(a, "plot0");
-      check(onUi(() -> a.game.crop[0] == 0 && a.game.coins == 76), "Pointer plants the actual soil tile");
+      check(onUi(() -> a.game.crop[0] == 0 && a.game.coins == 76), "Pointer plants inside fortress");
       touch(a, "plot0");
-      check(onUi(() -> a.game.coins == 76 && a.game.crop[0] == 0), "Growing tile does not replant or sell early");
-      touch(a, "plantAll");
-      check(onUi(() -> a.game.coins == 56 && a.game.crop[5] == 0 && a.game.crop[6] == -1), "Bulk action preserves planted and locked plots");
+      check(onUi(() -> a.game.coins == 76 && a.game.crop[0] == 0), "Growing tile cannot be harvested early");
+      touch(a, "build"); touch(a, "buildTab3"); touch(a, "plantAll"); touch(a, "closeBuild");
+      check(onUi(() -> a.game.coins == 56 && a.game.crop[5] == 0 && a.game.crop[6] == -1), "Bulk planting keeps locked plots intact");
       runOnMainSync(() -> { for (int p = 0; p < 6; p++) a.game.growth[p] = 1; a.refresh(); });
       touch(a, "plot0");
-      check(onUi(() -> a.game.coins == 68 && a.game.crop[0] == -1), "Ripe tile harvests directly for one sale");
+      check(onUi(() -> a.game.coins == 68 && a.game.wood == 26), "Direct harvest gives coins and timber");
       touch(a, "harvest");
-      check(onUi(() -> a.game.coins == 128 && a.game.harvested == 6), "Dock sells remaining ripe tiles once");
+      check(onUi(() -> a.game.coins == 128 && a.game.wood == 36 && a.game.harvested == 6), "Bulk harvest credits resources once");
       screenshot("smoke-farm.png");
-      touch(a, "build");
-      touch(a, "upgrade0");
-      check(onUi(() -> a.game.weapon == 1 && a.game.coins == 48 && a.paused), "Upgrade overlay debits once and stays paused");
+      touch(a, "wall1"); touch(a, "constructWall1");
+      check(onUi(() -> a.game.walls[1] == 1 && a.game.coins == 108 && a.game.wood == 28 && a.paused), "Build missing east fence with explicit coin/timber debit");
       touch(a, "closeBuild");
-      check(onUi(() -> a.paused), "Closing upgrades never auto-resumes");
+      touch(a, "building0"); touch(a, "construct0"); touch(a, "closeBuild");
+      check(onUi(() -> a.game.buildings[0] && a.game.coins == 58 && a.game.wood == 18), "Construct the interior timber mill");
+      farmCycle(a);
+      touch(a, "building2"); touch(a, "construct2"); touch(a, "closeBuild");
+      check(onUi(() -> a.game.buildings[2] && a.game.coins == 36), "Construct barracks using harvest income");
+      farmCycle(a);
+      touch(a, "squad"); touch(a, "hire");
+      check(onUi(() -> a.game.mercenaries.size() == 1 && a.game.coins == 29 && a.paused), "Hire a real patrol through Squad");
+      touch(a, "rally3");
+      check(onUi(() -> a.game.lane == 3), "Rally supports the west border");
+      touch(a, "closeBuild");
+      float progress = a.game.mercenaries.get(0).progress;
+      runOnMainSync(() -> { for (int i = 0; i < 20; i++) a.game.tick(.05f); a.refresh(); });
+      check(onUi(() -> a.game.mercenaries.get(0).progress > progress), "Patrol physically moves around the border");
       touch(a, "night");
-      check(onUi(() -> a.game.night && !a.paused), "Start night deliberately starts play");
-      touch(a, "lane2");
-      check(onUi(() -> a.game.lane == 2), "Pointer selects defense lane in artwork");
+      check(onUi(() -> a.game.night && !a.paused), "Start night deliberately begins four-border wave");
       screenshot("smoke-night.png");
       runOnMainSync(() -> a.onWindowFocusChanged(false));
       check(onUi(() -> a.paused), "Focus loss pauses game");
@@ -248,16 +259,17 @@ public final class SmokeInstrumentation extends Instrumentation {
       runOnMainSync(() -> { a.game.xp = 50; a.refresh(); });
       int[] seedBudget = new int[1];
       runOnMainSync(() -> seedBudget[0] = a.game.coins);
-      touch(a, "seed1");
+      touch(a, "seeds"); touch(a, "seed1");
       touch(a, "plot0");
       check(onUi(() -> a.game.crop[0] == 1 && a.game.coins == seedBudget[0] - Game.SEED[1]), "Seed card changes the planted crop and debit");
-      touch(a, "build");
+      touch(a, "building0");
       MainActivity landscape = rotate(a, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
       check(onUi(() -> landscape.game == a.game && landscape.paused), "Rotation retains farm and pause");
       check(control(landscape, "closeBuild").isShown(), "Upgrade overlay survives rotation");
       screenshot("smoke-upgrades-landscape.png");
       touch(landscape, "closeBuild");
       check(control(landscape, "seed1").isSelected(), "Selected seed survives rotation");
+      check(onUi(() -> landscape.game.buildings[0] && landscape.game.buildings[2] && landscape.game.mercenaries.size() == 1), "Buildings and squad survive rotation");
       checkBoard(landscape);
       runOnMainSync(() -> {
         GameBoard field = (GameBoard) control(landscape, "field");
@@ -286,10 +298,11 @@ public final class SmokeInstrumentation extends Instrumentation {
       waitForIdleSync();
       check(large.getResources().getConfiguration().fontScale >= 1.9f, "200 percent system font active");
       checkBoard(large);
-      touch(large, "build");
+      touch(large, "squad");
       touch(large, "closeBuild");
-      touch(large, "lane0");
-      check(onUi(() -> large.game.lane == 0), "Large-font actions remain reachable by scrolling");
+      touch(large, "wall0");
+      check(control(large, "constructWall0").isShown(), "Large-font fence actions remain reachable");
+      touch(large, "closeBuild");
       screenshot("smoke-large-font.png");
       int expected = large.game.coins;
       SystemClock.sleep(600);
@@ -314,6 +327,12 @@ public final class SmokeInstrumentation extends Instrumentation {
       result.putString("stream", "\nFAILURES!!!\n" + android.util.Log.getStackTraceString(e));
       finish(Activity.RESULT_CANCELED, result);
     }
+  }
+
+  private void farmCycle(MainActivity a) {
+    touch(a, "build"); touch(a, "buildTab3"); touch(a, "plantAll"); touch(a, "closeBuild");
+    runOnMainSync(() -> { for (int i = 0; i < a.game.plots(); i++) if (a.game.crop[i] >= 0) a.game.growth[i] = 1; a.refresh(); });
+    touch(a, "harvest");
   }
 
   private void testStoreRecovery() throws Exception {

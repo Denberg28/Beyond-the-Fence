@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0-rc.1 · 27 October 2026
+
+- Replace split farm/defense lanes with a top-down fortress: enclosed interior farming and building sites, four buildable/upgradeable borders, corner towers and original arcade-style sprites.
+- Add timber harvests, a producing timber mill, a market bonus and barracks. Explicit two-resource construction purchases do not affect crops or occupied plots.
+- Recruit up to6 persistent blue mercenaries. Their actual perimeter positions determine which nearby zombies they can shoot; four-direction waves use spatial approach offsets.
+- Add Fence/Farm/Squad/Gear panels, compact seed picker and native map actions with shared geometry and >=48dp targets.
+- Save schema2 persists construction, production and patrol combat; schema1 migration preserves old progression. Export a schema1 backup before upgrading because new saves do not downgrade to0.2.
+- Extend economy, spatial-combat, migration, bounds and installed-app fortress interaction checks. Candidate gates/physical-phone and test-signing limitations remain.
+
 ## 0.2.0-rc.2 · 27 October 2026
 
 - Fix rain/fog Paint alpha carrying into the next scene background; retain readable, opaque daytime scenery.

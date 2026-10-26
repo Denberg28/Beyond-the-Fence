@@ -39,7 +39,7 @@ public class GameTest {
   }
 
   @Test
-  public void harvestCountdownMatchesSimulationAndDoesNotChangeSaveFormat() throws Exception {
+  public void harvestCountdownMatchesSimulationAndSurvivesSaveRoundTrip() throws Exception {
     Game g = new Game();
     g.plantAll(0);
     assertEquals(16, g.harvestSeconds(0));
