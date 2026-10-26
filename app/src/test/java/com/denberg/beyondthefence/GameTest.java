@@ -13,6 +13,53 @@ public class GameTest {
   }
 
   @Test
+  public void bulkPlantingRespectsBudgetUnlocksAndExistingCrops() {
+    Game g = new Game();
+    assertEquals(0, g.plantAll(1));
+    assertEquals(0, g.plantAll(-1));
+    assertEquals(80, g.coins);
+    assertTrue(g.plant(0, 0));
+    g.growth[0] = .5f;
+    g.coins = 9;
+    assertEquals(2, g.plantablePlots(0));
+    assertEquals(2, g.plantAll(0));
+    assertEquals(1, g.coins);
+    assertEquals(.5f, g.growth[0], 0);
+    assertEquals(-1, g.crop[3]);
+    assertEquals(-1, g.crop[6]);
+    assertEquals(0, g.plantAll(0));
+    g.coins = 1000;
+    g.land = 1;
+    assertEquals(6, g.plantAll(0));
+    assertEquals(976, g.coins);
+    assertEquals(0, g.plantAll(0));
+    g.defeated = true;
+    g.crop[8] = -1;
+    assertEquals(0, g.plantAll(0));
+  }
+
+  @Test
+  public void harvestCountdownMatchesSimulationAndDoesNotChangeSaveFormat() throws Exception {
+    Game g = new Game();
+    g.plantAll(0);
+    assertEquals(16, g.harvestSeconds(0));
+    assertEquals(0, g.harvestSeconds(8));
+    g.weather = 1;
+    g.irrigation = 2;
+    int remaining = g.harvestSeconds(0);
+    assertTrue(remaining < 16);
+    seconds(g, remaining);
+    assertEquals(6, g.readyPlots());
+    assertEquals(0, g.harvestSeconds(0));
+    Game restored = SaveCodec.decode(SaveCodec.encode(g));
+    assertEquals(6, restored.readyPlots());
+    assertEquals(6, restored.harvestAll());
+    assertEquals(0, restored.harvestAll());
+    assertEquals(0, restored.readyPlots());
+    assertEquals(128, restored.coins);
+  }
+
+  @Test
   public void completeFarmEconomy() {
     Game g = new Game();
     int initial = g.coins;

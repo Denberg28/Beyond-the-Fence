@@ -1,8 +1,8 @@
-# MVP specification · 0.1.0-rc.1
+# MVP specification · 0.1.0-rc.2
 
 ## Scope and assumptions
 
-Confirmed destination: public `Denberg28/Beyond-the-Fence`, default branch main. Initial remote was empty. Push, commit and public release are authorized. New Android package `com.denberg.beyondthefence`, version code 1. Casual portrait-first sessions; layout can recreate on rotation. Native UI, original drawn art, no purchased assets/services and no game engine. Local-only single player; no dependency on TeleRC or other projects.
+Confirmed destination: public `Denberg28/Beyond-the-Fence`, default branch main. Initial remote was empty. Push, commit and public release are authorized. New Android package `com.denberg.beyondthefence`, version code 2. Casual portrait-first sessions; layout can recreate on rotation. Native UI, original drawn art, no purchased assets/services and no game engine. Local-only single player; no dependency on TeleRC or other projects.
 
 ## User flow
 
@@ -31,3 +31,16 @@ Not included: free-roam world, multiplayer, crafting trees, character inventory,
 | A11 | Real phone: 30 min play, 20 background/resume cycles, interruption/rotation, local backup round trip; no crashes/data loss; >=25fps normal rendering, UI input p95 <100ms, no unbounded resource growth | Required before stable; BLOCKED without phone |
 
 Balances are initial tuning values, not player-study results. Fun and long-term retention need playtesting. Starting economy: 80 coins; turnip cost/sale 4/12 (16s), corn 10/26 (29s), pumpkin 18/44 (43s). Crop harvest grants 4 XP, kills 3 XP, dawn 20 XP; level increases every 50 XP. Weapon costs 80+100/tier, fence 70+90/tier, irrigation 100+100/tier, expansion 200. Repair costs 8 coins for 40 health. Night reward: 20+3×day, capped day30. No finite resource can permanently lock the core loop.
+
+## rc.2 focused scope and acceptance
+
+Baseline: `975d790` (build/unit/lint passed; Android26/35 smoke failed on accessibility-window readiness; no published APK). No economy price, combat damage, schema or signing-identity change. Scope: reduce repetitive planting and clarify progression/readiness.
+
+| ID | Pass condition | Check |
+|---|---|---|
+| Q1 | Bulk planting fills only empty unlocked plots up to the current budget; insufficient funds, locked seeds and defeat spend nothing | GameTest + native bulk flow |
+| Q2 | Countdown uses the simulation weather/irrigation rate; ready count and bulk sale agree exactly once; schema1 continuation remains valid | GameTest |
+| Q3 | Farm shows cost/count, harvest timing and XP; Build shows benefits/shortfalls; Defend shows per-lane threats; rotation retains current tab/seed | Compile/lint + native recreation + screenshots; physical accessibility still blocked |
+| Q4 | Welcome action becomes available within10s; test failures block publication; final APK installs on API26/35 and passes lifecycle/checkpoint checks | Native instrumentation in CI |
+
+Recovery and rollback: export schema1 `.btfs` before installing; retain any installed preview APK. Candidate uses debug test signing, so fresh CI certificates may require backup/uninstall/install/import. Keep rc.2 as prerelease until handset and signing gates pass.

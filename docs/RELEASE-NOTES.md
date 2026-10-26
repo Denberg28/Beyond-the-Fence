@@ -1,6 +1,8 @@
-Beyond the Fence’s first Android **test candidate**: an offline farm-building and zombie-defense game.
+Beyond the Fence **0.1.0-rc.2 Android test candidate**: an offline farm-building and zombie-defense game.
 
-- Plant turnips, corn and pumpkins; sell harvests and level up.
+- Plant turnips, corn and pumpkins individually or fill affordable empty plots in one tap; sell harvests and level up.
+- See harvest countdowns, ready counts, XP progress, upgrade benefits/coin shortfalls, and lane threat counts. Selected tab/seed survive rotation.
+- Fix first-launch automation readiness and exercise bulk actions through installed-app checks; schema1 backups remain compatible.
 - Upgrade the rifle, fence, irrigation and farm size.
 - Survive three-lane nights against walkers, runners, brutes and spitters; choose a lane for focus shots while auto-fire protects the farm.
 - Changing weather, relaxed mode, reduced motion and pause-friendly play.
@@ -14,4 +16,4 @@ Beyond the Fence’s first Android **test candidate**: an offline farm-building 
 
 Local progress advances only during active play. Backgrounding pauses; tap Play to resume. No audio/music, free-roam map or cloud sync in this MVP. Balance is initial tuning and needs player feedback.
 
-Rollback: retain this APK and export a backup. This first release has no earlier working binary. Read README.md and docs/TESTING.md in the source archive for setup, recovery and device acceptance.
+Rollback: retain this APK and export a backup. No earlier GitHub APK was published; retain any preview already installed. Read README.md and docs/TESTING.md in the source archive for setup, recovery and device acceptance.

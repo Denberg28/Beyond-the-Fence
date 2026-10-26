@@ -2,17 +2,17 @@
 
 A small farm, a warm home, and something moving past the fence. An offline Android farming and survival game with original vector artwork, quick sessions, and no accounts, ads, purchases or internet permission.
 
-**First test candidate: 0.1.0-rc.1.** Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. This is a new project; no previous app, signing identity or known-good release existed. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
+**Current test candidate: 0.1.0-rc.2.** Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. This is a new project; no previous app, signing identity or known-good release existed. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
 
 ## Play
 
-1. Tap **Play**. In Farm, choose seeds and tap an empty plot. Tap ripe crops or Harvest all to sell them.
+1. Tap **Play**. In Farm, choose seeds and tap an empty plot. Tap ripe crops or Harvest all to sell them. Plant empty plots fills only affordable empty plots; existing crops stay intact. Each growing plot shows active seconds to harvest, adjusted for weather and irrigation.
 2. In Build, improve your rifle, fence and irrigation; expand from six to nine plots. Corn unlocks at level 2 and pumpkins at level 3.
 3. Daylight lasts 75 active seconds. Prepare for night or start it early in Defend. Auto-fire covers all three lanes. Tap a lane to prioritize it and fire a bonus focus shot every three seconds.
 4. Survive for a dawn reward. Walkers, runners, brutes and spitters unlock across nights 1–4. Weather changes each dawn: clear, rain (faster crops/slower zombies), fog (visual haze), heat (slower crops).
 5. If your fence falls, rebuild free. Keep crops and upgrades; lose at most 30 coins. A starting rifle can survive the first night even with zero coins.
 
-Pause any time. Leaving the app pauses immediately; reopening requires Play. Crops and attacks never advance while closed. Options includes help, relaxed mode (half incoming damage), reduced motion, backup export/import, and a confirmed new-farm action. Native labeled buttons support TalkBack; color is accompanied by text. Scrollable controls support large fonts. English only in this MVP.
+Pause any time. Leaving the app pauses immediately; reopening requires Play. Crops and attacks never advance while closed. The selected gameplay tab and seed choice survive rotation. Options includes help, relaxed mode (half incoming damage), reduced motion, backup export/import, and a confirmed new-farm action. Native labeled buttons support TalkBack; color is accompanied by text. Scrollable controls support large fonts. English only in this MVP.
 
 ## Install / upgrade / rollback
 

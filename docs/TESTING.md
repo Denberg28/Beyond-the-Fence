@@ -42,3 +42,9 @@ Configuration: report phone model, Android version/API, screen resolution/densit
 9. For stable signing: sign two versioned builds with the same privately held certificate, install version1, plant/upgrade/export, install version2 using `adb install -r`. Expect successful upgrade and unchanged saves/settings. Test rollback only with compatible schema, keeping a backup; Android may reject a lower versionCode.
 
 Retain PASS/FAIL/BLOCKED observations, timestamps, logs, build hashes and screenshots where useful. Missing observations remain BLOCKED. Known critical/high defects block candidate and stable delivery. For a serious regression, retain backup, stop promotion, reinstall the retained compatible candidate, import compatible backup, fix and rerun affected gates.
+
+## rc.2 verification record
+
+Baseline `975d790`: CI run40336041901 build PASS; API26 and35 integration FAIL at SmokeInstrumentation.java:56 (null active accessibility window), release skipped. Root cause: first window query occurred before the automation connection observed an active window. rc.2 connects automation before launch and bounds welcome discovery to10s; missing/disabled actions still fail the gate. No check is skipped.
+
+New JVM cases cover budget-limited bulk planting, locked seeds/land, occupied plots, defeat, exact seed debits, adjusted countdown/readiness and schema1 round-trip with single harvest credit. Native checks cover bulk planting/selling and retained tab after recreation. Full final-source CI and exact-artifact API26/35 smoke remain required for candidate publication; run-specific observed results accompany the release. Local Gradle resolution is BLOCKED by network access; local SDK Java compile is an additional check only. Handset acceptance/production signing remain BLOCKED.

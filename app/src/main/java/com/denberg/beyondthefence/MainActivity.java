@@ -25,7 +25,7 @@ public final class MainActivity extends Activity {
   private int tab, selectedCrop;
   private long lastFrame, lastUi, lastSave;
   private TextView heading, stats, status, notice, saving, forecast;
-  private Button play, phase, harvest;
+  private Button play, phase, harvest, plantAll;
   private final Button[] tabs = new Button[3],
       cropButtons = new Button[3],
       plotButtons = new Button[9],
@@ -71,6 +71,10 @@ public final class MainActivity extends Activity {
     game = session.game;
     storageBlocked = session.damaged;
     saveMessage = session.saveMessage;
+    if (state != null) {
+      tab = Math.max(0, Math.min(2, state.getInt("tab")));
+      selectedCrop = Math.max(0, Math.min(game.unlockedCrops() - 1, state.getInt("seed")));
+    }
     buildUi();
     refresh();
     if (storageBlocked)
@@ -86,6 +90,13 @@ public final class MainActivity extends Activity {
                   .setCancelable(false)
                   .show());
     else if (!game.tutorialDone) handler.post(this::welcome);
+  }
+
+  @Override
+  protected void onSaveInstanceState(Bundle state) {
+    state.putInt("tab", tab);
+    state.putInt("seed", selectedCrop);
+    super.onSaveInstanceState(state);
   }
 
   @Override
@@ -206,7 +217,7 @@ public final class MainActivity extends Activity {
     panel.setPadding(0, dp(6), 0, dp(6));
     scroll.addView(panel);
     root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1.15f));
-    saving = text(saveMessage + " · v0.1.0 rc1", 10, MUTED);
+    saving = text(saveMessage, 10, MUTED);
     saving.setPadding(0, dp(4), 0, dp(6));
     root.addView(saving);
     buildPanel();
@@ -229,6 +240,17 @@ public final class MainActivity extends Activity {
         choices.addView(cropButtons[i], new LinearLayout.LayoutParams(0, -2, 1));
       }
       panel.addView(choices);
+      plantAll =
+          button(
+              "Plant empty plots",
+              () -> {
+                if (canAct()) {
+                  game.plantAll(selectedCrop);
+                  changed();
+                }
+              });
+      plantAll.setTag("plantAll");
+      panel.addView(plantAll);
       for (int r = 0; r < 3; r++) {
         LinearLayout plots = row();
         for (int c = 0; c < 3; c++) {
@@ -358,13 +380,17 @@ public final class MainActivity extends Activity {
     store.save(game);
   }
 
-  @android.annotation.SuppressLint("SetTextI18n") // This candidate deliberately supports English only; see SPEC.md.
+  @android.annotation.SuppressLint(
+      "SetTextI18n") // This candidate deliberately supports English only; see SPEC.md.
   void refresh() {
     if (stats == null) return;
     stats.setText(
         game.coins
             + " coins     Lv "
             + game.level()
+            + " ("
+            + game.xp % 50
+            + "/50 XP)"
             + "     Fence "
             + Math.round(game.health)
             + "/"
@@ -401,6 +427,16 @@ public final class MainActivity extends Activity {
       tabs[i].setTextColor(tab == i ? Color.WHITE : INK);
     }
     if (tab == 0) {
+      int available = game.plantablePlots(selectedCrop);
+      plantAll.setText(
+          "Plant "
+              + available
+              + " empty plots · "
+              + available * Game.SEED[selectedCrop]
+              + " coins");
+      plantAll.setEnabled(available > 0 && !storageBlocked && !ioBusy);
+      harvest.setText("Harvest all · " + game.readyPlots() + " ready");
+      harvest.setEnabled(game.readyPlots() > 0 && !game.defeated && !storageBlocked && !ioBusy);
       for (int i = 0; i < 3; i++) {
         boolean unlocked = i < game.unlockedCrops();
         cropButtons[i].setText(
@@ -419,9 +455,7 @@ public final class MainActivity extends Activity {
                 : c < 0
                     ? "+ Plant"
                     : Game.CROPS[c]
-                        + (game.growth[i] >= 1
-                            ? " · Ready"
-                            : " · " + (int) (game.growth[i] * 100) + "%");
+                        + (game.growth[i] >= 1 ? " · Ready" : " · " + game.harvestSeconds(i) + "s");
         plotButtons[i].setText(label);
         plotButtons[i].setEnabled(unlocked && !storageBlocked && !ioBusy);
         plotButtons[i].setContentDescription("Plot " + (i + 1) + ", " + label);
@@ -429,20 +463,36 @@ public final class MainActivity extends Activity {
       }
     } else if (tab == 1) {
       String[] title = {
-        Game.WEAPONS[game.weapon] + " → upgrade",
-        "Fence · tier " + (game.fence + 1),
-        "Irrigation · tier " + game.irrigation,
+        Game.WEAPONS[game.weapon]
+            + (game.maxed(0) ? "" : " → " + Game.WEAPONS[game.weapon + 1])
+            + (game.maxed(0) ? "" : "\n+7 damage · faster auto-fire"),
+        "Fence · tier " + (game.fence + 1) + (game.maxed(1) ? "" : "\n+50 maximum strength"),
+        "Irrigation · tier " + game.irrigation + (game.maxed(2) ? "" : "\n+20% base growth speed"),
         "Expand land · 6 → 9 plots"
       };
       for (int i = 0; i < 4; i++) {
         upgradeButtons[i].setText(
-            title[i] + (game.maxed(i) ? "  ·  MAX" : "  ·  " + game.cost(i) + " coins"));
+            title[i]
+                + (game.maxed(i)
+                    ? "  ·  MAX"
+                    : "  ·  "
+                        + game.cost(i)
+                        + " coins"
+                        + (game.coins < game.cost(i)
+                            ? " · need " + (game.cost(i) - game.coins) + " more"
+                            : "")));
         upgradeButtons[i].setEnabled(!game.maxed(i) && !storageBlocked && !ioBusy);
       }
     } else {
       for (int i = 0; i < 3; i++) {
+        int threats = 0;
+        for (Game.Enemy e : game.enemies) if (e.lane == i) threats++;
         laneButtons[i].setText(
-            new String[] {"Left", "Middle", "Right"}[i] + (game.lane == i ? " ✓" : ""));
+            new String[] {"Left", "Middle", "Right"}[i]
+                + (game.lane == i ? " ✓" : "")
+                + "\n"
+                + threats
+                + " threats");
         laneButtons[i].setBackground(bg(game.lane == i ? GOLD : 0xffe5e8de));
       }
       phase.setText(

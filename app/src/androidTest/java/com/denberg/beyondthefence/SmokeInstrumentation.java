@@ -1,6 +1,7 @@
 package com.denberg.beyondthefence;
 
 import android.app.*;
+import android.app.UiAutomation;
 import android.content.*;
 import android.graphics.Bitmap;
 import android.os.*;
@@ -31,7 +32,8 @@ public final class SmokeInstrumentation extends Instrumentation {
         () -> {
           View v = a.findViewById(android.R.id.content).findViewWithTag(tag);
           if (v == null) throw new AssertionError("Missing control " + tag);
-          v.performClick();
+          if (!v.isEnabled() || !v.performClick())
+            throw new AssertionError("Control unavailable " + tag);
         });
     waitForIdleSync();
   }
@@ -47,23 +49,52 @@ public final class SmokeInstrumentation extends Instrumentation {
   public void onStart() {
     Bundle result = new Bundle();
     try {
+      // Connect before launch so the accessibility service observes the first window event.
+      UiAutomation automation = getUiAutomation();
       MainActivity a = launch();
       waitForIdleSync();
-      SystemClock.sleep(300);
-      List<AccessibilityNodeInfo> nodes =
-          getUiAutomation()
-              .getRootInActiveWindow()
-              .findAccessibilityNodeInfosByText("Plant the first seed");
-      if (!nodes.isEmpty()) nodes.get(0).performAction(AccessibilityNodeInfo.ACTION_CLICK);
+      boolean welcomed = false;
+      long deadline = SystemClock.uptimeMillis() + 10000;
+      while (!welcomed && SystemClock.uptimeMillis() < deadline) {
+        AccessibilityNodeInfo root = automation.getRootInActiveWindow();
+        if (root != null) {
+          List<AccessibilityNodeInfo> nodes =
+              root.findAccessibilityNodeInfosByText("Plant the first seed");
+          for (AccessibilityNodeInfo node : nodes)
+            welcomed |= node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        }
+        if (!welcomed) SystemClock.sleep(100);
+      }
+      check(welcomed, "Welcome visible and actionable within 10 seconds");
       waitForIdleSync();
       runOnMainSync(
           () -> {
             a.paused = true;
           });
       check(a.game.coins == 80, "Starting balance");
+      click(a, "plantAll");
+      check(
+          a.game.coins == 56 && a.game.crop[5] == 0 && a.game.crop[6] == -1,
+          "Native bulk planting respects locked land");
+      runOnMainSync(
+          () -> {
+            for (int p = 0; p < 6; p++) a.game.growth[p] = 1;
+            a.refresh();
+          });
+      click(a, "harvest");
+      check(a.game.coins == 128 && a.game.harvested == 6, "Native bulk sale exactly once");
+      runOnMainSync(
+          () -> {
+            a.game.coins = 80;
+            a.refresh();
+          });
       click(a, "plot0");
       check(a.game.crop[0] == 0 && a.game.coins == 76, "Native planting");
-      runOnMainSync(() -> a.game.growth[0] = 1);
+      runOnMainSync(
+          () -> {
+            a.game.growth[0] = 1;
+            a.refresh();
+          });
       click(a, "harvest");
       check(a.game.crop[0] == -1 && a.game.coins == 88, "Native harvest sale");
       click(a, "tab1");
@@ -109,12 +140,17 @@ public final class SmokeInstrumentation extends Instrumentation {
       waitForIdleSync();
       check(b.game.coins == expected && b.game.crop[0] == 0, "Persist across activity restart");
       check(b.paused, "Relaunch is paused");
+      click(b, "tab2");
       ActivityMonitor rotation = addMonitor(MainActivity.class.getName(), null, false);
       runOnMainSync(b::recreate);
       MainActivity rotated = (MainActivity) rotation.waitForActivityWithTimeout(5000);
       removeMonitor(rotation);
       check(rotated != null && rotated.game == b.game, "Rotation retains the current farm");
       check(rotated.paused, "Rotation requires explicit resume");
+      check(
+          rotated.findViewById(android.R.id.content).findViewWithTag("lane2") != null,
+          "Rotation retains the selected gameplay tab");
+      click(rotated, "tab0");
       waitForIdleSync();
       Bitmap screenshot = getUiAutomation().takeScreenshot();
       try (FileOutputStream out =

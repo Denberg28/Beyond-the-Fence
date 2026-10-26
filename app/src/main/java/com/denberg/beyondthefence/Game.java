@@ -99,6 +99,41 @@ public final class Game {
     return true;
   }
 
+  public float growthRate() {
+    return (1 + irrigation * .2f) * (weather == 1 ? 1.35f : weather == 3 ? .8f : 1);
+  }
+
+  public int harvestSeconds(int plot) {
+    if (plot < 0 || plot >= plots() || crop[plot] < 0) return 0;
+    return (int) Math.ceil(Math.max(0, 1 - growth[plot]) * GROW[crop[plot]] / growthRate());
+  }
+
+  public int readyPlots() {
+    int count = 0;
+    for (int p = 0; p < plots(); p++) if (crop[p] >= 0 && growth[p] >= 1) count++;
+    return count;
+  }
+
+  /** Number of empty plots affordable now; never removes or replaces an existing crop. */
+  public int plantablePlots(int type) {
+    if (defeated || type < 0 || type >= unlockedCrops()) return 0;
+    int empty = 0;
+    for (int p = 0; p < plots(); p++) if (crop[p] < 0) empty++;
+    return Math.min(empty, coins / SEED[type]);
+  }
+
+  public int plantAll(int type) {
+    int available = plantablePlots(type), planted = 0;
+    if (available == 0) {
+      notice = "No empty plots or not enough coins for these seeds.";
+      return 0;
+    }
+    for (int p = 0; p < plots() && planted < available; p++)
+      if (crop[p] < 0 && plant(p, type)) planted++;
+    notice = "Planted " + planted + " plots · " + planted * SEED[type] + " coins spent.";
+    return planted;
+  }
+
   public boolean harvest(int plot) {
     if (defeated || plot < 0 || plot >= plots() || crop[plot] < 0 || growth[plot] < 1) return false;
     int type = crop[plot];
@@ -204,7 +239,7 @@ public final class Game {
   public void tick(float dt) {
     if (!Float.isFinite(dt) || dt <= 0 || defeated) return;
     dt = Math.min(dt, 0.1f); // No catch-up damage after frame stalls or backgrounding.
-    float rate = (1 + irrigation * .2f) * (weather == 1 ? 1.35f : weather == 3 ? .8f : 1);
+    float rate = growthRate();
     for (int i = 0; i < plots(); i++)
       if (crop[i] >= 0) growth[i] = Math.min(1, growth[i] + dt * rate / GROW[crop[i]]);
     elapsed += dt;
