@@ -161,10 +161,10 @@ public final class MainActivity extends Activity {
               refresh();
             });
     play.setTag("play");
-    title.addView(play, new LinearLayout.LayoutParams(dp(68), dp(48)));
+    title.addView(play, new LinearLayout.LayoutParams(dp(68), -2));
     Button menu = button("•••", this::options);
     menu.setContentDescription("Pause and open options");
-    title.addView(menu, new LinearLayout.LayoutParams(dp(48), dp(48)));
+    title.addView(menu, new LinearLayout.LayoutParams(dp(48), -2));
     root.addView(title);
     stats = text("", 14, INK);
     stats.setPadding(0, dp(8), 0, dp(4));
@@ -197,7 +197,7 @@ public final class MainActivity extends Activity {
                 refresh();
               });
       tabs[i].setTag("tab" + i);
-      nav.addView(tabs[i], new LinearLayout.LayoutParams(0, dp(48), 1));
+      nav.addView(tabs[i], new LinearLayout.LayoutParams(0, -2, 1));
     }
     root.addView(nav);
     ScrollView scroll = new ScrollView(this);
@@ -226,7 +226,7 @@ public final class MainActivity extends Activity {
                   selectedCrop = c;
                   refresh();
                 });
-        choices.addView(cropButtons[i], new LinearLayout.LayoutParams(0, dp(56), 1));
+        choices.addView(cropButtons[i], new LinearLayout.LayoutParams(0, -2, 1));
       }
       panel.addView(choices);
       for (int r = 0; r < 3; r++) {
@@ -244,7 +244,7 @@ public final class MainActivity extends Activity {
                     changed();
                   });
           plotButtons[p].setTag("plot" + p);
-          plots.addView(plotButtons[p], new LinearLayout.LayoutParams(0, dp(52), 1));
+          plots.addView(plotButtons[p], new LinearLayout.LayoutParams(0, -2, 1));
         }
         panel.addView(plots);
       }
@@ -273,7 +273,7 @@ public final class MainActivity extends Activity {
                   }
                 });
         upgradeButtons[i].setTag("upgrade" + i);
-        panel.addView(upgradeButtons[i], new LinearLayout.LayoutParams(-1, dp(56)));
+        panel.addView(upgradeButtons[i], new LinearLayout.LayoutParams(-1, -2));
       }
     } else {
       panel.addView(
@@ -294,7 +294,7 @@ public final class MainActivity extends Activity {
                   }
                 });
         laneButtons[i].setTag("lane" + i);
-        lanes.addView(laneButtons[i], new LinearLayout.LayoutParams(0, dp(56), 1));
+        lanes.addView(laneButtons[i], new LinearLayout.LayoutParams(0, -2, 1));
       }
       panel.addView(lanes);
       Button repair =
