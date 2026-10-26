@@ -1,15 +1,18 @@
 package com.denberg.beyondthefence;
 
 import android.app.*;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
 import android.content.*;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.content.pm.ActivityInfo;
 import android.view.MotionEvent;
+import android.view.InputDevice;
 import android.os.*;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 import java.io.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -80,8 +83,27 @@ public final class SmokeInstrumentation extends Instrumentation {
     return a.findViewById(android.R.id.content).findViewWithTag(tag);
   }
 
+  private void dismissSystemHint() {
+    for (AccessibilityWindowInfo window : getUiAutomation().getWindows()) {
+      AccessibilityNodeInfo root = window.getRoot();
+      if (root == null) continue;
+      CharSequence pkg = root.getPackageName();
+      if (pkg == null || !(pkg.toString().equals("android") || pkg.toString().equals("com.android.systemui"))) continue;
+      for (AccessibilityNodeInfo node : root.findAccessibilityNodeInfosByText("Got it")) {
+        AccessibilityNodeInfo button = node;
+        for (int i = 0; button != null && i < 4; i++, button = button.getParent()) {
+          if (button.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+            SystemClock.sleep(200);
+            return;
+          }
+        }
+      }
+    }
+  }
+
   /** Real pointer injection checks the rendered tile hit areas, not just a listener call. */
   private void touch(MainActivity a, String tag) {
+    dismissSystemHint();
     runOnMainSync(() -> {
       View v = control(a, tag);
       if (v == null || !v.isEnabled() || !v.isShown()) throw new AssertionError("Unavailable " + tag);
@@ -93,14 +115,18 @@ public final class SmokeInstrumentation extends Instrumentation {
     runOnMainSync(() -> {
       View v = control(a, tag);
       Rect visible = new Rect();
-      if (!v.getGlobalVisibleRect(visible) || visible.isEmpty()) throw new AssertionError("Not visible " + tag);
-      xy[0] = visible.centerX(); xy[1] = visible.centerY();
+      if (!v.getLocalVisibleRect(visible) || visible.isEmpty()) throw new AssertionError("Not visible " + tag);
+      v.getLocationOnScreen(xy);
+      xy[0] += visible.centerX(); xy[1] += visible.centerY();
+      android.util.Log.i("BTFSmoke", tag + " at " + xy[0] + "," + xy[1] + " focus=" + a.hasWindowFocus());
     });
     long now = SystemClock.uptimeMillis();
     MotionEvent down = MotionEvent.obtain(now, now, MotionEvent.ACTION_DOWN, xy[0], xy[1], 0);
     MotionEvent up = MotionEvent.obtain(now, now + 50, MotionEvent.ACTION_UP, xy[0], xy[1], 0);
-    sendPointerSync(down);
-    sendPointerSync(up);
+    down.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+    up.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+    check(getUiAutomation().injectInputEvent(down, true), "Pointer down delivered");
+    check(getUiAutomation().injectInputEvent(up, true), "Pointer up delivered");
     down.recycle(); up.recycle();
     waitForIdleSync();
   }
@@ -149,11 +175,15 @@ public final class SmokeInstrumentation extends Instrumentation {
     Bundle result = new Bundle();
     try {
       UiAutomation automation = getUiAutomation();
+      AccessibilityServiceInfo info = automation.getServiceInfo();
+      info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+      automation.setServiceInfo(info);
       MainActivity a = launch();
       waitForIdleSync();
       boolean welcomed = false;
       long deadline = SystemClock.uptimeMillis() + 10000;
       while (!welcomed && SystemClock.uptimeMillis() < deadline) {
+        dismissSystemHint();
         AccessibilityNodeInfo root = automation.getRootInActiveWindow();
         if (root != null) {
           List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText("Plant the first seed");
@@ -255,6 +285,14 @@ public final class SmokeInstrumentation extends Instrumentation {
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
     } catch (Throwable e) {
+      try { screenshot("smoke-failure.png"); } catch (Throwable ignored) { }
+      try (InputStream in = new ParcelFileDescriptor.AutoCloseInputStream(
+              getUiAutomation().executeShellCommand("dumpsys window windows"));
+          OutputStream out = new FileOutputStream(new File(getTargetContext().getFilesDir(), "smoke-window.txt"))) {
+        byte[] buffer = new byte[4096];
+        int count;
+        while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
+      } catch (Throwable ignored) { }
       result.putString("stream", "\nFAILURES!!!\n" + android.util.Log.getStackTraceString(e));
       finish(Activity.RESULT_CANCELED, result);
     }
