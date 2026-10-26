@@ -2,6 +2,9 @@
 
 ## 0.1.0-rc.2 · 27 October 2026
 
+- Pause immediately when a system overlay removes window focus; returning focus never resumes play automatically.
+- Await the completed Home command and observed UI state in emulator lifecycle checks; collect activity, screenshot and crash evidence even on failure.
+
 - Bulk plant affordable empty plots without replacing crops; show exact count and total seed cost before tapping.
 - Show weather/irrigation-adjusted harvest countdowns, ready-crop counts, XP toward the next level, upgrade benefits/coin shortfalls, and threats per lane.
 - Retain the selected gameplay tab and seed after activity recreation. Save schema 1 is unchanged.

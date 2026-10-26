@@ -5,7 +5,7 @@ Beyond the Fence **0.1.0-rc.2 Android test candidate**: an offline farm-building
 - Fix first-launch automation readiness and exercise bulk actions through installed-app checks; schema1 backups remain compatible.
 - Upgrade the rifle, fence, irrigation and farm size.
 - Survive three-lane nights against walkers, runners, brutes and spitters; choose a lane for focus shots while auto-fire protects the farm.
-- Changing weather, relaxed mode, reduced motion and pause-friendly play.
+- Changing weather, relaxed mode, reduced motion and pause-friendly play. Losing window focus pauses immediately; returning requires Play.
 - Two automatic local checkpoints and manual save backup import/export. No accounts, ads, purchases or network permission.
 
 **Install the Preview.apk** (Android 8.0+). The Unsigned.apk is for future production signing and does not install directly. Source, checksums, build provenance, unit results and emulator evidence accompany the candidate.

@@ -11,6 +11,7 @@ import java.io.*;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 /** Runs against the installed APK using framework instrumentation; no test runtime dependency. */
 public final class SmokeInstrumentation extends Instrumentation {
@@ -43,6 +44,33 @@ public final class SmokeInstrumentation extends Instrumentation {
         startActivitySync(
             new Intent(getTargetContext(), MainActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+  }
+
+  private boolean onUi(BooleanSupplier condition) {
+    boolean[] value = new boolean[1];
+    runOnMainSync(() -> value[0] = condition.getAsBoolean());
+    return value[0];
+  }
+
+  private void awaitUi(BooleanSupplier condition, String message) {
+    long deadline = SystemClock.uptimeMillis() + 10000;
+    while (SystemClock.uptimeMillis() < deadline) {
+      if (onUi(condition)) {
+        check(true, message);
+        return;
+      }
+      SystemClock.sleep(100);
+    }
+    check(false, message);
+  }
+
+  private void shell(String command) throws IOException {
+    // Read through EOF: closing the descriptor immediately does not await command completion.
+    try (InputStream in =
+        new ParcelFileDescriptor.AutoCloseInputStream(getUiAutomation().executeShellCommand(command))) {
+      byte[] buffer = new byte[1024];
+      while (in.read(buffer) != -1) {}
+    }
   }
 
   @Override
@@ -106,19 +134,26 @@ public final class SmokeInstrumentation extends Instrumentation {
       click(a, "lane2");
       check(a.game.lane == 2, "Lane focus selection");
       click(a, "play");
+      awaitUi(() -> a.hasWindowFocus() && !a.paused, "Game running before interruption");
+      // A system overlay may remove focus without an Activity pause.
+      runOnMainSync(() -> a.onWindowFocusChanged(false));
+      check(onUi(() -> a.paused), "Focus loss pauses game");
+      runOnMainSync(() -> a.onWindowFocusChanged(true));
+      check(onUi(() -> a.paused), "Focus return does not auto-resume");
+      click(a, "play");
       SystemClock.sleep(300);
-      getUiAutomation().executeShellCommand("input keyevent 3").close();
-      SystemClock.sleep(500);
-      check(a.paused, "Background pauses game");
-      float elapsed = a.game.elapsed;
+      shell("input keyevent KEYCODE_HOME");
+      awaitUi(() -> !a.hasWindowFocus() && a.paused, "Background pauses game within 10 seconds");
+      float[] elapsed = new float[1];
+      runOnMainSync(() -> elapsed[0] = a.game.elapsed);
       SystemClock.sleep(400);
-      check(a.game.elapsed == elapsed, "No background simulation");
+      check(onUi(() -> a.game.elapsed == elapsed[0]), "No background simulation");
       getTargetContext()
           .startActivity(
               new Intent(getTargetContext(), MainActivity.class)
                   .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
-      SystemClock.sleep(500);
-      check(a.paused, "Explicit resume required");
+      awaitUi(a::hasWindowFocus, "Game returns to foreground within 10 seconds");
+      check(onUi(() -> a.paused), "Explicit resume required");
       runOnMainSync(
           () -> {
             a.game.defeated = true;

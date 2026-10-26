@@ -24,7 +24,7 @@ Not included: free-roam world, multiplayer, crafting trees, character inventory,
 | A4 | First night winnable with starting rifle and zero coins; autonomous harvest/upgrade strategy survives 20 days | Deterministic simulation |
 | A5 | Four zombie variants occur; rain/heat/irrigation alter growth as specified | Unit |
 | A6 | Defeat stops simulation; free recovery retains crops/upgrades and bounds loss | Unit + UI |
-| A7 | Background pauses; explicit Play required; no frame-stall catch-up damage | Unit + lifecycle instrumentation + device procedure |
+| A7 | Background/focus loss pauses; explicit Play required; no frame-stall catch-up damage | Unit + lifecycle instrumentation + device procedure |
 | A8 | Valid save reproduces deterministic continuation; malformed, truncated, oversized or non-finite data rejected; old checkpoint recovered | Unit + device instrumentation |
 | A9 | Farm/build/defend actions have native accessible labels; touch targets >=48dp; controls usable at 200% font | Source review + physical device |
 | A10 | Preview APK <=5MiB, correct package/version, signature verifies, source/config/checksums included | Packaging/CI |

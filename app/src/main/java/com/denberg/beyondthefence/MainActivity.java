@@ -112,6 +112,17 @@ public final class MainActivity extends Activity {
   }
 
   @Override
+  public void onWindowFocusChanged(boolean hasFocus) {
+    super.onWindowFocusChanged(hasFocus);
+    // System overlays can remove focus before onPause (or without pausing the Activity).
+    if (!hasFocus && game != null && !paused) {
+      paused = true;
+      save();
+      refresh();
+    }
+  }
+
+  @Override
   protected void onPause() {
     foreground = false;
     paused = true;
