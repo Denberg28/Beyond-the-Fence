@@ -69,6 +69,7 @@ final class FarmView extends View {
     float d = geometry.density;
     if (d == 0) return;
     boolean night = g.night;
+    p.setAlpha(255); // Weather overlays must not carry translucency into the next sky frame.
     p.setShader(night ? nightSky : daySky);
     c.drawRect(0, 0, getWidth(), getHeight(), p);
     p.setShader(null);

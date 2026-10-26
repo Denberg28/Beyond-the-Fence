@@ -5,6 +5,8 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
 import android.content.*;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Rect;
 import android.content.pm.ActivityInfo;
 import android.view.MotionEvent;
@@ -257,6 +259,22 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(landscape, "closeBuild");
       check(control(landscape, "seed1").isSelected(), "Selected seed survives rotation");
       checkBoard(landscape);
+      runOnMainSync(() -> {
+        GameBoard field = (GameBoard) control(landscape, "field");
+        Bitmap target = Bitmap.createBitmap(field.getWidth(), field.getHeight(), Bitmap.Config.ARGB_8888);
+        try {
+          for (int weather : new int[] {1, 2}) {
+            landscape.game.weather = weather;
+            field.artwork.draw(new Canvas(target));
+            target.eraseColor(Color.TRANSPARENT);
+            field.artwork.draw(new Canvas(target));
+            check(Color.alpha(target.getPixel(target.getWidth() - 1, 0)) == 255,
+                "Rain/fog cannot fade the next background frame");
+          }
+          landscape.game.weather = 1;
+          landscape.refresh();
+        } finally { target.recycle(); }
+      });
       screenshot("smoke-landscape.png");
       MainActivity portrait = rotate(landscape, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
       checkBoard(portrait);

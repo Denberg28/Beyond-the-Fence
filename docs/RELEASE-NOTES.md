@@ -1,5 +1,6 @@
-Beyond the Fence **0.2.0-rc.1 · in-world controls**
+Beyond the Fence **0.2.0-rc.2 · in-world controls**
 
+- Correct rain/fog background opacity and improve disabled-control label contrast.
 - Play on one immersive board: choose illustrated seed cards, tap soil to plant, and tap golden ripe tiles to harvest.
 - Tap defense lanes in the world to focus the rifle; selected lanes show a gold outline/checkmark, threat counts and recharge time.
 - Compact resource/pause/options HUD and bottom Build/Plant all/Harvest/Start night dock. Tap the fence badge to repair.

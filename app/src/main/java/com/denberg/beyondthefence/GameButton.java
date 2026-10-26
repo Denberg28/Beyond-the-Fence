@@ -34,7 +34,8 @@ final class GameButton extends Button {
     oldText = text;
     shape.setColor(fill);
     shape.setStroke(Math.round(2 * getResources().getDisplayMetrics().density), stroke);
+    int disabled = text == 0xff203e36 ? 0xff63725b : 0xffc5cfb8;
     setTextColor(new ColorStateList(new int[][] {new int[] {-android.R.attr.state_enabled}, new int[0]},
-        new int[] {0xff8e9d8a, text}));
+        new int[] {disabled, text}));
   }
 }

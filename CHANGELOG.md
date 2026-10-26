@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-rc.2 · 27 October 2026
+
+- Fix rain/fog Paint alpha carrying into the next scene background; retain readable, opaque daytime scenery.
+- Improve disabled seed/upgrade/repair text contrast against both light and dark control backgrounds.
+- Add installed-app two-frame rain/fog opacity regression checks. rc.1 passed19 JVM tests and278 checks on each API26/35 emulator; screenshot review identified this visual follow-up.
+
 ## 0.2.0-rc.1 · 27 October 2026
 
 - Replace the separate form-style panels with one immersive game window: illustrated seed cards above the world, directly actionable soil and defense lanes, and a compact bottom dock.
