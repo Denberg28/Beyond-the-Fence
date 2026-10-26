@@ -35,13 +35,13 @@ jobs:
       - name: Package exact source and candidate
         run: |
           mkdir -p artifacts
-          cp app/build/outputs/apk/debug/app-debug.apk artifacts/Beyond-the-Fence-0.1.0-rc.2-Preview.apk
-          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk artifacts/Beyond-the-Fence-0.1.0-rc.2-Tests.apk
-          cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/Beyond-the-Fence-0.1.0-rc.2-Unsigned.apk
-          git archive --format=zip HEAD -o artifacts/Beyond-the-Fence-0.1.0-rc.2-Source.zip
+          cp app/build/outputs/apk/debug/app-debug.apk artifacts/Beyond-the-Fence-0.2.0-rc.1-Preview.apk
+          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk artifacts/Beyond-the-Fence-0.2.0-rc.1-Tests.apk
+          cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/Beyond-the-Fence-0.2.0-rc.1-Unsigned.apk
+          git archive --format=zip HEAD -o artifacts/Beyond-the-Fence-0.2.0-rc.1-Source.zip
           cp docs/RELEASE-NOTES.md artifacts/RELEASE-NOTES.md
           cp app/build/test-results/testDebugUnitTest/*.xml artifacts/
-          printf 'commit=%s\nversion=0.1.0-rc.2\napplicationId=com.denberg.beyondthefence\nminSdk=26\ntargetSdk=35\nJDK=17\nGradle=8.9\nAGP=8.7.3\nbuildTools=35.0.0\ntier=prerelease\nsigning=debug test only\n' "$GITHUB_SHA" > artifacts/BUILD-INFO.txt
+          printf 'commit=%s\nversion=0.2.0-rc.1\napplicationId=com.denberg.beyondthefence\nminSdk=26\ntargetSdk=35\nJDK=17\nGradle=8.9\nAGP=8.7.3\nbuildTools=35.0.0\ntier=prerelease\nsigning=debug test only\n' "$GITHUB_SHA" > artifacts/BUILD-INFO.txt
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs artifacts/*Preview.apk >> artifacts/BUILD-INFO.txt
           cd artifacts
           sha256sum ./* > SHA256SUMS.txt
@@ -121,14 +121,14 @@ jobs:
           cd artifacts
           sha256sum -c SHA256SUMS.txt
           cd ..
-          if gh release view v0.1.0-rc.2 >/dev/null 2>&1; then
+          if gh release view v0.2.0-rc.1 >/dev/null 2>&1; then
             echo 'Version already published; preserving existing release. Bump version to publish changes.'
             exit 0
           fi
-          printf 'PASS: unit tests, debug/release builds, lint, package audit, APK signature\nPASS: native UI/lifecycle/checkpoint tests on API 26 and 35 emulators\nBLOCKED: physical handset endurance, TalkBack/font/device performance, production signing\nEvidence: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > artifacts/VERIFICATION.txt
-          zip -r artifacts/Beyond-the-Fence-0.1.0-rc.2-Emulator-Evidence.zip evidence
+          printf 'PASS: unit tests, debug/release builds, lint, package audit, APK signature\nPASS: native tile touch, orientation/font, lifecycle/checkpoint tests on API 26 and 35 emulators\nBLOCKED: physical handset endurance, TalkBack/font/device performance, production signing\nEvidence: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > artifacts/VERIFICATION.txt
+          zip -r artifacts/Beyond-the-Fence-0.2.0-rc.1-Emulator-Evidence.zip evidence
           cd artifacts
           rm SHA256SUMS.txt
           sha256sum ./* > SHA256SUMS.txt
           cd ..
-          gh release create v0.1.0-rc.2 artifacts/* --target "$GITHUB_SHA" --prerelease --title 'Beyond the Fence 0.1.0-rc.2 — Android preview' --notes-file docs/RELEASE-NOTES.md
+          gh release create v0.2.0-rc.1 artifacts/* --target "$GITHUB_SHA" --prerelease --title 'Beyond the Fence 0.2.0-rc.1 — Android preview' --notes-file docs/RELEASE-NOTES.md

@@ -213,7 +213,7 @@ public final class Game {
     if (e == null) return false;
     e.hp -= 18 + weapon * 5;
     focusClock = 3;
-    notice = "Focus shot · " + new String[] {"left", "middle", "right"}[lane] + " lane";
+    notice = "Focus shot · " + new String[] {"top", "middle", "bottom"}[lane] + " lane";
     removeDead();
     return true;
   }

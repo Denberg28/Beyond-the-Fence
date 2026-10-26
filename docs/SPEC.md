@@ -44,3 +44,17 @@ Baseline: `975d790` (build/unit/lint passed; Android26/35 smoke failed on access
 | Q4 | Welcome action becomes available within10s; test failures block publication; final APK installs on API26/35 and passes lifecycle/checkpoint checks | Native instrumentation in CI |
 
 Recovery and rollback: export schema1 `.btfs` before installing; retain any installed preview APK. Candidate uses debug test signing, so fresh CI certificates may require backup/uninstall/install/import. Keep rc.2 as prerelease until handset and signing gates pass.
+
+## 0.2.0-rc.1 in-world UI scope
+
+Baseline: published rc.2 at `545a5bb` passed18 JVM tests and28 checks on each API26/35 emulator. No gameplay/economy/save schema change is required for this UI update. VersionCode3, versionName0.2.0-rc.1.
+
+| ID | Pass condition | Verification |
+|---|---|---|
+| U1 | Seed cards change the crop; pointer tap on actual soil plants/debits once; early harvest is rejected; ripe tile sells exactly once | Native injected pointer checks + unchanged economy suite |
+| U2 | Plot/lane button bounds match the rendered world, do not overlap, stay inside the board and remain >=48dp | Shared geometry suite across densities/fonts/orientations + native bounds |
+| U3 | Locked soil opens paused upgrades without debit; explicit upgrade purchase; closing stays paused; selection/overlay survive rotation | Native pointer/recreation checks |
+| U4 | Tap world lane to focus; repair badge shares the existing repair rule; Start night explicitly starts play, rebuild returns paused | Native + unchanged simulation suite |
+| U5 | Portrait and landscape remain usable; 200% font keeps essential actions reachable using scroll; existing background/focus pause and checkpoint recovery pass | API26/35 screenshots and native checks; physical TalkBack/performance still blocked |
+
+Board: portrait stacks three defense lanes over nine soil tiles; landscape places farmland left of defense. Seed cards/HUD/dock are inside the same game window. No swipe/drag planting, plant-based weapons, copied artwork, prices or combat-rule changes. Rollback: rc.2 APK plus exported schema1 backup; downgrade/signing conflicts can require reinstall.

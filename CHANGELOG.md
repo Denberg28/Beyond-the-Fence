@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0-rc.1 · 27 October 2026
+
+- Replace the separate form-style panels with one immersive game window: illustrated seed cards above the world, directly actionable soil and defense lanes, and a compact bottom dock.
+- Show crop growth/harvest rewards on the actual tiles, highlight selected seeds and lanes, and open land upgrades from locked soil.
+- Put repair on the fence badge; open upgrades as a paused overlay with an explicit close control. Start night deliberately starts play; rebuild returns paused.
+- Adapt the board to portrait/landscape, keep native accessible 48dp targets, retain seed/overlay after rotation, and allow scrolling at large font sizes.
+- Add shared artwork/tile geometry tests, real pointer-input checks, portrait/landscape and 200% font checks and five screenshot views on API26/35.
+- Package/schema1 and economy/combat rules remain compatible with rc.2; test signing and physical-phone limitations remain.
+
 ## 0.1.0-rc.2 · 27 October 2026
 
 - Pause immediately when a system overlay removes window focus; returning focus never resumes play automatically.
