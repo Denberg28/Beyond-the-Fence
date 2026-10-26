@@ -299,7 +299,7 @@ public final class MainActivity extends Activity {
     seedsToggle.setTag("seeds");
     build = button("Build", this::showBuild);
     build.setTag("build");
-    plantAll = button("Plant all", () -> { if (canAct() && !buildOpen) { game.plantAll(selectedCrop); changed(); } });
+    plantAll = button("Plant all", () -> { if (canAct()) { game.plantAll(selectedCrop); changed(); } });
     plantAll.setTag("plantAll");
     harvest = button("Harvest", () -> { if (canAct() && !buildOpen) { game.harvestAll(); changed(); } });
     harvest.setTag("harvest");
