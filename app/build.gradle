@@ -13,6 +13,6 @@ android {
     }
     buildTypes { release { minifyEnabled false } }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
-    lint { abortOnError true; warningsAsErrors true; disable 'NewerVersionAvailable', 'GradleDependency' }
+    lint { abortOnError true; warningsAsErrors true; disable 'NewerVersionAvailable', 'GradleDependency', 'OldTargetApi' // Pinned API35 target; no Play Store publication in this MVP. }
 }
 dependencies { testImplementation 'junit:junit:4.13.2' }
