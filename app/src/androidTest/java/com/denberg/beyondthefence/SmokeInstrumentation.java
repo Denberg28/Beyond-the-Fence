@@ -214,15 +214,18 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(n.getLeft() == s.getLeft() && n.getTop() < e.getTop() && e.getTop() == w.getTop()
           && w.getLeft() < n.getLeft() && n.getLeft() < e.getLeft() && e.getTop() < s.getTop(), "N/W/E/S forms a compass cross");
       int[] at = new int[2]; cross.getLocationOnScreen(at);
-      check(Math.abs(at[0] + cross.getWidth() / 2 - a.getResources().getDisplayMetrics().widthPixels / 2) <= 2,
-          "Repair cross is horizontally centered");
+      View commands = control(a, "commands"); int[] dockAt = new int[2]; commands.getLocationOnScreen(dockAt);
+      check(Math.abs(at[0] + cross.getWidth() / 2 - (dockAt[0] + commands.getWidth() / 2)) <= 2,
+          "Repair cross is horizontally centered in its rendered bar: cross=" + at[0] + "/" + cross.getWidth()
+              + ", bar=" + dockAt[0] + "/" + commands.getWidth());
       for (String tag : new String[] {"quickHire", "quickUniform"}) {
         View shortcut = control(a, tag);
         check(shortcut.getWidth() >= min && shortcut.getHeight() >= min && shortcut.getContentDescription() != null,
             "Direct mercenary command is accessible and at least48dp");
       }
-      check(at[1] + cross.getHeight() <= a.getResources().getDisplayMetrics().heightPixels,
-          "Repair cross is pinned within screen bounds");
+      View content = a.findViewById(android.R.id.content); int[] contentAt = new int[2]; content.getLocationOnScreen(contentAt);
+      check(at[1] >= contentAt[1] && at[1] + cross.getHeight() <= contentAt[1] + content.getHeight(),
+          "Repair cross is pinned within the actual window bounds");
     });
   }
 
