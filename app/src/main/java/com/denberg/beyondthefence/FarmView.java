@@ -9,6 +9,8 @@ import java.util.function.Supplier;
 /** Original chunky arcade artwork, viewed from above. All actions have native overlays. */
 @android.annotation.SuppressLint("ViewConstructor")
 final class FarmView extends View {
+  // Counts actual scene rendering, excluding window/ripple draws using the cached layer.
+  long renderedFrames;
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final RectF rect = new RectF();
   private final Supplier<Game> model;
@@ -31,6 +33,7 @@ final class FarmView extends View {
   }
   @Override protected void onDraw(Canvas c) {
     super.onDraw(c);
+    renderedFrames++;
     Game g = model.get(); float d = geometry.density;
     if (g == null || d == 0 || getHeight() == 0) return;
     // Every frame starts opaque; weather cannot leak alpha into subsequent backgrounds.

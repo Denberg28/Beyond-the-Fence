@@ -351,18 +351,14 @@ public final class SmokeInstrumentation extends Instrumentation {
   private void assertPausedStatic(MainActivity a) {
     // Allow one-off ripples, focus changes and checkpoint labels to finish first.
     SystemClock.sleep(1000);
-    java.util.concurrent.atomic.AtomicInteger draws = new java.util.concurrent.atomic.AtomicInteger();
-    android.view.ViewTreeObserver.OnDrawListener listener = draws::incrementAndGet;
+    long[] before = new long[1];
     runOnMainSync(() -> {
       check(a.paused, "Static rendering check runs while paused");
-      control(a, "field").getViewTreeObserver().addOnDrawListener(listener);
+      before[0] = ((GameBoard) control(a, "field")).artwork.renderedFrames;
     });
-    try {
-      SystemClock.sleep(600);
-      check(draws.get() <= 1, "Paused board does not continuously redraw");
-    } finally {
-      runOnMainSync(() -> control(a, "field").getViewTreeObserver().removeOnDrawListener(listener));
-    }
+    SystemClock.sleep(600);
+    check(onUi(() -> ((GameBoard) control(a, "field")).artwork.renderedFrames - before[0] <= 1),
+        "Paused farm renderer does not continuously redraw");
   }
 
   private void farmCycle(MainActivity a) {
