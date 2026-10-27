@@ -299,7 +299,7 @@ public final class MainActivity extends Activity {
     notice.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
     boardContent.addView(notice);
 
-    boardContent.addView(seedTray);
+    gameShell.addView(seedTray);
     createCommandDock();
     LinearLayout dock = row();
     seedsToggle = button("Seeds", () -> {

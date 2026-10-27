@@ -289,6 +289,10 @@ public final class SmokeInstrumentation extends Instrumentation {
       screenshot("smoke-roaming.png");
       touch(a, "seeds");
       check(!control(a, "seed1").isEnabled(), "Locked seed is visibly unavailable");
+      check(onUi(() -> {
+        View seed = control(a, "seed0"); Rect visible = new Rect();
+        return seed.getGlobalVisibleRect(visible) && visible.height() == seed.getHeight();
+      }), "Seeds opens a visible tray above the fixed commands without scrolling");
       touch(a, "seed0");
       touch(a, "plot6");
       check(onUi(() -> a.paused && a.game.coins == 80 && control(a, "upgrade3").isShown()), "Locked soil opens expansion without spending");
