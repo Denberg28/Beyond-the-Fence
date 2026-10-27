@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 3;
+  private static final int MAGIC = 0x42544653, VERSION = 4;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -62,6 +62,14 @@ public final class SaveCodec {
     d.writeInt(g.roamers.size());
     for (Game.Roamer roamer : g.roamers) {
       d.writeInt(roamer.type); d.writeFloat(roamer.progress); d.writeFloat(roamer.distance);
+    }
+    for (float hp : g.wallHealth) d.writeFloat(hp);
+    for (int i = 0; i < 9; i++) { d.writeFloat(g.cropHealth[i]); d.writeBoolean(g.scorched[i]); }
+    for (int i = 0; i < 3; i++) { d.writeFloat(g.buildingHealth[i]); d.writeBoolean(g.buildingRuins[i]); }
+    d.writeInt(g.lostCrops); d.writeInt(g.lostBuildings);
+    for (Game.Enemy enemy : g.enemies) {
+      d.writeBoolean(enemy.breached); d.writeFloat(enemy.advance);
+      d.writeFloat(enemy.attackClock); d.writeInt(enemy.target);
     }
     d.flush();
     CRC32 crc = new CRC32();
@@ -149,7 +157,7 @@ public final class SaveCodec {
       for (int i = 0; i < 3; i++) g.buildings[i] = in.readBoolean();
       g.productionClock = in.readFloat(); number(g.productionClock, 0, 12);
       int mercs = in.readInt(); integer(mercs, 0, Game.MAX_MERCS);
-      range(mercs == 0 || g.buildings[2]);
+      range(version >= 4 || mercs == 0 || g.buildings[2]);
       for (int i = 0; i < mercs; i++) {
         float progress = in.readFloat(), clock = in.readFloat(), tx = in.readFloat(), ty = in.readFloat();
         number(progress, 0, 3.9999998f); number(clock, 0, .9f);
@@ -173,6 +181,33 @@ public final class SaveCodec {
     } else {
       // Old raids keep their existing enemies and spawn timing; daytime gains roaming scouts.
       g.populateRoamers();
+    }
+    if (version >= 4) {
+      for (int i = 0; i < 4; i++) { g.wallHealth[i] = in.readFloat(); number(g.wallHealth[i], 0, g.maxWallHealth(i)); }
+      for (int i = 0; i < 9; i++) {
+        g.cropHealth[i] = in.readFloat(); g.scorched[i] = in.readBoolean();
+        number(g.cropHealth[i], 0, Game.CROP_HEALTH);
+        range(g.crop[i] >= 0 ? g.cropHealth[i] > 0 && !g.scorched[i] : g.cropHealth[i] == 0);
+        if (i >= g.plots()) range(!g.scorched[i]);
+      }
+      for (int i = 0; i < 3; i++) {
+        g.buildingHealth[i] = in.readFloat(); g.buildingRuins[i] = in.readBoolean();
+        number(g.buildingHealth[i], 0, Game.BUILDING_HEALTH);
+        range(g.buildings[i] ? g.buildingHealth[i] > 0 && !g.buildingRuins[i] : g.buildingHealth[i] == 0);
+      }
+      g.lostCrops = in.readInt(); g.lostBuildings = in.readInt();
+      integer(g.lostCrops, 0, 10_000_000); integer(g.lostBuildings, 0, 10_000_000);
+      for (Game.Enemy enemy : g.enemies) {
+        enemy.breached = in.readBoolean(); enemy.advance = in.readFloat();
+        enemy.attackClock = in.readFloat(); enemy.target = in.readInt();
+        number(enemy.advance, 0, 1); number(enemy.attackClock, 0, 1.2f); integer(enemy.target, -1, 11);
+        range(enemy.breached ? enemy.x == 0 : enemy.advance == 0 && enemy.attackClock == 0 && enemy.target == -1);
+      }
+    } else {
+      // Older releases had no independent damage. Preserve investments with intact assets.
+      for (int i = 0; i < 4; i++) g.wallHealth[i] = g.maxWallHealth(i);
+      for (int i = 0; i < 9; i++) g.cropHealth[i] = g.crop[i] < 0 ? 0 : Game.CROP_HEALTH;
+      for (int i = 0; i < 3; i++) g.buildingHealth[i] = g.buildings[i] ? Game.BUILDING_HEALTH : 0;
     }
     range(g.night || count == 0);
     range(!g.defeated || g.health == 0);

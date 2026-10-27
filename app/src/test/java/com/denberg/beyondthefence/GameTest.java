@@ -140,7 +140,9 @@ public class GameTest {
     g.weapon = 2;
     g.health = .01f;
     g.night = true;
-    g.enemies.add(new Game.Enemy(2, 0, 0, 200, 200));
+    Game.Enemy intruder = new Game.Enemy(2, 0, 0, 200, 200);
+    intruder.breached = true; intruder.advance = 1; g.wallHealth[0] = 0;
+    g.enemies.add(intruder);
     g.shotClock = 1;
     g.tick(.1f);
     assertTrue(g.defeated);
@@ -153,7 +155,7 @@ public class GameTest {
     assertEquals(g.maxHealth(), g.health, 0);
     assertEquals(0, g.crop[0]);
     assertEquals(2, g.weapon);
-    assertEquals(0, g.coins);
+    assertEquals(12, g.coins); // Recovery seed aid prevents an empty-wallet replanting lock.
   }
 
   @Test
@@ -167,7 +169,8 @@ public class GameTest {
     b.relaxed = true;
     a.tick(.1f);
     b.tick(.1f);
-    assertEquals((100 - a.health) / 2, 100 - b.health, .001f);
+    assertTrue(a.wallHealth[0] < 80);
+    assertEquals((80 - a.wallHealth[0]) / 2, 80 - b.wallHealth[0], .001f);
   }
 
   @Test

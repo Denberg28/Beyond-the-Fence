@@ -58,10 +58,13 @@ public class FortressTest {
       g.night = true; g.spawned = g.quota(); g.shotClock = 1;
       g.enemies.add(new Game.Enemy(0, 1, 0, 100, 100));
     }
-    stone.walls[1] = 3;
+    open.walls[1] = 1; open.wallHealth[1] = open.maxWallHealth(1);
+    stone.walls[1] = 3; stone.wallHealth[1] = stone.maxWallHealth(1);
     open.tick(.1f); stone.tick(.1f);
-    assertTrue(100 - open.health > (100 - stone.health) * 2);
+    assertTrue(80 - open.wallHealth[1] > (160 - stone.wallHealth[1]) * 1.9f);
+    assertEquals(100, open.health, 0); assertEquals(100, stone.health, 0);
     stone.buildings[0] = true; stone.buildings[2] = true;
+    stone.buildingHealth[0] = 100; stone.buildingHealth[2] = 100;
     stone.mercenaries.add(new Game.Mercenary(1, 0, .5f, .5f));
     stone.wood = 25; stone.defeated = true; stone.health = 0; stone.recover();
     assertEquals(3, stone.walls[1]); assertTrue(stone.buildings[0]);

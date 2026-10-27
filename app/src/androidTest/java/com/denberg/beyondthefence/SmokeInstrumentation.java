@@ -354,6 +354,38 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> reopened.game.roamers.isEmpty() && !reopened.game.enemies.isEmpty()
           && reopened.game.spawned <= reopened.game.quota()), "Roamers become bounded, real attacking enemies");
       touch(reopened, "play");
+      Game threatened = new Game();
+      threatened.coins = 100; threatened.wood = 0;
+      threatened.buildings[2] = true; threatened.buildingHealth[2] = Game.BUILDING_HEALTH;
+      threatened.plant(0, 0); threatened.plant(1, 0); threatened.growth[1] = 1;
+      threatened.cropHealth[0] = 1; threatened.wallHealth[0] = .1f;
+      threatened.night = true; threatened.roamers.clear(); threatened.spawned = threatened.quota();
+      threatened.enemies.add(new Game.Enemy(2, 0, 0, 200, 200)); threatened.shotClock = 1;
+      runOnMainSync(() -> { reopened.game = threatened; reopened.paused = true; reopened.refresh(); });
+      touch(reopened, "seeds"); touch(reopened, "seed0");
+      touch(reopened, "play");
+      awaitUi(() -> threatened.lostCrops == 1, "Actual frame loop breaks a fence and destroys a crop");
+      touch(reopened, "play");
+      check(onUi(() -> threatened.wallHealth[0] == 0 && threatened.enemies.get(0).breached
+          && threatened.scorched[0] && threatened.crop[0] == -1 && threatened.harvested == 0
+          && threatened.coins == 92 && threatened.wood == 0), "Breach and crop loss award no harvest resources");
+      screenshot("smoke-breach.png");
+      touch(reopened, "plot0");
+      check(onUi(() -> threatened.crop[0] == 0 && !threatened.scorched[0]
+          && threatened.cropHealth[0] == Game.CROP_HEALTH && threatened.coins == 88), "Ruined farm tile can be replanted for seed cost");
+      touch(reopened, "harvest");
+      check(onUi(() -> threatened.coins == 100 && threatened.wood == 2 && threatened.harvested == 1),
+          "Surviving ripe crop funds repairs through normal harvest");
+      touch(reopened, "wall0"); touch(reopened, "buyTimber");
+      check(onUi(() -> threatened.coins == 88 && threatened.wood == 12), "Harvest coins buy a timber bundle atomically");
+      touch(reopened, "constructWall0");
+      check(onUi(() -> threatened.wallHealth[0] == 50 && threatened.coins == 80 && threatened.wood == 8
+          && threatened.enemies.get(0).breached && reopened.paused), "Repair closes a breach without deleting an existing intruder");
+      touch(reopened, "closeBuild"); touch(reopened, "squad"); touch(reopened, "hire");
+      check(onUi(() -> threatened.mercenaries.size() == 1 && threatened.coins == 25 && threatened.wood == 2),
+          "Harvest economy funds an actual mercenary after repair");
+      touch(reopened, "closeBuild");
+      screenshot("smoke-rebuilt.png");
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);

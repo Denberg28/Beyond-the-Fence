@@ -1,12 +1,11 @@
-Beyond the Fence **0.4.0-rc.1 · Roaming Zombies**
+Beyond the Fence **0.5.0-rc.1 · Breach and Rebuild**
 
-- Smaller central farm with more visible wilderness around all four borders; crop/building/fence actions retain48dp touch targets.
--4 zombies roam outside at player level1, increasing to a maximum10. They cannot harm the farm during preparation. When the raid starts, they turn into actual enemies at their current positions and count toward the wave quota.
-- More frequent attacks as player level rises: preparation75→30 active seconds, reinforcements4.8→1.2 seconds across levels1→10. Player level and a visible Raid in countdown explain the pacing; tap Raid in to start early.
-- Existing fences, timber buildings, mercenary patrols, farming/gear upgrades, weather, local saves, pause and recovery remain.
+- Zombies visibly damage individual fence sides. At zero health the side becomes a breach and lets attackers inside.
+- Intruders can ruin crops and destroy the mill, market and barracks. Ruined crops earn no harvest coins, timber or XP. Replant soil and rebuild lost buildings; their benefits stop while destroyed.
+- Sell your harvest to fund defenses: buy10 timber for12 coins in Fence, repair a side for8 coins/4 timber (+50HP), or repair a building for10 coins/5 timber (+60HP). Barracks and recruitment keep their original costs. Hired guards survive a destroyed barracks, but new hiring requires rebuilding it.
+- Fence health bars, cracks, breach warnings, scorched soil, rubble and damage flashes make attacks visible. Repairing a breach blocks new entry; zombies already inside still need to be killed.
+- Free defeat recovery restores the homestead and invested fences, with enough seed coins to reach12 when needed. Destroyed crops/buildings remain lost. Existing gear, surviving assets and mercenaries remain.
 
-Install **Preview.apk** on Android8.0+. This is a test-signed prerelease, not a stable release. Export your current farm before upgrading/uninstalling. Fresh CI signing certificates may require export→uninstall→install→import.
+Install **Preview.apk** (Android8.0+). This is a test-signed prerelease. Export your farm before upgrading/uninstalling; certificate conflicts may require export→uninstall→install→import. Schema1–3 saves migrate to schema4 with intact individual asset health and preserved resources/progression. New schema4 saves cannot open in0.4 or earlier; keep your pre-upgrade backup and previous APK for rollback.
 
-Schema1/2 backups migrate to schema3, preserving existing farm resources, construction and combat. Schema3 includes wandering zombies and cannot be read by0.3 or older versions. Keep a pre-upgrade backup and the0.3 APK for rollback. An older daytime save adopts the level-based countdown when resumed.
-
-Release gates: JVM economy/combat/roaming/migration/geometry checks, debug/release/test builds, lint, identity/signature audit, and exact-artifact API26/35 native construction/recruitment/roaming/automatic-raid/lifecycle/font/rotation/checkpoint tests. Observed results, checksums, source and screenshots accompany this release. Physical-phone endurance, TalkBack, measured performance and production signing remain unvalidated. Balance needs player feedback; no cloud, ads, purchases or network permission.
+Candidate gates include all JVM economy/damage/combat/save/migration/geometry tests, builds/lint/package/signature audit and exact-artifact Android26/35 pointer, breach/destruction, harvest-funded repair/recruitment, rotation/font, pause/lifecycle and checkpoint recovery checks. Source, hashes, test results and screenshots accompany the release. Physical-phone endurance, TalkBack, measured performance and production signing remain unvalidated. No free pathfinding, guard deaths, network, purchases or ads; balance remains initial tuning.

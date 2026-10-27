@@ -57,12 +57,19 @@ final class FarmView extends View {
     for (int i = 0; i < 9; i++) {
       BoardGeometry.Box tile = geometry.plots[i];
       boolean open = i < g.plots();
-      box(c, tile.left, tile.top, tile.width(), tile.height(), 3 * d, open ? 0xff755132 : 0xff668e48);
+      box(c, tile.left, tile.top, tile.width(), tile.height(), 3 * d, g.scorched[i] ? 0xff44372c : open ? 0xff755132 : 0xff668e48);
       if (!open) continue;
       for (int row = 0; row < 4; row++)
         line(c, tile.left + 7 * d, tile.top + tile.height() * (.15f + row * .18f),
             tile.right - 7 * d, tile.top + tile.height() * (.15f + row * .18f), 0xff997044, 2 * d);
+      if (g.scorched[i]) {
+        line(c, tile.left + 10 * d, tile.top + 8 * d, tile.right - 10 * d, tile.top + 20 * d, 0xffb56a46, 3 * d);
+        line(c, tile.left + 10 * d, tile.top + 20 * d, tile.right - 10 * d, tile.top + 8 * d, 0xff694733, 3 * d);
+      }
       if (g.crop[i] >= 0) {
+        box(c, tile.left + 5 * d, tile.top + 3 * d, tile.width() - 10 * d, 3 * d, 0, 0xff492e27);
+        box(c, tile.left + 5 * d, tile.top + 3 * d, (tile.width() - 10 * d) * g.cropHealth[i] / Game.CROP_HEALTH,
+            3 * d, 0, g.cropHealth[i] < 20 ? 0xffe99b55 : 0xffa8ce6b);
         for (int plant = 0; plant < 3; plant++)
           crop(c, tile.left + tile.width() * (.25f + plant * .25f), tile.top + tile.height() * .35f,
               g.crop[i], g.growth[i], Math.min(tile.width() / 105f, tile.height() / 75f));
@@ -70,11 +77,19 @@ final class FarmView extends View {
         box(c, tile.left + 5 * d, tile.bottom - 4 * d, (tile.width() - 10 * d) * g.growth[i], 2 * d, 0, 0xfff4d36c);
       }
     }
-    for (int i = 0; i < 3; i++) building(c, geometry.buildings[i], i, g.buildings[i], d);
+    for (int i = 0; i < 3; i++) {
+      BoardGeometry.Box tile = geometry.buildings[i];
+      building(c, tile, i, g.buildings[i], g.buildingRuins[i], d);
+      if (g.buildings[i]) {
+        box(c, tile.left + 5 * d, tile.top + 3 * d, tile.width() - 10 * d, 3 * d, 0, 0xff492e27);
+        box(c, tile.left + 5 * d, tile.top + 3 * d, (tile.width() - 10 * d) * g.buildingHealth[i] / Game.BUILDING_HEALTH,
+            3 * d, 0, g.buildingHealth[i] < 50 ? 0xffe99b55 : 0xffa8ce6b);
+      }
+    }
     for (int side = 0; side < 4; side++) {
       float x = side == 1 ? r : l, y = side == 2 ? b : t;
       float xx = side == 3 ? l : r, yy = side == 0 ? t : b;
-      int tier = g.walls[side];
+      int tier = g.wallHealth[side] > 0 ? g.walls[side] : 0;
       int tone = tier == 0 ? 0x669b8a56 : tier == 1 ? 0xff9d683b : tier == 2 ? 0xff87939c : 0xffb5c4cb;
       line(c, x, y, xx, yy, 0x44302d25, 12 * d);
       if (tier == 0) {
@@ -92,6 +107,16 @@ final class FarmView extends View {
           box(c, px - 3 * d, py - 3 * d, 6 * d, 6 * d, 0, tier == 1 ? 0xffd1a265 : 0xffd8dfce);
         }
       }
+      if (g.walls[side] > 0) {
+        float ratio = g.wallHealth[side] / g.maxWallHealth(side);
+        line(c, x, y, xx, yy, 0xff6e3b2f, 3 * d);
+        line(c, x, y, x + (xx - x) * ratio, y + (yy - y) * ratio,
+            ratio < .5f ? 0xffe58d4e : 0xffb4d176, 3 * d);
+        if (ratio < .6f) for (int crack = 1; crack <= 3; crack++) {
+          float at = crack / 4f, cx = x + (xx - x) * at, cy = y + (yy - y) * at;
+          line(c, cx - 4 * d, cy - 5 * d, cx + 3 * d, cy + 5 * d, 0xff48352a, 2 * d);
+        }
+      }
     }
     tower(c, l, t, d); tower(c, r, t, d); tower(c, l, b, d); tower(c, r, b, d);
     for (Game.Roamer roamer : g.roamers) {
@@ -102,6 +127,14 @@ final class FarmView extends View {
     for (Game.Enemy enemy : g.enemies) {
       float x = geometry.worldX(Game.enemyX(enemy)), y = geometry.worldY(Game.enemyY(enemy));
       float size = d * (enemy.type == 2 ? 1.25f : 1);
+      if (enemy.breached && enemy.advance >= 1 && enemy.attackClock > 1 && !paused.get() && !g.reducedMotion) {
+        float tx = (l + r) / 2, ty = (t + b) / 2;
+        if (enemy.target >= 0) {
+          BoardGeometry.Box target = enemy.target < 9 ? geometry.plots[enemy.target] : geometry.buildings[enemy.target - 9];
+          tx = (target.left + target.right) / 2f; ty = (target.top + target.bottom) / 2f;
+        }
+        line(c, x, y, tx, ty, 0xcced8257, 2 * d);
+      }
       fighter(c, x, y, size, false, enemy.type, 0);
       box(c, x - 8 * d, y - 13 * d, 16 * d, 2 * d, 0, 0xff172e26);
       box(c, x - 8 * d, y - 13 * d, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
@@ -134,12 +167,16 @@ final class FarmView extends View {
     box(c, x - 5 * d, y - 6 * d, 10 * d, 10 * d, 0, 0xff526b80);
     box(c, x - 2 * d, y - 3 * d, 4 * d, 5 * d, 0, 0xffd7c894);
   }
-  private void building(Canvas c, BoardGeometry.Box tile, int kind, boolean built, float d) {
+  private void building(Canvas c, BoardGeometry.Box tile, int kind, boolean built, boolean ruined, float d) {
     box(c, tile.left, tile.top, tile.width(), tile.height(), 3 * d, built ? 0xffc0a66a : 0xff739a53);
     float x = tile.left + tile.width() * .5f, y = tile.top + tile.height() * .32f;
     float size = Math.min(tile.width() / 50f, tile.height() / 65f);
     c.save(); c.translate(x, y); c.scale(size, size);
-    if (!built) {
+    if (ruined) {
+      box(c, -15, -8, 30, 22, 1, 0xff504438);
+      line(c, -12, -10, 13, 12, 0xffb2764f, 5);
+      line(c, 12, -9, -12, 11, 0xff3c332e, 5);
+    } else if (!built) {
       box(c, -12, -9, 24, 20, 1, 0xffa0b67d);
       line(c, -7, 1, 7, 1, 0xff4b6e4d, 3); line(c, 0, -6, 0, 8, 0xff4b6e4d, 3);
     } else {

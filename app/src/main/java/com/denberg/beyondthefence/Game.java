@@ -20,6 +20,10 @@ public final class Game {
   public static final int MAX_MERCS = 6;
   public static final int MAX_ROAMERS = 10;
   public final ArrayList<Roamer> roamers = new ArrayList<>();
+  public static final float CROP_HEALTH = 40, BUILDING_HEALTH = 100;
+  public final float[] wallHealth = {80, 0, 80, 0}, cropHealth = new float[9], buildingHealth = new float[3];
+  public final boolean[] scorched = new boolean[9], buildingRuins = new boolean[3];
+  public int lostCrops, lostBuildings;
   public int wood = 24;
   public final int[] walls = {1, 0, 1, 0};
   public final boolean[] buildings = new boolean[3];
@@ -121,6 +125,7 @@ public final class Game {
     money(-SEED[type]);
     crop[plot] = type;
     growth[plot] = 0;
+    cropHealth[plot] = CROP_HEALTH; scorched[plot] = false;
     notice = CROPS[type] + " planted. Tap when ready to harvest.";
     return true;
   }
@@ -168,7 +173,7 @@ public final class Game {
     experience(4);
     harvested++;
     crop[plot] = -1;
-    growth[plot] = 0;
+    growth[plot] = 0; cropHealth[plot] = 0;
     notice = "+" + sale(type) + " coins · +" + (2 + type * 2) + " timber · " + CROPS[type];
     return true;
   }
@@ -193,6 +198,8 @@ public final class Game {
     else if (kind == 1) {
       fence++;
       health += 50;
+      for (int side = 0; side < 4; side++) if (walls[side] > 0)
+        wallHealth[side] = Math.min(maxWallHealth(side), wallHealth[side] + 15);
     } else if (kind == 2) irrigation++;
     else land = 1;
     notice =
@@ -208,16 +215,16 @@ public final class Game {
 
   public boolean repair() {
     if (defeated || health >= maxHealth()) {
-      notice = "The fence is already in good shape.";
+      notice = "The homestead is already in good shape.";
       return false;
     }
     if (coins < 8) {
-      notice = "Repairs cost 8 coins. Recovery is free if the fence falls.";
+      notice = "Homestead repairs cost 8 coins. Recovery is free after defeat.";
       return false;
     }
     money(-8);
     health = Math.min(maxHealth(), health + 40);
-    notice = "Fence repaired · +40 strength";
+    notice = "Homestead repaired · +40 health";
     return true;
   }
 
@@ -308,16 +315,35 @@ public final class Game {
       removeDead();
     }
     for (Enemy e : enemies) {
-      float speed = new float[] {.040f, .068f, .024f, .033f}[e.type];
-      float stop = e.type == 3 ? .26f : 0;
-      e.x = Math.max(stop, e.x - speed * dt * (weather == 1 ? .85f : 1));
-      if (e.x <= stop) health -= (e.type == 2 ? 10 : 6) * dt * (relaxed ? .5f : 1)
-          * (walls[e.lane] == 0 ? 1.3f : walls[e.lane] == 1 ? 1 : walls[e.lane] == 2 ? .72f : .5f);
+      if (!e.breached) {
+        float speed = new float[] {.040f, .068f, .024f, .033f}[e.type];
+        float stop = e.type == 3 && wallHealth[e.lane] > 0 ? .26f : 0;
+        e.x = Math.max(stop, e.x - speed * dt * (weather == 1 ? .85f : 1));
+        if (e.x <= stop && wallHealth[e.lane] > 0) {
+          float damage = (e.type == 2 ? 10 : 6) * dt * (relaxed ? .5f : 1)
+              * (walls[e.lane] == 2 ? .72f : walls[e.lane] >= 3 ? .5f : 1);
+          wallHealth[e.lane] = Math.max(0, wallHealth[e.lane] - damage);
+          if (wallHealth[e.lane] == 0) notice = SIDES[e.lane] + " fence breached! Repair it before more zombies enter.";
+        }
+        if (wallHealth[e.lane] <= 0 && e.x <= 0) {
+          e.breached = true; e.target = assaultTarget(e.lane); e.attackClock = 1.2f;
+          notice = "Zombie inside the farm! Rally guards and protect your harvest.";
+        }
+      }
+      if (e.breached) {
+        e.advance = Math.min(1, e.advance + dt * .55f);
+        e.attackClock = Math.max(0, e.attackClock - dt);
+        if (e.advance >= 1 && e.attackClock <= 0) {
+          if (!targetAlive(e.target)) e.target = assaultTarget(e.lane);
+          damageTarget(e.target, (e.type == 2 ? 18 : e.type == 1 ? 8 : 10) * (relaxed ? .5f : 1));
+          e.attackClock = 1.2f;
+        }
+      }
     }
     if (health <= 0) {
       health = 0;
       defeated = true;
-      notice = "The fence fell. Your farm and upgrades are safe. Rebuild for free.";
+      notice = "Homestead overrun. Recover free; ruined crops and buildings need replanting or rebuilding.";
       return;
     }
     if ((spawned >= quota() && enemies.isEmpty()) || elapsed >= 75) dawn();
@@ -360,12 +386,76 @@ public final class Game {
     weather = random(4);
     roamers.clear();
     populateRoamers();
-    notice = "A fresh start. Fence rebuilt. Lost " + lost + " coins; crops and upgrades kept.";
+    for (int side = 0; side < 4; side++) wallHealth[side] = maxWallHealth(side);
+    int aid = Math.max(0, 12 - coins); money(aid);
+    notice = "Homestead recovered. Replant ruined crops and rebuild lost buildings. "
+        + (aid > 0 ? "+" + aid + " seed coins." : "Lost " + lost + " coins.");
   }
 
   public int sale(int type) { return SALE[type] + (buildings[1] ? SALE[type] / 4 : 0); }
 
   private void timber(int amount) { wood = Math.min(10_000_000, Math.max(0, wood + amount)); }
+
+  public float maxWallHealth(int side) { return walls[side] == 0 ? 0 : 80 + (walls[side] - 1) * 40 + fence * 15; }
+  public boolean wallDamaged(int side) { return walls[side] > 0 && wallHealth[side] < maxWallHealth(side); }
+
+  public boolean repairWall(int side) {
+    if (defeated || side < 0 || side > 3 || !wallDamaged(side)) return false;
+    if (coins < 8 || wood < 4) { notice = "Fence repair needs 8 coins and 4 timber. Harvest or buy timber in Fence."; return false; }
+    money(-8); timber(-4); wallHealth[side] = Math.min(maxWallHealth(side), wallHealth[side] + 50);
+    notice = SIDES[side] + " fence repaired. Zombies already inside still need to be defeated.";
+    return true;
+  }
+
+  public boolean buyTimber() {
+    if (defeated || coins < 12 || wood > 9_999_990) { notice = "A 10-timber bundle costs 12 coins."; return false; }
+    money(-12); timber(10); notice = "+10 timber · 12 coins. Build fences, repair damage or hire guards.";
+    return true;
+  }
+
+  public boolean repairBuilding(int kind) {
+    if (defeated || kind < 0 || kind > 2 || !buildings[kind] || buildingHealth[kind] >= BUILDING_HEALTH) return false;
+    if (coins < 10 || wood < 5) { notice = "Building repairs need 10 coins and 5 timber."; return false; }
+    money(-10); timber(-5); buildingHealth[kind] = Math.min(BUILDING_HEALTH, buildingHealth[kind] + 60);
+    notice = BUILDINGS[kind] + " repaired."; return true;
+  }
+
+  private boolean targetAlive(int target) {
+    return target < 0 || (target < 9 ? crop[target] >= 0 : buildings[target - 9]);
+  }
+
+  private int assaultTarget(int side) {
+    int best = -1, score = Integer.MAX_VALUE;
+    for (int p = 0; p < plots(); p++) if (crop[p] >= 0) {
+      int rank = side == 0 ? p : side == 1 ? (2 - p % 3) * 3 + p / 3
+          : side == 2 ? 8 - p : p % 3 * 3 + p / 3;
+      if (rank < score) { best = p; score = rank; }
+    }
+    if (best >= 0) return best;
+    for (int b = 0; b < 3; b++) if (buildings[b]) return 9 + b;
+    return -1;
+  }
+
+  private void damageTarget(int target, float damage) {
+    if (target < 0) { health = Math.max(0, health - damage); return; }
+    if (target < 9) {
+      cropHealth[target] = Math.max(0, cropHealth[target] - damage);
+      if (cropHealth[target] == 0 && crop[target] >= 0) {
+        crop[target] = -1; growth[target] = 0; scorched[target] = true;
+        lostCrops = Math.min(10_000_000, lostCrops + 1);
+        notice = "Farm plot " + (target + 1) + " destroyed! No harvest earned. Repair the breach and replant.";
+      }
+    } else {
+      int kind = target - 9;
+      buildingHealth[kind] = Math.max(0, buildingHealth[kind] - damage);
+      if (buildingHealth[kind] == 0 && buildings[kind]) {
+        buildings[kind] = false; buildingRuins[kind] = true;
+        if (kind == 0) productionClock = 0;
+        lostBuildings = Math.min(10_000_000, lostBuildings + 1);
+        notice = BUILDINGS[kind] + " destroyed! Rebuild in Farm. Existing mercenaries stay with you.";
+      }
+    }
+  }
 
   public int wallCoinCost(int side) { return 20 + walls[side] * 12; }
   public int wallWoodCost(int side) { return 8 + walls[side] * 6; }
@@ -378,8 +468,9 @@ public final class Game {
       return false;
     }
     money(-coinsNeeded); timber(-woodNeeded); walls[side]++;
+    wallHealth[side] = maxWallHealth(side);
     health = Math.min(maxHealth(), health + 20);
-    notice = SIDES[side] + " fence built to tier " + walls[side] + ". Gaps take more damage.";
+    notice = SIDES[side] + " fence tier " + walls[side] + " · " + Math.round(wallHealth[side]) + " health. Protect your crops.";
     return true;
   }
 
@@ -390,6 +481,7 @@ public final class Game {
       return false;
     }
     money(-BUILD_COINS[kind]); timber(-BUILD_WOOD[kind]); buildings[kind] = true;
+    buildingHealth[kind] = BUILDING_HEALTH; buildingRuins[kind] = false;
     notice = BUILDINGS[kind] + " built · " + new String[] {
         "+4 timber every 12 active seconds", "+25% crop sale value", "mercenary recruitment unlocked"}[kind];
     return true;
@@ -422,11 +514,11 @@ public final class Game {
   }
 
   public static float enemyX(Enemy e) {
-    return ringX(e.lane + e.offset, e.x);
+    return ringX(e.lane + e.offset, e.breached ? -.8f * e.advance : e.x);
   }
 
   public static float enemyY(Enemy e) {
-    return ringY(e.lane + e.offset, e.x);
+    return ringY(e.lane + e.offset, e.breached ? -.8f * e.advance : e.x);
   }
 
   public static float ringX(float progress, float distance) {
@@ -486,7 +578,9 @@ public final class Game {
 
   public static final class Enemy {
     // lane is the persisted side index: north, east, south, west. x is distance outside the wall.
-    public int type, lane;
+    public int type, lane, target = -1;
+    public boolean breached;
+    public float advance, attackClock;
     public float x, hp, maxHp, offset;
 
     public Enemy(int type, int lane, float x, float hp, float maxHp) {

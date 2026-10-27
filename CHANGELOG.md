@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0-rc.1 · 27 October 2026
+
+- Give each fence independent health, damage bars/cracks and visible breaches. Zombies enter broken or unbuilt borders; repaired fences stop new entrants while existing intruders keep fighting.
+- Let intruders destroy crops and buildings. Ruined crops give no harvest rewards and can be replanted; ruined buildings lose their benefit and require rebuilding. Existing mercenaries survive a destroyed barracks, but hiring stops until rebuilt.
+- Add timber bundles (10 timber/12 coins), side repairs (+50HP/8 coins/4 timber) and building repairs (+60HP/10 coins/5 timber). Harvest money/materials pay for defenses and recruitment.
+- Add damage/ruin indicators, per-side health labels, repair/rebuild actions and attack hit flashes. Keep the compact farm, roaming scouts, level-based raids and paused construction controls.
+- Recovery restores homestead/invested fences and provides a minimum12 seed coins if needed; destroyed crops/buildings stay lost.
+- Save schema4 preserves damage, ruins, losses and intruder progress; migrate schemas1–3 without removing previous progress. Add damage/economy/migration regressions and installed-app breach→replant→harvest→materials→repair→hire checks.
+
 ## 0.4.0-rc.1 · 27 October 2026
 
 - Make the central farm compact, with visible roaming terrain on all four sides. Keep all16 native map actions at least48dp; adapt to orientation/fonts and inset sprites from screen edges.

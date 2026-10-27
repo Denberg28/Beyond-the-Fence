@@ -28,7 +28,7 @@ public final class MainActivity extends Activity {
   private boolean buildOpen;
   private long lastFrame, lastUi, lastSave;
   private TextView stats, status, notice, saving;
-  private GameButton play, phase, harvest, plantAll, repair, build, seedsToggle, hireButton, repairOverlay;
+  private GameButton play, phase, harvest, plantAll, repair, build, seedsToggle, hireButton, repairOverlay, materialsButton;
   private final GameButton[] cropButtons = new GameButton[3],
       plotButtons = new GameButton[9], upgradeButtons = new GameButton[4],
       wallButtons = new GameButton[4], buildingButtons = new GameButton[3],
@@ -279,7 +279,7 @@ public final class MainActivity extends Activity {
     }
     for (int i = 0; i < 3; i++) {
       final int kind = i;
-      buildingButtons[i] = button("", () -> showBuild(kind == 2 && game.buildings[2] ? 2 : 1));
+      buildingButtons[i] = button("", () -> showBuild(kind == 2 && game.buildings[2] && game.buildingHealth[2] >= Game.BUILDING_HEALTH ? 2 : 1));
       buildingButtons[i].setTag("building" + i);
       buildingButtons[i].setTextSize(11);
       buildingButtons[i].setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
@@ -380,19 +380,21 @@ public final class MainActivity extends Activity {
     java.util.Arrays.fill(upgradeButtons, null);
     java.util.Arrays.fill(wallPurchase, null);
     java.util.Arrays.fill(construction, null);
-    hireButton = null; repairOverlay = null; roster = null;
+    hireButton = null; repairOverlay = null; materialsButton = null; roster = null;
     if (buildTab == 0) {
+      materialsButton = button("Buy 10 timber · 12 coins", () -> { if (canAct()) { game.buyTimber(); changed(); } });
+      materialsButton.setTag("buyTimber"); addBuildAction(materialsButton);
       repairOverlay = button("", () -> { if (canAct()) { game.repair(); changed(); } });
       repairOverlay.setTag("repair"); addBuildAction(repairOverlay);
       for (int i = 0; i < 4; i++) {
         final int side = i;
-        wallPurchase[i] = button("", () -> { if (canAct()) { game.buildWall(side); changed(); } });
+        wallPurchase[i] = button("", () -> { if (canAct()) { if (game.wallDamaged(side)) game.repairWall(side); else game.buildWall(side); changed(); } });
         wallPurchase[i].setTag("constructWall" + i); addBuildAction(wallPurchase[i]);
       }
     } else if (buildTab == 1) {
       for (int i = 0; i < 3; i++) {
         final int kind = i;
-        construction[i] = button("", () -> { if (canAct()) { game.construct(kind); changed(); } });
+        construction[i] = button("", () -> { if (canAct()) { if (game.buildings[kind]) game.repairBuilding(kind); else game.construct(kind); changed(); } });
         construction[i].setTag("construct" + i); addBuildAction(construction[i]);
       }
     } else if (buildTab == 2) {
@@ -480,11 +482,11 @@ public final class MainActivity extends Activity {
     if (stats == null) return;
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
     stats.setText(game.coins + " coins · " + game.wood + " timber");
-    status.setText("Lv " + game.level() + " · Day " + game.day + " · " + Game.WEATHER[game.weather] + " · Fence "
+    status.setText("Lv " + game.level() + " · Day " + game.day + " · " + Game.WEATHER[game.weather] + " · Farm "
         + Math.round(game.health) + "/" + game.maxHealth());
     stats.setContentDescription(game.coins + " coins, " + game.wood + " timber, level " + game.level());
     play.setText(game.defeated ? "Rebuild" : paused ? "Play" : "Pause");
-    play.setContentDescription(game.defeated ? "Rebuild fence free and resume" : paused ? "Resume game" : "Pause game");
+    play.setContentDescription(game.defeated ? "Recover homestead free and resume" : paused ? "Resume game" : "Pause game");
     play.setEnabled(!storageBlocked && !ioBusy && !buildOpen);
     play.colors(paused ? GOLD : 0xff314e40, GOLD, paused ? INK : CREAM);
     repair.setText("Squad\n" + game.mercenaries.size() + "/" + Game.MAX_MERCS);
@@ -510,40 +512,56 @@ public final class MainActivity extends Activity {
       cropButtons[i].setSelected(selected);
       cropButtons[i].setContentDescription(Game.CROPS[i] + (unlocked ? ", seed " + Game.SEED[i] + " coins, sells for " + game.sale(i) + " coins and " + (2 + 2 * i) + " timber" + (selected ? ", selected" : "") : ", unlocks at level " + (i + 1)));
       cropButtons[i].colors(selected ? GOLD : 0xffe9e5d3, selected ? GOLD : 0xff9baf83, INK);
-      buildingButtons[i].setText(new String[] {"Mill", "Shop", "Camp"}[i]);
+      buildingButtons[i].setText(new String[] {"Mill", "Shop", "Camp"}[i]
+          + (game.buildingRuins[i] ? "\nRuins" : game.buildings[i] && game.buildingHealth[i] < Game.BUILDING_HEALTH
+              ? "\n" + Math.round(game.buildingHealth[i]) + "HP" : ""));
       buildingButtons[i].setEnabled(available);
-      buildingButtons[i].setContentDescription(Game.BUILDINGS[i] + (game.buildings[i] ? ", built, tap to manage" : ", construction plot, tap to build for " + Game.BUILD_COINS[i] + " coins and " + Game.BUILD_WOOD[i] + " timber"));
+      buildingButtons[i].setContentDescription(Game.BUILDINGS[i] + (game.buildings[i] ? ", health " + Math.round(game.buildingHealth[i]) + " of100, tap to manage" : ", construction plot, tap to build for " + Game.BUILD_COINS[i] + " coins and " + Game.BUILD_WOOD[i] + " timber"));
       buildingButtons[i].colors(0x00583c28, game.buildings[i] ? GOLD : 0xffb6c68b, INK);
       if (construction[i] != null) {
-        construction[i].setText(Game.BUILDINGS[i] + (game.buildings[i] ? " · BUILT" : "\n" + Game.BUILD_COINS[i] + " coins · " + Game.BUILD_WOOD[i] + " timber") + "\n" + new String[] {"Produces 4 timber / 12 active seconds", "+25% crop sale value", "Unlocks mercenary recruitment"}[i]);
-        construction[i].setEnabled(available && !game.buildings[i] && game.coins >= Game.BUILD_COINS[i] && game.wood >= Game.BUILD_WOOD[i]);
+        boolean damaged = game.buildings[i] && game.buildingHealth[i] < Game.BUILDING_HEALTH;
+        construction[i].setText(Game.BUILDINGS[i] + (damaged ? " · REPAIR\n10 coins · 5 timber · +60 health"
+            : game.buildings[i] ? " · BUILT · 100 health" : (game.buildingRuins[i] ? " · REBUILD" : " · BUILD")
+                + "\n" + Game.BUILD_COINS[i] + " coins · " + Game.BUILD_WOOD[i] + " timber")
+            + "\n" + new String[] {"Produces4 timber /12 active seconds", "+25% crop sale value", "Unlocks mercenary recruitment"}[i]);
+        construction[i].setEnabled(available && (damaged ? game.coins >= 10 && game.wood >= 5
+            : !game.buildings[i] && game.coins >= Game.BUILD_COINS[i] && game.wood >= Game.BUILD_WOOD[i]));
       }
     }
     for (int i = 0; i < 4; i++) {
       int tier = game.walls[i];
-      wallButtons[i].setText(Game.SIDES[i].substring(0, 1) + "\n" + (tier == 0 ? "+" : "T" + tier));
-      wallButtons[i].setContentDescription(Game.SIDES[i] + " fence, " + (tier == 0 ? "open gap" : "tier " + tier) + ", tap to manage construction and repair");
-      wallButtons[i].colors(tier == 0 ? 0xcc5f4630 : 0xcc263e32, selectedWall == i ? GOLD : 0xffc0a274, CREAM);
+      boolean damaged = game.wallDamaged(i), breached = tier > 0 && game.wallHealth[i] <= 0;
+      wallButtons[i].setText(Game.SIDES[i].substring(0, 1) + "\n" + (tier == 0 ? "Gap" : breached ? "0!" : String.valueOf(Math.round(game.wallHealth[i]))));
+      wallButtons[i].setContentDescription(Game.SIDES[i] + " fence, " + (tier == 0 ? "open gap" : "tier " + tier
+          + ", health " + Math.round(game.wallHealth[i]) + " of " + Math.round(game.maxWallHealth(i))
+          + (breached ? ", breached, zombies can enter" : "")) + ", tap to build or repair");
+      wallButtons[i].colors(breached ? 0xdd853c32 : damaged ? 0xdd77532e : tier == 0 ? 0xcc5f4630 : 0xcc263e32,
+          selectedWall == i ? GOLD : 0xffc0a274, CREAM);
       if (wallPurchase[i] != null) {
-        wallPurchase[i].setText(Game.SIDES[i] + " border · " + (tier == 0 ? "Build fence" : "Tier " + tier)
-            + (tier >= 3 ? " · MAX" : " → " + (tier + 1) + "\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber")
-            + "\n" + (tier == 0 ? "Close this gap · +20 fence strength" : "Reinforce against damage · +20 strength"));
-        wallPurchase[i].setEnabled(available && tier < 3 && game.coins >= game.wallCoinCost(i) && game.wood >= game.wallWoodCost(i));
+        wallPurchase[i].setText(Game.SIDES[i] + " · " + (damaged ? "REPAIR · " + Math.round(game.wallHealth[i]) + "/"
+            + Math.round(game.maxWallHealth(i)) + "HP\n8 coins · 4 timber · +50 health"
+            : tier == 0 ? "BUILD FENCE\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber"
+            : tier >= 3 ? "Tier3 · MAX · " + Math.round(game.wallHealth[i]) + "HP"
+            : "UPGRADE " + tier + " → " + (tier + 1) + "\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber")
+            + "\n" + (damaged ? "Closes the breach for new zombies; fight intruders inside" : "A healthy fence keeps zombies away from crops"));
+        wallPurchase[i].setEnabled(available && (damaged ? game.coins >= 8 && game.wood >= 4
+            : tier < 3 && game.coins >= game.wallCoinCost(i) && game.wood >= game.wallWoodCost(i)));
         wallPurchase[i].colors(selectedWall == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
       }
       buildTabs[i].colors(buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
     }
     for (int i = 0; i < 9; i++) {
       boolean unlocked = i < game.plots(); int crop = game.crop[i]; boolean ripe = crop >= 0 && game.growth[i] >= 1;
-      plotButtons[i].setText(!unlocked ? "Land +" : crop < 0 ? "+" : ripe ? "+" + game.sale(crop) + "c" : game.harvestSeconds(i) + "s");
+      plotButtons[i].setText(!unlocked ? "Land +" : crop < 0 ? game.scorched[i] ? "Replant" : "+" : ripe ? "+" + game.sale(crop) + "c" : game.harvestSeconds(i) + "s");
       plotButtons[i].setEnabled(available);
       plotButtons[i].setContentDescription("Farm plot " + (i + 1) + ", " + (!unlocked ? "locked, tap for expansion" : crop < 0
-          ? "empty, plant " + Game.CROPS[selectedCrop] + " for " + Game.SEED[selectedCrop] + " coins"
-          : Game.CROPS[crop] + (ripe ? ", tap to harvest " + game.sale(crop) + " coins and " + (2 + crop * 2) + " timber" : ", growing, " + game.harvestSeconds(i) + " seconds")));
+          ? (game.scorched[i] ? "crop destroyed, replant " : "empty, plant ") + Game.CROPS[selectedCrop] + " for " + Game.SEED[selectedCrop] + " coins"
+          : Game.CROPS[crop] + ", health " + Math.round(game.cropHealth[i]) + " of40" + (ripe ? ", tap to harvest " + game.sale(crop) + " coins and " + (2 + crop * 2) + " timber" : ", growing, " + game.harvestSeconds(i) + " seconds")));
       plotButtons[i].colors(0x00583c28, ripe ? GOLD : unlocked ? 0xffb9965c : 0xff8cb061, ripe ? GOLD : CREAM);
     }
+    if (materialsButton != null) materialsButton.setEnabled(available && game.coins >= 12 && game.wood <= 9_999_990);
     if (repairOverlay != null) {
-      repairOverlay.setText("Repair fortress · 8 coins\n+40 strength · " + Math.round(game.health) + "/" + game.maxHealth());
+      repairOverlay.setText("Repair homestead · 8 coins\n+40 health · " + Math.round(game.health) + "/" + game.maxHealth());
       repairOverlay.setEnabled(available && game.health < game.maxHealth() && game.coins >= 8);
     }
     if (hireButton != null) {
@@ -551,7 +569,7 @@ public final class MainActivity extends Activity {
       hireButton.setEnabled(available && game.buildings[2] && game.mercenaries.size() < Game.MAX_MERCS && game.coins >= game.hireCost() && game.wood >= 6);
       roster.setText("Patrols " + game.mercenaries.size() + "/6 · Blue uniforms\nGuards circle the fence and shoot within range. Permanent guards · no upkeep.");
     }
-    String[] upgrades = {"Watchtower · " + Game.WEAPONS[game.weapon] + "\n+7 damage · faster auto-fire", "Fortress strength · tier " + (game.fence + 1) + "\n+50 maximum strength", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
+    String[] upgrades = {"Watchtower · " + Game.WEAPONS[game.weapon] + "\n+7 damage · faster auto-fire", "Fortify · tier " + (game.fence + 1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
     for (int i = 0; i < 4; i++) if (upgradeButtons[i] != null) {
       upgradeButtons[i].setText(upgrades[i] + (game.maxed(i) ? " · MAX" : "\n" + game.cost(i) + " coins"));
       upgradeButtons[i].setEnabled(available && !game.maxed(i) && game.coins >= game.cost(i));
@@ -566,8 +584,8 @@ public final class MainActivity extends Activity {
         .setTitle("Your farm. Your last safe place.")
         .setMessage(
             "1  Open Seeds, then tap farm plots inside your fortress. Harvest ripe crops for coins and timber.\n\n"
-                + "2  Tap N/E/S/W fence markers to close gaps and reinforce borders. Tap interior building plots for a mill, market or barracks.\n\n"
-                + "3  Build barracks and hire mercenaries in Squad. Blue guards patrol the perimeter and fire at nearby zombies. The watchtower also auto-fires.\n\n"
+                + "2  Zombies damage individual fences. A breach lets them enter and destroy crops and buildings. Tap N/E/S/W to build or repair; Fence sells 10 timber for 12 harvest coins.\n\n"
+                + "3  Harvest crops for coins and timber. Build barracks and hire mercenaries in Squad. Blue guards patrol the perimeter and fire at nearby zombies. The watchtower also auto-fires.\n\n"
                 + "4  Zombies roam the terrain outside your compact farm. The raid countdown gets shorter as your level rises:75 seconds at level1, down to30 at level10. Tap Raid in to start a raid early. Guards and the watchtower fight automatically. Progress advances only while playing.")
         .setPositiveButton(
             "Plant the first seed",
@@ -587,7 +605,7 @@ public final class MainActivity extends Activity {
     refresh();
     String[] items = {
       "How to play",
-      game.relaxed ? "Relaxed mode: ON (half fence damage)" : "Relaxed mode: OFF",
+      game.relaxed ? "Relaxed mode: ON (half zombie damage)" : "Relaxed mode: OFF",
       game.reducedMotion ? "Reduced motion: ON" : "Reduced motion: OFF",
       "Export save backup",
       "Import save backup",
