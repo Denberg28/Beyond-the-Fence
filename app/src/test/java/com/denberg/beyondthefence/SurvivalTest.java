@@ -67,6 +67,17 @@ public class SurvivalTest {
     g.health = 0; g.defeated = true; g.recover(); assertEquals(1, g.mercenaries.size());
     assertEquals(g.guardMaxHealth(), g.mercenaries.get(0).health, 0);
   }
+  @Test public void invalidSquadsAndInvalidHealthAreRejected() throws Exception {
+    Game g = new Game();
+    for (float health : new float[] {0, -1, Float.NaN, 81}) {
+      g.mercenaries.get(0).health = health;
+      try { SaveCodec.decode(SaveCodec.encode(g)); fail("Invalid crew health"); } catch (java.io.IOException expected) { }
+    }
+    g.mercenaries.get(0).health = .00001f;
+    assertEquals(.00001f, SaveCodec.decode(SaveCodec.encode(g)).mercenaries.get(0).health, 0);
+    while (g.mercenaries.size() < 4) g.mercenaries.add(new Game.Mercenary(0, 0, .5f, .5f));
+    try { SaveCodec.decode(SaveCodec.encode(g)); fail("Oversized squad"); } catch (java.io.IOException expected) { }
+  }
   @Test public void crewHealthRoundTripsAndHealsOnlyDuringPreparation() throws Exception {
     Game g = new Game(); g.mercenaries.get(0).health = 20;
     Game h = SaveCodec.decode(SaveCodec.encode(g)); seconds(g, 3); seconds(h, 3);

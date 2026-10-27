@@ -213,7 +213,7 @@ public final class SaveCodec {
     }
     for (Game.Mercenary merc : g.mercenaries) {
       merc.health = version >= 6 ? in.readFloat() : g.guardMaxHealth();
-      number(merc.health, .001f, g.guardMaxHealth());
+      number(merc.health, Float.MIN_VALUE, g.guardMaxHealth());
     }
     range(g.night || count == 0);
     range(!g.defeated || g.health == 0);

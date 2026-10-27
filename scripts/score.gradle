@@ -9,7 +9,10 @@ tasks.register('generateScore') {
         int rate = 22050, frames = rate * 8
         def rng = new Random(72419)
         def out = new ByteArrayOutputStream()
-        def le = { long n, int bytes -> for (int b = 0; b < bytes; b++) out.write((int)(n >> (8 * b)) & 255) }
+        def le = { value, width ->
+            int n = value as int
+            for (int b = 0; b < (width as int); b++) out.write((n >> (8 * b)) & 255)
+        }
         out.write('RIFF'.getBytes('US-ASCII')); le(36 + frames * 2, 4)
         out.write('WAVEfmt '.getBytes('US-ASCII')); le(16, 4); le(1, 2); le(1, 2)
         le(rate, 4); le(rate * 2, 4); le(2, 2); le(16, 2)

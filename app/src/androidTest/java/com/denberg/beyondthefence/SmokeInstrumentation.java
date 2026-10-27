@@ -121,6 +121,20 @@ public final class SmokeInstrumentation extends Instrumentation {
     return a.findViewById(android.R.id.content).findViewWithTag(tag);
   }
 
+  private void dialogAction(String text) {
+    long deadline = SystemClock.uptimeMillis() + 10000;
+    while (SystemClock.uptimeMillis() < deadline) {
+      AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
+      if (root != null) for (AccessibilityNodeInfo node : root.findAccessibilityNodeInfosByText(text)) {
+        if (text.contentEquals(node.getText()) && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+          check(true, "Dialog action: " + text); awaitIdle(); return;
+        }
+      }
+      SystemClock.sleep(100);
+    }
+    check(false, "Dialog action reachable: " + text);
+  }
+
   private void dismissSystemHint() {
     for (AccessibilityWindowInfo window : getUiAutomation().getWindows()) {
       AccessibilityNodeInfo root = window.getRoot();
@@ -308,6 +322,11 @@ public final class SmokeInstrumentation extends Instrumentation {
           .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
       awaitUi(a::hasWindowFocus, "Game foreground return");
       check(onUi(() -> a.paused), "Foreground return requires explicit resume");
+      touch(a, "options"); dialogAction("Action music: ON");
+      check(onUi(() -> !a.musicEnabled && !a.music.isPlaying()), "Options mutes the action score");
+      dialogAction("Close"); touch(a, "play");
+      check(onUi(() -> !a.paused && !a.music.isPlaying()), "Muted raid continues without playback");
+      touch(a, "play");
       runOnMainSync(() -> { a.game.defeated = true; a.game.health = 0; a.refresh(); });
       touch(a, "night");
       check(onUi(() -> !a.game.defeated && a.game.health == a.game.maxHealth() && a.paused), "Free recovery keeps player paused");
@@ -319,7 +338,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> a.game.crop[0] == 1 && a.game.coins == seedBudget[0] - Game.SEED[1]), "Seed card changes the planted crop and debit");
       touch(a, "building0");
       MainActivity landscape = rotate(a, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-      check(onUi(() -> landscape.game == a.game && landscape.paused), "Rotation retains farm and pause");
+      check(onUi(() -> landscape.game == a.game && landscape.paused && !landscape.musicEnabled), "Rotation retains farm and pause");
       check(control(landscape, "closeBuild").isShown(), "Upgrade overlay survives rotation");
       screenshot("smoke-upgrades-landscape.png");
       touch(landscape, "closeBuild");
@@ -374,7 +393,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       MainActivity reopened = launch();
       awaitIdle();
       check(onUi(() -> reopened.game.coins == expected && reopened.game.crop[0] == 1), "Farm persists after activity restart");
-      check(onUi(() -> reopened.paused), "Restart requires explicit resume");
+      check(onUi(() -> reopened.paused && !reopened.musicEnabled), "Restart retains mute and requires explicit resume");
       runOnMainSync(() -> {
         reopened.game.day = 11;
         reopened.game.night = false;
