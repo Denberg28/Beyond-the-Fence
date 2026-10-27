@@ -493,25 +493,56 @@ public final class MainActivity extends Activity {
     if (game.arenaActive) { showArena(); return; }
     paused = true; adventureDialog = true;
     if (game.arenaOfferDay > 0) {
-      new AlertDialog.Builder(this).setTitle("A champion awaits")
-          .setMessage("Day " + game.arenaOfferDay + " survived. One foe. One attempt.\n\nWin for a55% relic chance, including Epic and Legendary finds.\n\nYour farm pauses. Entry is free; used supplies are spent.")
-          .setPositiveButton("Enter arena", (d, w) -> { game.acceptArena(); save(); handler.post(this::showArena); })
-          .setNegativeButton("Decline", (d, w) -> { game.declineArena(); changed(); })
-          .setNeutralButton("Equipment", (d, w) -> showBuild(4))
-          .setCancelable(false).setOnDismissListener(d -> adventureDialog = false).show();
+      adventurePrompt("A champion awaits",
+          "Day " + game.arenaOfferDay + " survived. One foe. One attempt.\n\nWin for a 55% relic chance, including Epic and Legendary finds.\n\nYour farm pauses. Entry is free; used supplies are spent.",
+          new String[] {"Enter arena", "Decline", "Equipment"}, new Runnable[] {
+            () -> { game.acceptArena(); save(); },
+            () -> { game.declineArena(); changed(); },
+            () -> showBuild(4)
+          });
     } else if (game.worldComplete) {
       portalShown = true;
-      new AlertDialog.Builder(this).setTitle("The rift is open")
-          .setMessage("One hundred dawns. Another sky.\n\nEnter World " + Math.min(999, game.world + 1) + " with your relics, equipment and button assignments.\n\nA fresh farm begins at Day1. Buildings, coins, crew and supplies reset.")
-          .setPositiveButton("Cross the rift", (d, w) -> {
-            Game next = game.crossRift(); if (next != null) {
-              game = next; selectedCrop = 0; selectedWall = selectedBuilding = -1; portalShown = false;
-              paused = true; changed();
-            }
-          }).setNegativeButton("Stay here", null)
-          .setOnDismissListener(d -> adventureDialog = false).show();
+      adventurePrompt("The rift is open",
+          "One hundred dawns. Another sky.\n\nEnter World " + Math.min(999, game.world + 1) + " with your relics, equipment and button assignments.\n\nA fresh farm begins at Day1. Buildings, coins, crew and supplies reset.",
+          new String[] {"Cross the rift", "Stay here"}, new Runnable[] {
+            () -> {
+              Game next = game.crossRift(); if (next != null) {
+                game = next; selectedCrop = 0; selectedWall = selectedBuilding = -1; portalShown = false;
+                paused = true; changed();
+              }
+            }, () -> { }
+          });
     } else adventureDialog = false;
     refresh();
+  }
+
+  private void adventurePrompt(String title, String message, String[] labels, Runnable[] actions) {
+    Dialog dialog = new Dialog(this); dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+    LinearLayout card = column(); card.setPadding(dp(16), dp(16), dp(16), dp(16));
+    GradientDrawable skin = new GradientDrawable(); skin.setColor(CREAM); skin.setCornerRadius(dp(12)); card.setBackground(skin);
+    TextView heading = text(title, 20, INK); heading.setTextSize(compactTextSize(20, 28)); heading.setTypeface(null, Typeface.BOLD); card.addView(heading);
+    ScrollView scroll = new ScrollView(this);
+    TextView copy = text(message, 16, INK); copy.setPadding(0, dp(12), 0, dp(12)); scroll.addView(copy);
+    card.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+    int width = getResources().getDisplayMetrics().widthPixels, height = getResources().getDisplayMetrics().heightPixels;
+    boolean horizontal = width > height;
+    LinearLayout choices = horizontal ? row() : column();
+    for (int i = 0; i < labels.length; i++) {
+      final int choice = i;
+      GameButton action = button(labels[i], () -> { actions[choice].run(); dialog.dismiss(); });
+      action.setTextSize(compactTextSize(12, 18)); action.setTag("adventureAction" + i);
+      if (i == 0) action.colors(GOLD, GOLD, INK);
+      LinearLayout.LayoutParams size = horizontal ? new LinearLayout.LayoutParams(0, -1, 1) : new LinearLayout.LayoutParams(-1, -2);
+      size.setMargins(horizontal && i > 0 ? dp(6) : 0, dp(6), 0, 0); choices.addView(action, size);
+    }
+    card.addView(choices);
+    dialog.setContentView(card); dialog.setCancelable(false);
+    dialog.setOnDismissListener(d -> { adventureDialog = false; refresh(); });
+    dialog.show();
+    Window popup = dialog.getWindow(); popup.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+    float scale = getResources().getConfiguration().fontScale;
+    int preferred = dp(380 + Math.round(170 * Math.min(1, Math.max(0, scale - 1))));
+    popup.setLayout(Math.min(dp(480), width - dp(32)), Math.min(preferred, height - dp(128)));
   }
 
   private void showArena() {

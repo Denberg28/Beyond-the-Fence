@@ -1,3 +1,7 @@
+# Fixed adventure action area
+
+Source e7aad20/run40602283578 passed all source gates and1485 native checks per emulator, but screenshot review still found Android8.0 choices under the navigation bar. Replace adventure prompts with a bounded dialog, scrollable message and fixed native action area; use a horizontal action row in landscape. Strengthen the screen check to require48dp controls and reserve24dp top/64dp bottom system-bar margins. Repeat source/signed gates and visual review.
+
 # 0.13.0-rc.2 visual regression
 
 Source9714dc1/run40600732808 passed93 JVM tests in both variants and1469 installed-app checks on each API26/35 emulator. Screenshot self-review found clipped arena choices and portal title ellipsis at200% font despite actions being programmatically reachable. Shorten those prompts; add a native check for every action being visible and fully inside the physical screen, plus a welcome scene capture. Repeat required source and signed-APK gates before publication. Earlier local APKs were development builds, not a published GitHub release.

@@ -141,7 +141,8 @@ public final class SmokeInstrumentation extends Instrumentation {
     awaitIdle();
     Bitmap screen = getUiAutomation().takeScreenshot();
     check(screen != null, "Dialog screen dimensions are available");
-    Rect bounds = new Rect(0, 0, screen.getWidth(), screen.getHeight()); screen.recycle();
+    float density = getTargetContext().getResources().getDisplayMetrics().density;
+    Rect bounds = new Rect(0, Math.round(24 * density), screen.getWidth(), screen.getHeight() - Math.round(64 * density)); screen.recycle();
     AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
     check(root != null, "Dialog has an active accessibility window");
     for (String label : labels) {
@@ -149,7 +150,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       for (AccessibilityNodeInfo node : root.findAccessibilityNodeInfosByText(label)) {
         if (node.getText() == null || !label.equalsIgnoreCase(node.getText().toString())) continue;
         Rect rect = new Rect(); node.getBoundsInScreen(rect);
-        if (node.isVisibleToUser() && !rect.isEmpty() && bounds.contains(rect)) found = true;
+        if (node.isVisibleToUser() && rect.width() >= 48 * density - 1 && rect.height() >= 48 * density - 1 && bounds.contains(rect)) found = true;
       }
       check(found, "Dialog action is fully on screen at the current font size: " + label);
     }
