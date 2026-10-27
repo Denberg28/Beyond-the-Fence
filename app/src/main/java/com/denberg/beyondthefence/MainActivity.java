@@ -61,7 +61,7 @@ public final class MainActivity extends Activity {
             if (now - lastSave >= 3000) save();
           }
           lastFrame = now;
-          if (running && now - lastUi >= 250) {
+          if (running && (now - lastUi >= 250 || game.defeated)) {
             refresh();
             lastUi = now;
           }
