@@ -7,12 +7,12 @@ apk = pathlib.Path(filename)
 assert 0 < apk.stat().st_size <= 5 * 1024 * 1024, 'Preview must be <=5MiB'
 badging = subprocess.check_output([aapt, 'dump', 'badging', str(apk)], text=True)
 assert "package: name='com.denberg.beyondthefence'" in badging
-assert "versionCode='11'" in badging and "versionName='0.9.0-rc.1'" in badging
+assert "versionCode='12'" in badging and "versionName='0.10.0-rc.1'" in badging
 assert "sdkVersion:'26'" in badging and "targetSdkVersion:'35'" in badging
 permissions = subprocess.check_output([aapt, 'dump', 'permissions', str(apk)], text=True)
 assert 'uses-permission:' not in permissions, permissions
 with zipfile.ZipFile(apk) as z:
-    lengths = {'sunny': 352800, 'creepy': 352800, 'shot': 3969, 'zombie': 30870, 'owl': 39690, 'cricket': 35280}
+    lengths = {'sunny': 705600, 'creepy': 705600, 'shot': 3969, 'zombie': 30870, 'owl': 39690, 'cricket': 35280}
     audio = []
     for name, frames in lengths.items():
         data = z.read('res/raw/' + name + '.wav'); audio.append(data)

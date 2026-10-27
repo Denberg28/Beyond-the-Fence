@@ -1,3 +1,21 @@
+# 0.10 acceptance — Settlements, heroes and supplies
+
+Baseline0.9/29eeea5:63 JVM cases,923 installed-app checks on API26/35. User scope: inline coin requirements, five-day changing maps/fences, expanded upgrades, cinematic scores, spaced transparent controls, consumables with side slots and hero recruitment in building popups.
+
+| Criterion | Required evidence |
+| --- | --- |
+| E1 Cost feedback |Unaffordable fence/merc upgrades show full coins/timber inside button for1.8s; zero debit, no popup/pause; native real touches |
+| E2 Chapters |Farm1–5/Village6–10/Castle11–15/repeat. Trapezoid/chamfer boundary shared by visible fence and actual guard/enemy ranges. Tiles re-order, remain48dp/inside; assets preserved at dawn/save; ChapterTest/native |
+| E3 Upgrades |4 Steel reinforcement ranks,3 Mill/Drill/Hero tiers; exact atomic costs, bounded caps, real mitigation/production/combat changes; ChapterTest/native |
+| E4 Hero |One paid hero separate from max3 mercenaries; prerequisite Barracks, firing/injury/death/training/save behavior; ChapterTest/native |
+| E5 Supplies |Market prerequisite;35c Elixir/45c Enhancer,9-stock cap, left/right slots. Heal only living/injured actors;20 active seconds nonstacking40% damage/20% cadence boost; no paused/background catch-up; ChapterTest/native |
+| E6 UI/audio |Transparent controls, additional bottom separation, dedicated popups; original32s day/night arrangements; six distinct unclipped audited WAVs; native/layout/screenshots |
+| E7 Compatibility |Schema7 reads1–6, exact continuation/new-state validation and corruption tests; all prior Game/lifecycle/sound gates remain |
+
+Default prices: Steel rank120+60×current rank coins,18+8×rank timber. Mill90+80×tier coins/12+6×tier timber. Drill140+100×tier coins/8 timber. Hero recruit360c/20 timber; training220+150×tier coins/12 timber. No player XP levels return. Physical-device stable gates remain blocked.
+
+## Prior design and verification records
+
 # 0.9 acceptance — Compact compass and building features
 
 Baseline0.8.0-rc.1/3c8251f8124b043863a6091e3e2349b36938cbbb:63 JVM cases and824 native checks/API26 and35. Scope follows the supplied phone screenshot: transparent compass, no persistent instructions/Fix8c label, center selected-side upgrade, building-specific features, Merc ↑ name.

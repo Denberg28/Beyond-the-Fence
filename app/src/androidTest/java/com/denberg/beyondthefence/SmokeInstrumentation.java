@@ -223,7 +223,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(Math.abs(at[0] + cross.getWidth() / 2 - (dockAt[0] + commands.getWidth() / 2)) <= 2,
           "Repair cross is horizontally centered in its rendered bar: cross=" + at[0] + "/" + cross.getWidth()
               + ", bar=" + dockAt[0] + "/" + commands.getWidth());
-      for (String tag : new String[] {"quickHire", "quickUniform"}) {
+      for (String tag : new String[] {"quickHire", "quickUniform", "itemSlot0", "itemSlot1"}) {
         View shortcut = control(a, tag);
         check(shortcut.getWidth() >= min && shortcut.getHeight() >= min && shortcut.getContentDescription() != null,
             "Direct mercenary command is accessible and at least48dp");
@@ -342,7 +342,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> a.game.buildings[0] && a.game.coins == 58 && a.game.wood == 18), "Construct the interior timber mill");
       farmCycle(a);
       touch(a, "building2");
-      check(((android.widget.TextView) control(a, "panelTitle")).getText().toString().equals("CAMP")
+      check(((android.widget.TextView) control(a, "panelTitle")).getText().toString().equals("BARRACKS")
           && control(a, "hire").isShown() && control(a, "upgrade0") != null,
           "Camp opens construction, recruitment and mercenary upgrades");
       touch(a, "construct2"); touch(a, "closeBuild");
@@ -573,15 +573,25 @@ public final class SmokeInstrumentation extends Instrumentation {
           && !control(reopened, "closeBuild").isShown()), "Center builds only the selected gap with exact coin/timber debit");
       touch(reopened, "fenceUpgrade"); touch(reopened, "fenceUpgrade");
       check(onUi(() -> compact.walls[1] == 3 && compact.coins == 104 && compact.wood == 58
-          && !control(reopened, "fenceUpgrade").isEnabled()), "Center upgrades selected Wood to Stone to Steel and disables at maximum");
+          && control(reopened, "fenceUpgrade").isEnabled()), "Steel unlocks additional reinforcement ranks");
+      touch(reopened, "fenceUpgrade");
+      check(onUi(() -> compact.coins == 104 && compact.wood == 58 && compact.wallRanks[1] == 0
+          && ((android.widget.TextView)control(reopened, "fenceUpgrade")).getText().toString().contains("120c")),
+          "Insufficient reinforcement funds reveal required price inside the same button without spending");
       touch(reopened, "wall2"); touch(reopened, "play"); touch(reopened, "fenceUpgrade");
       check(onUi(() -> compact.walls[2] == 2 && compact.walls[1] == 3 && compact.walls[0] == 1
           && compact.coins == 72 && compact.wood == 44 && !reopened.paused), "Changing direction upgrades that side while play continues");
       touch(reopened, "play");
       runOnMainSync(() -> { compact.coins = 0; reopened.refresh(); });
       touch(reopened, "wall0");
-      check(!control(reopened, "fenceUpgrade").isEnabled() && compact.walls[0] == 1,
-          "Unaffordable center upgrade is disabled without charging another side");
+      touch(reopened, "fenceUpgrade");
+      check(onUi(() -> compact.coins == 0 && compact.walls[0] == 1
+          && ((android.widget.TextView)control(reopened, "fenceUpgrade")).getText().toString().contains("32c")),
+          "Unaffordable fence upgrade shows coin requirement in the button with no panel or debit");
+      touch(reopened, "quickUniform");
+      check(onUi(() -> compact.weapon == 0 && compact.coins == 0
+          && ((android.widget.TextView)control(reopened, "quickUniform")).getText().toString().contains("80c")),
+          "Unaffordable mercenary upgrade shows its price inside the button");
       runOnMainSync(() -> { compact.coins = 200; compact.wood = 100; compact.plant(0, 0); compact.growth[0] = 1; reopened.refresh(); });
       touch(reopened, "building1");
       check(((android.widget.TextView) control(reopened, "panelTitle")).getText().toString().equals("SHOP")
@@ -594,6 +604,28 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> compact.coins == 107 && compact.crop[5] == 0 && compact.crop[6] == -1), "Shop planting respects existing plot limits and seed prices");
       screenshot("smoke-shop.png"); touch(reopened, "closeBuild");
       screenshot("smoke-compact.png");
+      runOnMainSync(() -> { compact.coins = 2000; compact.wood = 500; compact.health = 40; compact.mercenaries.get(0).health = 20; reopened.refresh(); });
+      touch(reopened, "building2"); touch(reopened, "construct2"); touch(reopened, "buyHero");
+      check(onUi(() -> compact.hero != null && compact.hero.health == 220 && compact.mercenaries.size() == 1),
+          "Barracks recruits a real hero separate from mercenary slots");
+      touch(reopened, "advanced1"); touch(reopened, "advanced2");
+      check(onUi(() -> compact.drill == 1 && compact.heroLevel == 1 && compact.hero.health == 260), "Barracks drill and hero training change real combat stats");
+      screenshot("smoke-barracks.png"); touch(reopened, "closeBuild");
+      touch(reopened, "building0"); touch(reopened, "construct0"); touch(reopened, "advanced0");
+      check(onUi(() -> compact.millLevel == 1 && compact.millYield() == 6 && compact.millPeriod() == 11), "Mill popup buys a working production upgrade");
+      touch(reopened, "closeBuild"); touch(reopened, "building1"); touch(reopened, "buyItem0"); touch(reopened, "buyItem1");
+      check(onUi(() -> compact.elixirs == 1 && compact.enhancers == 1), "Shop stocks both side-slot consumables");
+      screenshot("smoke-items.png"); touch(reopened, "closeBuild"); touch(reopened, "itemSlot0");
+      check(onUi(() -> compact.elixirs == 0 && compact.health == 75 && compact.mercenaries.get(0).health == 90), "Left elixir slot heals surviving actors exactly once");
+      touch(reopened, "itemSlot1");
+      check(onUi(() -> compact.enhancers == 0 && compact.enhancerTime == 20 && !control(reopened, "itemSlot1").isEnabled()), "Right enhancer slot starts a bounded boost without consuming twice");
+      for (int day : new int[] {6, 11}) {
+        runOnMainSync(() -> { compact.day = day; compact.elapsed = 0; reopened.refresh(); });
+        settle(reopened); checkBoard(reopened);
+        check(onUi(() -> compact.settlementStyle() == (day == 6 ? 1 : 2) && compact.buildings[1] && compact.crop[0] == 0),
+            "Five-day layout transition preserves crops and purchases");
+        screenshot(day == 6 ? "smoke-village.png" : "smoke-castle.png");
+      }
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);

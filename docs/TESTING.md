@@ -1,3 +1,15 @@
+# 0.10 verification plan
+
+Baseline0.9/29eeea5 passed63 JVM cases and923 native checks per API26/35. Local JDK17/JUnit suite now72 cases PASS before Android packaging. Final-source builds/lint/package and both exact-APK native suites remain blocking. Self-review is not independent review.
+
+ChapterTest adds9 meaningful cases: five-day transitions/asset preservation; continuous distinct shared boundary coordinates; accessible tile containment/no overlap across templates/orientations/fonts; exact reinforcement spending/caps/mitigation; real mill/drill benefits; hero cap separation/fire/death/training; consumable purchase/heal/timed buff/no waste/bounds/deterministic continuation; invalid new state rejection; released-schema6 fixture migration with preserved damage/resources. Existing byte-mutation/truncation/fuzz and save/lifecycle suites remain.
+
+Native adds actual insufficient-fund taps showing price without debit, additional rank availability, hero recruitment/drill/training, Mill production upgrade, Shop inventory and both field slots, chapter layout changes with retained assets. Sixteen scenes per API add Barracks/items/Village/Castle. Existing precise economy/damage, fonts/orientation, static pause, full sound dispatch/mute, Home/focus/checkpoint checks remain. Audit32s phase WAVs and all4 effects for exact format, no clipping, non-silence and quiet boundaries; preview remains<=5MiB/zero permissions. Compare source archive and published artifact hash to audited candidate.
+
+Stable gates remain BLOCKED: physical phone30min/endurance20 interruptions, TalkBack, sound listening/mixing/route/volume, actual frame/thermal/latency measurements and production signing/upgrade continuity. No equipment-control HIL applies. Export pre-upgrade schema6 and keep0.9 APK for rollback; schema7 cannot downgrade.
+
+## Prior design and verification records
+
 # 0.9 verification plan
 
 Baseline0.8.0-rc.1/3c8251f passed63 JVM tests and824 installed-app checks on each API26/35 emulator. No Game/SaveCodec/audio changes are needed; local JDK17/JUnit regression remains63 PASS. Final-source full Android builds/lint/package and both installed-APK suites remain blocking. Self-review is not independent review.

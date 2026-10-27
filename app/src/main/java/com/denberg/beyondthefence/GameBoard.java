@@ -11,10 +11,13 @@ import java.util.function.Supplier;
 final class GameBoard extends FrameLayout {
   final BoardGeometry geometry = new BoardGeometry();
   final FarmView artwork;
+  private final Supplier<Game> model;
+  private int lastStyle = -1;
   private final View[] plots = new View[9], buildings = new View[3];
 
   GameBoard(Context context, Supplier<Game> game, Supplier<Boolean> paused) {
     super(context);
+    model = game;
     setTag("field");
     artwork = new FarmView(context, game, paused, geometry);
     artwork.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
@@ -27,6 +30,8 @@ final class GameBoard extends FrameLayout {
         getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
   }
 
+  void refreshSettlement() { if (model.get().settlementStyle() != lastStyle) requestLayout(); }
+
   void plot(int index, View control) { plots[index] = control; addView(control); }
   void building(int index, View control) { buildings[index] = control; addView(control); }
 
@@ -36,7 +41,8 @@ final class GameBoard extends FrameLayout {
     setMeasuredDimension(width, height);
     geometry.layout(width, height, getResources().getDisplayMetrics().density,
         getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE,
-        getResources().getConfiguration().fontScale);
+        getResources().getConfiguration().fontScale, model.get().settlementStyle());
+    lastStyle = model.get().settlementStyle();
     artwork.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
         MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
     for (int i = 0; i < 9; i++) measureTile(plots[i], geometry.plots[i]);

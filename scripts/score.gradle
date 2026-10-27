@@ -7,7 +7,7 @@ tasks.register('generateScore') {
     doLast {
         def dir = scoreDir.get().asFile; project.delete(dir); dir.mkdirs()
         int rate = 22050
-        def lengths = [sunny:16, creepy:16, shot:.18, zombie:1.4, owl:1.8, cricket:1.6]
+        def lengths = [sunny:32, creepy:32, shot:.18, zombie:1.4, owl:1.8, cricket:1.6]
         lengths.each { name, duration ->
             int frames = (int)(rate * duration)
             def rng = new Random(72419)
@@ -20,22 +20,34 @@ tasks.register('generateScore') {
             out.write('WAVEfmt '.getBytes('US-ASCII')); le(16, 4); le(1, 2); le(1, 2)
             le(rate, 4); le(rate * 2, 4); le(2, 2); le(16, 2)
             out.write('data'.getBytes('US-ASCII')); le(frames * 2, 4)
+            def dayRoots = [130.813d,174.614d,164.814d,195.998d,130.813d,146.832d,174.614d,195.998d]
+            def dayMelody = [523.251d,659.255d,783.991d,659.255d,587.330d,523.251d,440d,391.995d,523.251d,587.330d,659.255d,783.991d,880d,783.991d,659.255d,587.330d]
+            def nightRoots = [55d,51.913d,58.270d,49d,55d,65.406d,58.270d,51.913d]
             def sunny = [261.626d,329.628d,391.995d,523.251d,440d,391.995d,329.628d,293.665d]
             def bass = [130.813d,174.614d,195.998d,130.813d]
             for (int i = 0; i < frames; i++) {
                 double t = i / (double) rate, noise = rng.nextDouble() * 2 - 1, sample = 0
                 if (name == 'sunny') {
-                    double note = sunny[(int)(t * 4) % 8], a = t % .25
-                    sample = (.19 * Math.sin(2 * Math.PI * note * t) + .06 * Math.sin(4 * Math.PI * note * t)) * Math.exp(-a * 8)
-                    sample += .12 * Math.sin(2 * Math.PI * bass[(int)(t / 4) % 4] * t) * Math.exp(-(t % .5) * 8)
-                    sample += .08 * Math.sin(2 * Math.PI * 65 * (t % .5)) * Math.exp(-(t % .5) * 25)
-                    sample += noise * Math.exp(-(t % .25) * 110) * .025
+                    // Eight-bar hopeful chamber theme: piano, plucked strings, warm sustained chords.
+                    double root = dayRoots[(int)(t / 4) % 8], a = t % .5, note = dayMelody[(int)(t * 2) % 16]
+                    double chordEnv = Math.min(1, (t % 4) * 2) * Math.min(1, (4 - t % 4) * 2)
+                    sample = (.10 * Math.sin(2*Math.PI*root*t) + .065*Math.sin(2*Math.PI*root*1.25*t)
+                        + .045*Math.sin(2*Math.PI*root*1.5*t)) * chordEnv
+                    sample += (.15*Math.sin(2*Math.PI*note*t) + .035*Math.sin(4*Math.PI*note*t)) * Math.exp(-a*5)
+                    sample += .055*Math.sin(2*Math.PI*root*2*t)*Math.exp(-(t%.25)*14)
+                    sample += .045*Math.sin(2*Math.PI*65*(t%.5))*Math.exp(-(t%.5)*25)
+                    sample += noise*Math.exp(-(t%.25)*110)*.015
                 } else if (name == 'creepy') {
-                    sample = .15 * Math.sin(2 * Math.PI * 55 * t) * (.7 + .3 * Math.sin(t * Math.PI / 2))
-                    sample += .09 * Math.sin(2 * Math.PI * 58.27 * t) + .07 * Math.sin(2 * Math.PI * 82.407 * t)
-                    double a = t % 2
-                    sample += Math.sin(2 * Math.PI * (t < 8 ? 220 : 233.082) * t) * Math.exp(-a * 3) * .10
-                    sample += noise * .02 * (.5 + .5 * Math.sin(t * 3))
+                    // Original suspense score: cello ostinato, low strings, sparse piano and heartbeat percussion.
+                    double root = nightRoots[(int)(t/4)%8], pulse = t%.5, bar = t%4
+                    double swell = .45 + .55*Math.sin(Math.PI*bar/4)
+                    sample = (.13*Math.sin(2*Math.PI*root*t) + .065*Math.sin(2*Math.PI*root*1.05946*t)
+                        + .055*Math.sin(2*Math.PI*root*1.5*t)) * swell
+                    sample += .13*Math.sin(2*Math.PI*root*2*t) * Math.exp(-pulse*7)
+                    sample += .07*Math.sin(2*Math.PI*root*4*t) * Math.exp(-(t%2)*3.5)
+                    sample += .10*Math.sin(2*Math.PI*43*pulse)*Math.exp(-pulse*25)
+                    if ((int)(t*2)%8==7) sample += noise*.065*Math.exp(-pulse*20)
+                    sample += noise*.012*(.5+.5*Math.sin(t*3))
                 } else if (name == 'shot') {
                     sample = (.65 * noise + .20 * Math.sin(2 * Math.PI * 100 * t)) * Math.exp(-t * 38)
                 } else if (name == 'zombie') {

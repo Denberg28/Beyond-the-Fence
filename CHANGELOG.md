@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0-rc.1 — Settlements, heroes and supplies
+
+- Unaffordable upgrade taps briefly show required coins/timber inside the same button; no panel, pause or charge.
+- Five-day Farm → Village → Castle chapters change the physical perimeter, interior placement and scenery while retaining assets. Renderer and combat share geometry.
+- Added4 Steel reinforcement ranks,3 mill tiers,3 mercenary drill tiers and3 hero training tiers. Barracks recruits1 hero separately from the3 mercenary cap.
+- Shop sells Elixirs and timed Enhancers, with stocked left/right bottle slots and bounded inventory/effect timers.
+- Transparent crew controls and additional separation above bottom actions. Dedicated building pages include the new related purchases.
+- Original32-second day/night scores with richer melodic/harmonic/percussion layers. Existing effects and mute/lifecycle rules retained.
+- Schema7 migrates schemas1–6 and persists all new inventory/hero/upgrade/effect state; new saves cannot downgrade to0.9.
+
 ## 0.9.0-rc.1 — Compact compass and building features
 
 - Transparent N/W/E/S buttons in a smaller144dp cross, retaining48dp targets and a selected-side outline.

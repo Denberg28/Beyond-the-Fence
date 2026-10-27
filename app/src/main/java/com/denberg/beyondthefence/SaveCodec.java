@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 6;
+  private static final int MAGIC = 0x42544653, VERSION = 7;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -72,6 +72,12 @@ public final class SaveCodec {
       d.writeFloat(enemy.attackClock); d.writeInt(enemy.target);
     }
     for (Game.Mercenary merc : g.mercenaries) d.writeFloat(merc.health);
+    for (int rank : g.wallRanks) d.writeInt(rank);
+    for (int value : new int[] {g.millLevel, g.drill, g.heroLevel, g.elixirs, g.enhancers}) d.writeInt(value);
+    d.writeFloat(g.enhancerTime); d.writeBoolean(g.hero != null);
+    if (g.hero != null) {
+      for (float v : new float[] {g.hero.progress, g.hero.shotClock, g.hero.targetX, g.hero.targetY, g.hero.health}) d.writeFloat(v);
+    }
     d.flush();
     CRC32 crc = new CRC32();
     crc.update(body.toByteArray());
@@ -185,7 +191,7 @@ public final class SaveCodec {
       g.populateRoamers();
     }
     if (version >= 4) {
-      for (int i = 0; i < 4; i++) { g.wallHealth[i] = in.readFloat(); number(g.wallHealth[i], 0, g.maxWallHealth(i)); }
+      for (int i = 0; i < 4; i++) { g.wallHealth[i] = in.readFloat(); number(g.wallHealth[i], 0, g.maxWallHealth(i) + (version >= 7 && g.walls[i] > 0 ? 120 : 0)); }
       for (int i = 0; i < 9; i++) {
         g.cropHealth[i] = in.readFloat(); g.scorched[i] = in.readBoolean();
         number(g.cropHealth[i], 0, Game.CROP_HEALTH);
@@ -213,8 +219,22 @@ public final class SaveCodec {
     }
     for (Game.Mercenary merc : g.mercenaries) {
       merc.health = version >= 6 ? in.readFloat() : g.guardMaxHealth();
-      number(merc.health, Float.MIN_VALUE, g.guardMaxHealth());
+      number(merc.health, Float.MIN_VALUE, g.guardMaxHealth() + (version >= 7 ? 30 : 0));
     }
+    if (version >= 7) {
+      for (int side = 0; side < 4; side++) { g.wallRanks[side] = in.readInt(); integer(g.wallRanks[side], 0, Game.MAX_WALL_RANK); range(g.wallRanks[side] == 0 || g.walls[side] == 3); }
+      g.millLevel = in.readInt(); g.drill = in.readInt(); g.heroLevel = in.readInt();
+      integer(g.millLevel, 0, 3); integer(g.drill, 0, 3); integer(g.heroLevel, 0, 3);
+      g.elixirs = in.readInt(); g.enhancers = in.readInt(); integer(g.elixirs, 0, Game.MAX_ITEMS); integer(g.enhancers, 0, Game.MAX_ITEMS);
+      g.enhancerTime = in.readFloat(); number(g.enhancerTime, 0, 20);
+      if (in.readBoolean()) {
+        g.hero = new Game.Mercenary(in.readFloat(), in.readFloat(), in.readFloat(), in.readFloat()); g.hero.health = in.readFloat();
+        number(g.hero.progress, 0, 3.9999998f); number(g.hero.shotClock, 0, .91f);
+        number(g.hero.targetX, 0, 1); number(g.hero.targetY, 0, 1); number(g.hero.health, Float.MIN_VALUE, g.heroMaxHealth());
+      }
+    }
+    for (int side = 0; side < 4; side++) number(g.wallHealth[side], 0, g.maxWallHealth(side));
+    for (Game.Mercenary merc : g.mercenaries) number(merc.health, Float.MIN_VALUE, g.guardMaxHealth());
     range(g.night || count == 0);
     range(!g.defeated || g.health == 0);
     range(in.readLong() == crc.getValue());

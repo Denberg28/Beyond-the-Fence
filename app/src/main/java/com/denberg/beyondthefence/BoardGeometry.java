@@ -22,7 +22,8 @@ final class BoardGeometry {
     float cell = Math.max(48, 28 * fontScale + 12);
     return (int) Math.ceil(density * (wide ? 3 * cell + 160 : 4 * cell + 198));
   }
-  void layout(int width, int height, float density, boolean wide, float fontScale) {
+  void layout(int width, int height, float density, boolean wide, float fontScale) { layout(width, height, density, wide, fontScale, 0); }
+  void layout(int width, int height, float density, boolean wide, float fontScale, int style) {
     this.width = width; this.height = height; this.density = density; this.wide = wide;
     // Keep the farm compact as the viewport grows. The surrounding terrain belongs to zombies.
     float gap = 6 * density;
@@ -47,6 +48,14 @@ final class BoardGeometry {
     }
     float cw = (cropRight - left - gap * 2) / 3, ch = (bottom - cropTop - gap * 2) / 3;
     for (int i = 0; i < 9; i++) plots[i].set(left + (i % 3) * (cw + gap), cropTop + (i / 3) * (ch + gap), cw, ch);
+    if (style > 0) {
+      Box[] old = new Box[3];
+      for (int i = 0; i < 3; i++) { old[i] = new Box(); old[i].set(buildings[i].left, buildings[i].top, buildings[i].width(), buildings[i].height()); }
+      for (int i = 0; i < 3; i++) { Box b = old[(i + style) % 3]; buildings[i].set(b.left, b.top, b.width(), b.height()); }
+      Box[] soil = new Box[9];
+      for (int i = 0; i < 9; i++) { soil[i] = new Box(); soil[i].set(plots[i].left, plots[i].top, plots[i].width(), plots[i].height()); }
+      for (int i = 0; i < 9; i++) { Box b = soil[style == 1 ? i / 3 * 3 + 2 - i % 3 : (i + 3) % 9]; plots[i].set(b.left, b.top, b.width(), b.height()); }
+    }
   }
   float worldX(float x) {
     float inset = 24 * density;

@@ -1,3 +1,13 @@
+# 0.10 current limitations
+
+- Test preview: real-device endurance, TalkBack, audio listening/mixing/routing, measured performance and production signing remain unvalidated; stable promotion blocked.
+- Five-day settlements reuse3 hand-authored templates in a fixed cycle; no random town generation or pathfinding. Shared perimeter geometry changes on dawn, not during combat. Building/crop indices survive positional changes.
+- One hero is separate from3 mercenaries; all actors can die, training remains purchased, Elixirs heal survivors only. Enhancer is20 active seconds with no stacking; stock9 each. New balance has seeded automated cases, not broad player playtesting.
+- Original32s music loops repeat; quality/phone speaker comfort requires listening. No copied film/game tracks or external samples.
+- Schema7 exports cannot downgrade to0.9; keep a pre-upgrade save/APK. Preview certificate changes can require export/uninstall/install/import. No production key continuity configured.
+
+## Previous limitations/history
+
 # Candidate limitations
 
 - Physical-phone endurance, TalkBack, measured frame/thermal/latency behavior and production signing/upgrade continuity remain unvalidated; stable promotion is blocked.

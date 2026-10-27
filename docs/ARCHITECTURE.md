@@ -1,3 +1,15 @@
+# 0.10 state and settlement architecture
+
+Settlement maps day to one of3 deterministic five-day chapters. It owns ring coordinates: rectangle Farm, trapezoidal Village and8-edge chamfered Castle. Game instance guard/foe/ring coordinate methods use it for combat, while FarmView uses the exact same points to draw fences, actors and courtyard. Static old square helpers remain compatibility/test utilities only. GameBoard requests layout when chapter changes; BoardGeometry permutes tile positions without shrinking48dp hit areas. Unit checks cover shape continuity, containment, geometry and resource preservation. No transition consumes the simulation RNG.
+
+Game adds wallRanks[4], millLevel/drill/heroLevel, hero(nullable Mercenary), item counts and enhancerTime. Hero is outside the3-member mercenary list, with its own stats, healing and death. Perimeter/range and guard targeting code covers both actor classes. Enhancer scales shot strength/cadence and ticks only in Game.tick; recovery clears it. Elixir affects living crew/core, never resurrects. Mill upgrades alter the actual production period/yield; destroyed buildings still stop benefits.
+
+Schema7 appends new state after schema6 crew health. Decode bounds provisional health before reading ranks/drills, then validates exact final maxima, actor state, stock caps and timers before accepting CRC/trailing length. Old saves initialize new fields to zero/null without a free hero or item. Legacy investment migration/refunds remain. No new permission/service/dependency.
+
+MainActivity uses1.8s main-handler inline feedback tied to a button/token, cleared on selection/success/context changes. Unaffordability does not disable a valid upgrade; max/prerequisites still do. Bottle slots are original Drawable art, placed under transparent Merc controls on both sides of the compass. Extra top/bottom padding separates command area from global actions. Popups expose related advanced/item/hero purchases and retain modal pause/accessibility behavior. All audio remains generated from source;32s phase themes replace16s loops and preserve lifecycle/focus/mute behavior.
+
+## Prior design and verification records
+
 # 0.9 compass and contextual feature pages
 
 MainActivity keeps selectedWall in[-1,3], initially−1; a direction selects and calls the existing repair action. The center button calls Game.buildWall only for a valid selected side. Enabled state uses actual next-tier coin/timber requirements and max material. No simulation rules/save fields change. Activity bundle retains side and selectedBuilding in[-1,2]; fresh game/import clears both. Building context restores on rotation and ordinary Build navigation clears it.

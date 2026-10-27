@@ -25,6 +25,19 @@ public final class Game {
   public final float[] wallHealth = {80, 0, 80, 0}, cropHealth = new float[9], buildingHealth = new float[3];
   public final boolean[] scorched = new boolean[9], buildingRuins = new boolean[3];
   public int lostCrops, lostBuildings;
+  public final int[] wallRanks = new int[4];
+  public int drill, millLevel, heroLevel, elixirs, enhancers;
+  public float enhancerTime;
+  public Mercenary hero;
+  public static final int MAX_WALL_RANK = 4, MAX_ITEMS = 9;
+  public int settlementStyle() { return Settlement.style(day); }
+  public float ringXAt(float progress, float distance) { return Settlement.x(settlementStyle(), progress, distance); }
+  public float ringYAt(float progress, float distance) { return Settlement.y(settlementStyle(), progress, distance); }
+  public float guardX(float progress) { return ringXAt(progress, 0); }
+  public float guardY(float progress) { return ringYAt(progress, 0); }
+  public float foeX(Enemy e) { return ringXAt(e.lane + e.offset, e.breached ? -.8f * e.advance : e.x); }
+  public float foeY(Enemy e) { return ringYAt(e.lane + e.offset, e.breached ? -.8f * e.advance : e.x); }
+
   public int wood = 24;
   public final int[] walls = {1, 0, 1, 0};
   public final boolean[] buildings = new boolean[3];
@@ -262,10 +275,10 @@ public final class Game {
     }
   }
 
-  public int guardDamage() { return 16 + weapon * 3; }
-  public float guardMaxHealth() { return 80 + weapon * 20; }
-  public float guardRange() { return GUARD_RANGE + weapon * .008f; }
-  public float guardInterval() { return Math.max(.75f, 1.15f - weapon * .07f); }
+  public int guardDamage() { return Math.round((16 + weapon * 3 + drill * 3) * (enhancerTime > 0 ? 1.4f : 1)); }
+  public float guardMaxHealth() { return 80 + weapon * 20 + drill * 10; }
+  public float guardRange() { return GUARD_RANGE + weapon * .008f + drill * .005f; }
+  public float guardInterval() { return Math.max(.65f, 1.15f - weapon * .07f - drill * .025f) * (enhancerTime > 0 ? .8f : 1); }
   public float wallRatio(int side) { return walls[side] == 0 ? 0 : Math.max(0, Math.min(1, wallHealth[side] / maxWallHealth(side))); }
 
   private void removeDead() {
@@ -275,19 +288,19 @@ public final class Game {
         it.remove();
         kills++;
         money(2);
-
       }
   }
 
   public void tick(float dt) {
     if (!Float.isFinite(dt) || dt <= 0 || defeated) return;
     dt = Math.min(dt, 0.1f); // No catch-up damage after frame stalls or backgrounding.
+    enhancerTime = Math.max(0, enhancerTime - dt);
     float rate = growthRate();
     for (int i = 0; i < plots(); i++)
       if (crop[i] >= 0) growth[i] = Math.min(1, growth[i] + dt * rate / GROW[crop[i]]);
     if (buildings[0]) {
       productionClock += dt;
-      if (productionClock >= 12) { productionClock -= 12; timber(4); }
+      if (productionClock >= millPeriod()) { productionClock -= millPeriod(); timber(millYield()); }
     }
     patrol(dt);
     elapsed = Math.min(86400, elapsed + dt);
@@ -313,7 +326,7 @@ public final class Game {
         e.x = Math.max(stop, e.x - speed * dt * (weather == 1 ? .85f : 1));
         if (e.x <= stop && wallHealth[e.lane] > 0) {
           float damage = enemyDamage(e.type) * dt * (relaxed ? .5f : 1)
-              * (walls[e.lane] == 2 ? .72f : walls[e.lane] >= 3 ? .5f : 1);
+              * (walls[e.lane] == 2 ? .72f : walls[e.lane] >= 3 ? Math.max(.3f, .5f - wallRanks[e.lane] * .05f) : 1);
           wallHealth[e.lane] = Math.max(0, wallHealth[e.lane] - damage);
           if (wallHealth[e.lane] == 0) notice = SIDES[e.lane] + " fence breached! Repair it before more zombies enter.";
         }
@@ -329,14 +342,18 @@ public final class Game {
           if (!targetAlive(e.target)) e.target = assaultTarget(e.lane);
           float damage = enemyDamage(e.type) * 1.2f * (relaxed ? .5f : 1);
           Mercenary victim = null; float closest = .20f * .20f;
-          for (Mercenary merc : mercenaries) {
-            float dx = enemyX(e) - patrolX(merc.progress), dy = enemyY(e) - patrolY(merc.progress);
+          for (int person = 0; person < mercenaries.size() + (hero == null ? 0 : 1); person++) {
+            Mercenary merc = person < mercenaries.size() ? mercenaries.get(person) : hero;
+            float dx = foeX(e) - guardX(merc.progress), dy = foeY(e) - guardY(merc.progress);
             float distance = dx * dx + dy * dy;
             if (distance < closest) { closest = distance; victim = merc; }
           }
           if (victim != null) {
-            victim.health = Math.max(0, victim.health - damage * Math.max(.55f, 1 - weapon * .08f));
-            if (victim.health == 0) { mercenaries.remove(victim); notice = "Mercenary lost! The horde can wipe out your crew."; }
+            victim.health = Math.max(0, victim.health - damage * (victim == hero ? .65f : Math.max(.45f, 1 - weapon * .08f - drill * .04f)));
+            if (victim.health == 0) {
+              if (victim == hero) { hero = null; notice = "Hero lost. Recruit a replacement at the Barracks."; }
+              else { mercenaries.remove(victim); notice = "Mercenary lost! The horde can wipe out your crew."; }
+            }
           } else damageTarget(e.target, damage);
           e.attackClock = 1.2f;
         }
@@ -355,7 +372,6 @@ public final class Game {
     int reward = 20 + Math.min(day, 30) * 3;
     money(reward);
     timber(6);
-
     day = Math.min(9999, day + 1);
     night = false;
     elapsed = 0;
@@ -376,6 +392,7 @@ public final class Game {
     int lost = Math.min(30, coins / 5);
     money(-lost);
     defeated = false;
+    enhancerTime = 0;
     night = false;
     elapsed = 0;
     health = maxHealth();
@@ -398,7 +415,7 @@ public final class Game {
 
   private void timber(int amount) { wood = Math.min(10_000_000, Math.max(0, wood + amount)); }
 
-  public float maxWallHealth(int side) { return walls[side] == 0 ? 0 : 80 + (walls[side] - 1) * 40 + fence * 15; }
+  public float maxWallHealth(int side) { return walls[side] == 0 ? 0 : 80 + (walls[side] - 1) * 40 + fence * 15 + wallRanks[side] * 30; }
   public boolean wallDamaged(int side) { return walls[side] > 0 && wallHealth[side] < maxWallHealth(side); }
 
   public boolean repairWall(int side) {
@@ -505,6 +522,59 @@ public final class Game {
     return true;
   }
 
+  public int borderCoinCost(int side) { return walls[side] < 3 ? wallCoinCost(side) : 120 + wallRanks[side] * 60; }
+  public int borderWoodCost(int side) { return walls[side] < 3 ? wallWoodCost(side) : 18 + wallRanks[side] * 8; }
+  public boolean borderMaxed(int side) { return walls[side] >= 3 && wallRanks[side] >= MAX_WALL_RANK; }
+  public boolean upgradeBorder(int side) {
+    if (defeated || side < 0 || side > 3 || borderMaxed(side)) return false;
+    if (walls[side] < 3) return buildWall(side);
+    if (coins < borderCoinCost(side) || wood < borderWoodCost(side)) return false;
+    money(-borderCoinCost(side)); timber(-borderWoodCost(side)); wallRanks[side]++;
+    wallHealth[side] = maxWallHealth(side); notice = SIDES[side] + " reinforced Steel rank " + wallRanks[side]; return true;
+  }
+  public int advancedCost(int kind) { return kind == 0 ? 90 + millLevel * 80 : kind == 1 ? 140 + drill * 100 : 220 + heroLevel * 150; }
+  public int advancedWood(int kind) { return kind == 0 ? 12 + millLevel * 6 : kind == 1 ? 8 : 12; }
+  public boolean advancedMaxed(int kind) { return (kind == 0 ? millLevel : kind == 1 ? drill : heroLevel) >= 3; }
+  public boolean upgradeAdvanced(int kind) {
+    if (defeated || kind < 0 || kind > 2 || advancedMaxed(kind) || !(kind == 0 ? buildings[0] : buildings[2])
+        || kind == 2 && hero == null || coins < advancedCost(kind) || wood < advancedWood(kind)) return false;
+    money(-advancedCost(kind)); timber(-advancedWood(kind));
+    if (kind == 0) millLevel++;
+    else if (kind == 1) { drill++; for (Mercenary m : mercenaries) m.health = Math.min(guardMaxHealth(), m.health + 10); }
+    else { heroLevel++; hero.health = Math.min(heroMaxHealth(), hero.health + 40); }
+    notice = "Upgrade purchased."; return true;
+  }
+  public float millPeriod() { return 12 - millLevel; }
+  public int millYield() { return 4 + millLevel * 2; }
+  public float heroMaxHealth() { return 220 + heroLevel * 40; }
+  public boolean buyHero() {
+    if (defeated || !buildings[2] || hero != null || coins < 360 || wood < 20) return false;
+    money(-360); timber(-20); hero = new Mercenary(2.5f, 0, .5f, .5f); hero.health = heroMaxHealth();
+    notice = "Hero recruited. One hero fights alongside your three mercenaries."; return true;
+  }
+  public int itemPrice(int type) { return type == 0 ? 35 : 45; }
+  public boolean buyItem(int type) {
+    if (defeated || type < 0 || type > 1 || !buildings[1] || (type == 0 ? elixirs : enhancers) >= MAX_ITEMS || coins < itemPrice(type)) return false;
+    money(-itemPrice(type)); if (type == 0) elixirs++; else enhancers++;
+    notice = type == 0 ? "Elixir stored in the left slot." : "Enhancer stored in the right slot."; return true;
+  }
+  public boolean useItem(int type) {
+    if (defeated || type < 0 || type > 1) return false;
+    if (type == 0) {
+      boolean injured = health < maxHealth() || hero != null && hero.health < heroMaxHealth();
+      for (Mercenary m : mercenaries) injured |= m.health < guardMaxHealth();
+      if (elixirs == 0 || !injured) return false;
+      elixirs--; health = Math.min(maxHealth(), health + 35);
+      for (Mercenary m : mercenaries) m.health = Math.min(guardMaxHealth(), m.health + 60);
+      if (hero != null) hero.health = Math.min(heroMaxHealth(), hero.health + 90);
+      notice = "Elixir: farm and surviving crew healed.";
+    } else {
+      if (enhancers == 0 || enhancerTime > 0) return false;
+      enhancers--; enhancerTime = 20; notice = "Enhancer:20 active seconds of stronger, faster fire.";
+    }
+    return true;
+  }
+
   /** Clockwise perimeter in normalized world coordinates, shared with the renderer. */
   public static float patrolX(float progress) {
     if (progress < 1) return .18f + progress * .64f;
@@ -560,12 +630,14 @@ public final class Game {
   }
 
   private void patrol(float dt) {
-    for (int index = 0; index < mercenaries.size(); index++) {
-      Mercenary merc = mercenaries.get(index);
-      if (!night) merc.health = Math.min(guardMaxHealth(), merc.health + dt * 1.5f);
+    int count = mercenaries.size() + (hero == null ? 0 : 1);
+    for (int index = 0; index < count; index++) {
+      Mercenary merc = index < mercenaries.size() ? mercenaries.get(index) : hero;
+      boolean champion = merc == hero;
+      if (!night) merc.health = Math.min(champion ? heroMaxHealth() : guardMaxHealth(), merc.health + dt * (champion ? 2.5f : 1.5f));
       if (lane < 0) merc.progress = (merc.progress + dt * .14f) % 4;
       else {
-        float destination = lane + (mercenaries.size() == 1 ? .5f : .15f + .7f * index / (mercenaries.size() - 1));
+        float destination = lane + (count == 1 ? .5f : .15f + .7f * index / (count - 1));
         float delta = destination - merc.progress;
         if (delta > 2) delta -= 4;
         if (delta < -2) delta += 4;
@@ -573,18 +645,19 @@ public final class Game {
       }
       merc.shotClock = Math.max(0, merc.shotClock - dt);
       if (!night || merc.shotClock > 0) continue;
-      float mx = patrolX(merc.progress), my = patrolY(merc.progress), best = Float.MAX_VALUE;
+      float mx = guardX(merc.progress), my = guardY(merc.progress), best = Float.MAX_VALUE;
       Enemy chosen = null;
       for (Enemy e : enemies) {
         if (e.hp <= 0) continue;
-        float dx = enemyX(e) - mx, dy = enemyY(e) - my, distance = dx * dx + dy * dy;
-        if (distance > guardRange() * guardRange()) continue;
+        float dx = foeX(e) - mx, dy = foeY(e) - my, distance = dx * dx + dy * dy;
+        if (distance > (champion ? .36f : guardRange()) * (champion ? .36f : guardRange())) continue;
         float score = distance + e.x * .05f - (e.breached ? 2 : 0) - (lane >= 0 && e.lane == lane ? .5f : 0);
         if (score < best) { chosen = e; best = score; }
       }
       if (chosen != null) {
-        merc.targetX = enemyX(chosen); merc.targetY = enemyY(chosen);
-        chosen.hp -= guardDamage(); shots++; merc.shotClock = guardInterval();
+        merc.targetX = foeX(chosen); merc.targetY = foeY(chosen);
+        chosen.hp -= champion ? Math.round((32 + heroLevel * 8) * (enhancerTime > 0 ? 1.4f : 1)) : guardDamage();
+        shots++; merc.shotClock = champion ? (enhancerTime > 0 ? .72f : .9f) : guardInterval();
       }
     }
     removeDead();
