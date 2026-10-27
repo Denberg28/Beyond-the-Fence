@@ -13,7 +13,10 @@ public class BoardGeometryTest {
           int height = BoardGeometry.minimumHeight(density, font, wide);
           for (int extra : new int[] {0, Math.round(120 * density)}) {
             BoardGeometry g = new BoardGeometry();
-            g.layout(width, height + extra, density, wide);
+            g.layout(width, height + extra, density, wide, font);
+            assertTrue("Roaming terrain on both horizontal sides", g.fortLeft >= 56 * density);
+            assertTrue("Roaming terrain above and below", g.fortTop >= 48 * density);
+            assertTrue("Farm stays compact in tall windows", g.fortBottom - g.fortTop < (height + extra) * .82f);
             BoardGeometry.Box[] boxes = new BoardGeometry.Box[16];
             System.arraycopy(g.plots, 0, boxes, 0, 9);
             System.arraycopy(g.buildings, 0, boxes, 9, 3);

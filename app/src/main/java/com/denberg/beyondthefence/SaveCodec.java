@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 2;
+  private static final int MAGIC = 0x42544653, VERSION = 3;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -59,6 +59,10 @@ public final class SaveCodec {
       d.writeFloat(merc.progress); d.writeFloat(merc.shotClock);
       d.writeFloat(merc.targetX); d.writeFloat(merc.targetY);
     }
+    d.writeInt(g.roamers.size());
+    for (Game.Roamer roamer : g.roamers) {
+      d.writeInt(roamer.type); d.writeFloat(roamer.progress); d.writeFloat(roamer.distance);
+    }
     d.flush();
     CRC32 crc = new CRC32();
     crc.update(body.toByteArray());
@@ -74,7 +78,7 @@ public final class SaveCodec {
     DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
     if (in.readInt() != MAGIC) throw new IOException("Unsupported save format");
     int version = in.readInt();
-    if (version != 1 && version != VERSION) throw new IOException("Unsupported save format");
+    if (version < 1 || version > VERSION) throw new IOException("Unsupported save format");
     Game g = new Game();
     g.revision = in.readLong();
     g.day = in.readInt();
@@ -155,6 +159,20 @@ public final class SaveCodec {
     } else {
       // Preserve existing investments; old farms arrive with a complete matching perimeter.
       java.util.Arrays.fill(g.walls, Math.min(3, g.fence + 1));
+    }
+    g.roamers.clear();
+    if (version >= 3) {
+      int roamers = in.readInt(); integer(roamers, 0, Game.MAX_ROAMERS);
+      range(!g.night || roamers == 0);
+      for (int i = 0; i < roamers; i++) {
+        int type = in.readInt();
+        float progress = in.readFloat(), distance = in.readFloat();
+        integer(type, 0, 3); number(progress, 0, 3.9999998f); number(distance, .55f, .95f);
+        g.roamers.add(new Game.Roamer(type, progress, distance));
+      }
+    } else {
+      // Old raids keep their existing enemies and spawn timing; daytime gains roaming scouts.
+      g.populateRoamers();
     }
     range(g.night || count == 0);
     range(!g.defeated || g.health == 0);

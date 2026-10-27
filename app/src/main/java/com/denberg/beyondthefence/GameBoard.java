@@ -36,7 +36,8 @@ final class GameBoard extends FrameLayout {
     int width = MeasureSpec.getSize(widthSpec), height = resolveSize(minimumBoardHeight(), heightSpec);
     setMeasuredDimension(width, height);
     geometry.layout(width, height, getResources().getDisplayMetrics().density,
-        getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE);
+        getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE,
+        getResources().getConfiguration().fontScale);
     artwork.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
         MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
     for (int i = 0; i < 9; i++) measureTile(plots[i], geometry.plots[i]);

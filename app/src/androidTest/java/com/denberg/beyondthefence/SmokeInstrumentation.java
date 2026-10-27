@@ -151,6 +151,11 @@ public final class SmokeInstrumentation extends Instrumentation {
   private void checkBoard(MainActivity a) {
     runOnMainSync(() -> {
       View field = control(a, "field");
+      GameBoard map = (GameBoard) field;
+      check(map.geometry.fortLeft >= 55 * a.getResources().getDisplayMetrics().density,
+          "Compact farm leaves visible roaming terrain on each side");
+      check(map.geometry.fortTop >= 47 * a.getResources().getDisplayMetrics().density,
+          "Compact farm leaves roaming terrain above and below");
       float min = 48 * a.getResources().getDisplayMetrics().density - 1;
       for (String prefix : new String[] {"plot", "wall", "building"}) {
         int count = prefix.equals("plot") ? 9 : prefix.equals("wall") ? 4 : 3;
@@ -216,6 +221,13 @@ public final class SmokeInstrumentation extends Instrumentation {
       checkBoard(a);
       // A paused farm must stop continuous rendering, including while a panel is open.
       assertPausedStatic(a);
+      float roamingProgress = a.game.roamers.get(0).progress;
+      runOnMainSync(() -> { for (int i = 0; i < 20; i++) a.game.tick(.05f); a.refresh(); });
+      check(onUi(() -> !a.game.night && a.game.roamers.get(0).progress > roamingProgress
+          && a.game.health == 100 && a.game.coins == 80), "Daytime zombies visibly roam without harming the farm");
+      check(onUi(() -> ((android.widget.TextView) control(a, "night")).getText().toString().contains("Raid in")),
+          "Raid countdown is visible in the action dock");
+      screenshot("smoke-roaming.png");
       touch(a, "seeds");
       check(!control(a, "seed1").isEnabled(), "Locked seed is visibly unavailable");
       touch(a, "seed0");
@@ -331,6 +343,17 @@ public final class SmokeInstrumentation extends Instrumentation {
       awaitIdle();
       check(onUi(() -> reopened.game.coins == expected && reopened.game.crop[0] == 1), "Farm persists after activity restart");
       check(onUi(() -> reopened.paused), "Restart requires explicit resume");
+      runOnMainSync(() -> {
+        reopened.game.xp = 450;
+        reopened.game.night = false;
+        reopened.game.enemies.clear(); reopened.game.roamers.clear(); reopened.game.populateRoamers();
+        reopened.game.elapsed = 29.95f; reopened.refresh();
+      });
+      touch(reopened, "play");
+      awaitUi(() -> reopened.game.night, "Level10 automatically starts a raid after30 active seconds");
+      check(onUi(() -> reopened.game.roamers.isEmpty() && !reopened.game.enemies.isEmpty()
+          && reopened.game.spawned <= reopened.game.quota()), "Roamers become bounded, real attacking enemies");
+      touch(reopened, "play");
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);

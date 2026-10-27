@@ -21,18 +21,19 @@ final class BoardGeometry {
   }
   static int minimumHeight(float density, float fontScale, boolean wide) {
     float cell = Math.max(48, 28 * fontScale + 12);
-    return (int) Math.ceil(density * (wide ? 5 * cell + 24 : 6 * cell + 30));
+    return (int) Math.ceil(density * (wide ? 3 * cell + 160 : 4 * cell + 198));
   }
-  void layout(int width, int height, float density, boolean wide) {
+  void layout(int width, int height, float density, boolean wide, float fontScale) {
     this.width = width; this.height = height; this.density = density; this.wide = wide;
-    // Grow the edge targets vertically when additional height is available; no hit areas overlap.
-    float gap = 6 * density;
-    float cell = Math.max(48 * density, (height - (wide ? 24 : 30) * density) / (wide ? 5 : 6));
-    float wallHeight = Math.min(cell, 80 * density);
-    fortLeft = 42 * density; fortRight = width - 42 * density;
-    fortTop = wallHeight / 2 + 4 * density; fortBottom = height - fortTop;
+    // Keep the farm compact as the viewport grows. The surrounding terrain belongs to zombies.
+    float gap = 6 * density, wallHeight = 48 * density;
+    float cell = Math.max(48, 28 * fontScale + 12) * density;
+    float farmWidth = Math.min(width - 112 * density, (wide ? 380 : 256) * density);
+    float farmHeight = (wide ? 3 : 4) * cell + (wide ? 64 : 70) * density;
+    fortLeft = (width - farmWidth) / 2; fortRight = width - fortLeft;
+    fortTop = (height - farmHeight) / 2; fortBottom = height - fortTop;
     float left = fortLeft + 26 * density, right = fortRight - 26 * density;
-    float top = fortTop + wallHeight / 2 + 2 * density, bottom = fortBottom - wallHeight / 2 - 2 * density;
+    float top = fortTop + 26 * density, bottom = fortBottom - 26 * density;
     walls[0].set(width / 2f - 24 * density, fortTop - wallHeight / 2, 48 * density, wallHeight);
     walls[1].set(fortRight - 24 * density, height / 2f - wallHeight / 2, 48 * density, wallHeight);
     walls[2].set(width / 2f - 24 * density, fortBottom - wallHeight / 2, 48 * density, wallHeight);
@@ -53,13 +54,15 @@ final class BoardGeometry {
     for (int i = 0; i < 9; i++) plots[i].set(left + (i % 3) * (cw + gap), cropTop + (i / 3) * (ch + gap), cw, ch);
   }
   float worldX(float x) {
-    if (x < .18f) return fortLeft * x / .18f;
-    if (x > .82f) return fortRight + (width - fortRight) * (x - .82f) / .18f;
+    float inset = 12 * density;
+    if (x < .18f) return inset + (fortLeft - inset) * x / .18f;
+    if (x > .82f) return fortRight + (width - inset - fortRight) * (x - .82f) / .18f;
     return fortLeft + (fortRight - fortLeft) * (x - .18f) / .64f;
   }
   float worldY(float y) {
-    if (y < .18f) return fortTop * y / .18f;
-    if (y > .82f) return fortBottom + (height - fortBottom) * (y - .82f) / .18f;
+    float inset = 12 * density;
+    if (y < .18f) return inset + (fortTop - inset) * y / .18f;
+    if (y > .82f) return fortBottom + (height - inset - fortBottom) * (y - .82f) / .18f;
     return fortTop + (fortBottom - fortTop) * (y - .18f) / .64f;
   }
 }

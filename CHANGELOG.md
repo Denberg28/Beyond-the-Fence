@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0-rc.1 · 27 October 2026
+
+- Make the central farm compact, with visible roaming terrain on all four sides. Keep all16 native map actions at least48dp; adapt to orientation/fonts and inset sprites from screen edges.
+- Add4–10 persistent wandering zombies outside the fence during preparation. They become real attackers at their current positions when a raid starts, counted against the existing quota.
+- Scale preparation from75s at player level1 to30s at level10+, and reinforcement spacing from4.8s to1.2s. Show player level and Raid in countdown.
+- Save schema3 preserves roaming positions and migrates schema1/2 farms. Keep a pre-upgrade backup for rollback.
+- Add roaming, frequency, conversion, corner continuity, migration, deterministic continuation and native automatic-raid checks. Existing build/lint/package/API26/API35 gates remain blocking.
+
 ## 0.3.0-rc.1 · 27 October 2026
 
 - Replace split farm/defense lanes with a top-down fortress: enclosed interior farming and building sites, four buildable/upgradeable borders, corner towers and original arcade-style sprites.

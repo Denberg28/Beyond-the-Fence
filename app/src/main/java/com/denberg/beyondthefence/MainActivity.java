@@ -480,7 +480,7 @@ public final class MainActivity extends Activity {
     if (stats == null) return;
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
     stats.setText(game.coins + " coins · " + game.wood + " timber");
-    status.setText("Day " + game.day + " · " + Game.WEATHER[game.weather] + " · Fence "
+    status.setText("Lv " + game.level() + " · Day " + game.day + " · " + Game.WEATHER[game.weather] + " · Fence "
         + Math.round(game.health) + "/" + game.maxHealth());
     stats.setContentDescription(game.coins + " coins, " + game.wood + " timber, level " + game.level());
     play.setText(game.defeated ? "Rebuild" : paused ? "Play" : "Pause");
@@ -498,8 +498,8 @@ public final class MainActivity extends Activity {
     harvest.setText("Harvest\n" + game.readyPlots() + " ready");
     harvest.setEnabled(available && game.readyPlots() > 0);
     harvest.colors(game.readyPlots() > 0 ? GOLD : 0xffe9e5d3, 0xffd2cba9, INK);
-    phase.setText(game.defeated ? "Rebuild\nFree" : game.night ? "Wave " + game.day + "\n" + game.enemies.size() + " foes" : "Night\n" + Math.max(0, (int) Math.ceil(Game.DAY_SECONDS - game.elapsed)) + "s");
-    phase.setContentDescription(game.defeated ? "Rebuild fortress free" : game.night ? "Night wave in progress" : "Start the next zombie wave now");
+    phase.setText(game.defeated ? "Rebuild\nFree" : game.night ? "Raid " + game.day + "\n" + game.enemies.size() + " foes" : "Raid in\n" + game.raidInSeconds() + "s");
+    phase.setContentDescription(game.defeated ? "Rebuild fortress free" : game.night ? "Raid in progress" : "Start the next zombie raid now, automatic raid in " + game.raidInSeconds() + " seconds at level " + game.level());
     phase.setEnabled(!storageBlocked && !ioBusy && (!game.night || game.defeated));
     phase.colors(0xff536f48, 0xffa8bc87, CREAM);
     for (int i = 0; i < 3; i++) {
@@ -549,7 +549,7 @@ public final class MainActivity extends Activity {
     if (hireButton != null) {
       hireButton.setText(!game.buildings[2] ? "Build Barracks first in Farm" : game.mercenaries.size() >= Game.MAX_MERCS ? "Squad full · 6 patrols" : "Hire mercenary · " + game.hireCost() + " coins · 6 timber");
       hireButton.setEnabled(available && game.buildings[2] && game.mercenaries.size() < Game.MAX_MERCS && game.coins >= game.hireCost() && game.wood >= 6);
-      roster.setText("Patrols " + game.mercenaries.size() + "/6 · Blue uniforms\nGuards circle the fence and shoot within range. No upkeep or guard deaths in this candidate.");
+      roster.setText("Patrols " + game.mercenaries.size() + "/6 · Blue uniforms\nGuards circle the fence and shoot within range. Permanent guards · no upkeep.");
     }
     String[] upgrades = {"Watchtower · " + Game.WEAPONS[game.weapon] + "\n+7 damage · faster auto-fire", "Fortress strength · tier " + (game.fence + 1) + "\n+50 maximum strength", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
     for (int i = 0; i < 4; i++) if (upgradeButtons[i] != null) {
@@ -568,7 +568,7 @@ public final class MainActivity extends Activity {
             "1  Open Seeds, then tap farm plots inside your fortress. Harvest ripe crops for coins and timber.\n\n"
                 + "2  Tap N/E/S/W fence markers to close gaps and reinforce borders. Tap interior building plots for a mill, market or barracks.\n\n"
                 + "3  Build barracks and hire mercenaries in Squad. Blue guards patrol the perimeter and fire at nearby zombies. The watchtower also auto-fires.\n\n"
-                + "4  Start a night wave when ready. Survive attacks from all four sides, collect dawn rewards and expand. Progress advances only while playing.")
+                + "4  Zombies roam the terrain outside your compact farm. The raid countdown gets shorter as your level rises:75 seconds at level1, down to30 at level10. Tap Raid in to start a raid early. Guards and the watchtower fight automatically. Progress advances only while playing.")
         .setPositiveButton(
             "Plant the first seed",
             (d, w) -> {

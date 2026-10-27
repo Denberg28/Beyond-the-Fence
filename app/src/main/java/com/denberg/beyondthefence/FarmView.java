@@ -94,6 +94,11 @@ final class FarmView extends View {
       }
     }
     tower(c, l, t, d); tower(c, r, t, d); tower(c, l, b, d); tower(c, r, b, d);
+    for (Game.Roamer roamer : g.roamers) {
+      float x = geometry.worldX(Game.ringX(roamer.progress, roamer.distance));
+      float y = geometry.worldY(Game.ringY(roamer.progress, roamer.distance));
+      fighter(c, x, y, d, false, roamer.type, 0);
+    }
     for (Game.Enemy enemy : g.enemies) {
       float x = geometry.worldX(Game.enemyX(enemy)), y = geometry.worldY(Game.enemyY(enemy));
       float size = d * (enemy.type == 2 ? 1.25f : 1);

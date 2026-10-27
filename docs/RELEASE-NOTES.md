@@ -1,19 +1,12 @@
-Beyond the Fence **0.3.0-rc.1 · Farm Fortress**
+Beyond the Fence **0.4.0-rc.1 · Roaming Zombies**
 
-A top-down castle-defense direction with original colorful arcade artwork.
+- Smaller central farm with more visible wilderness around all four borders; crop/building/fence actions retain48dp touch targets.
+-4 zombies roam outside at player level1, increasing to a maximum10. They cannot harm the farm during preparation. When the raid starts, they turn into actual enemies at their current positions and count toward the wave quota.
+- More frequent attacks as player level rises: preparation75→30 active seconds, reinforcements4.8→1.2 seconds across levels1→10. Player level and a visible Raid in countdown explain the pacing; tap Raid in to start early.
+- Existing fences, timber buildings, mercenary patrols, farming/gear upgrades, weather, local saves, pause and recovery remain.
 
-- Crops and three constructible buildings inside the perimeter: timber mill, market and barracks.
-- Harvest coins and timber; build missing fence sides, reinforce tiers and repair fortress strength.
-- Hire up to6 blue mercenaries. They patrol the actual fence boundary and fire only at spatially nearby zombies.
-- Zombies approach from north/east/south/west. A watchtower provides automatic baseline defense; rally a border from Squad.
-- Tap map plots and wall markers; manage Fence/Farm/Squad/Gear through a paused panel. Compact seed picker and portrait/landscape layout, with native accessible controls and large-font scroll fallback.
-- Day/night, weather, crop/weapon upgrades, free defeat recovery, local checkpoints and backups remain.
-- Paused farms and construction panels stop continuous scene and control refreshes, reducing unnecessary work. Native regression checks cover static paused rendering and bounded UI waits.
+Install **Preview.apk** on Android8.0+. This is a test-signed prerelease, not a stable release. Export your current farm before upgrading/uninstalling. Fresh CI signing certificates may require export→uninstall→install→import.
 
-**Install Preview.apk** (Android8.0+). This is a debug-test-signed prerelease; Unsigned.apk requires signing. Export your existing save before replacing/uninstalling. Fresh CI certificates may require export→uninstall→install→import.
+Schema1/2 backups migrate to schema3, preserving existing farm resources, construction and combat. Schema3 includes wandering zombies and cannot be read by0.3 or older versions. Keep a pre-upgrade backup and the0.3 APK for rollback. An older daytime save adopts the level-based countdown when resumed.
 
-**Save upgrade:** schema1 from0.2 is migrated, retaining coins, crops, progression and upgrades. Migrated farms get a complete matching perimeter and24 timber. Schema2 includes buildings/guards and cannot be loaded by older apps. Keep a pre-upgrade schema1 export and0.2 APK for rollback.
-
-Validation: builds, lint, package/signature checks, JVM economy/migration/spatial patrol tests and exact-artifact API26/35 native pointer/construction/recruitment/lifecycle/rotation/font/checkpoint checks gate publication. Check VERIFICATION.txt for observed results and screenshots. Physical-phone endurance, measured performance, TalkBack and production signing remain BLOCKED. Economy values need player feedback.
-
-Limits: one farm;6 immortal/no-upkeep guards; whole-fortress shared health modified by each attacked side's wall tier; fixed building sites rather than free placement; no audio, cloud sync, multiplayer or offline progress. No copied game assets or new runtime libraries.
+Release gates: JVM economy/combat/roaming/migration/geometry checks, debug/release/test builds, lint, identity/signature audit, and exact-artifact API26/35 native construction/recruitment/roaming/automatic-raid/lifecycle/font/rotation/checkpoint tests. Observed results, checksums, source and screenshots accompany this release. Physical-phone endurance, TalkBack, measured performance and production signing remain unvalidated. Balance needs player feedback; no cloud, ads, purchases or network permission.

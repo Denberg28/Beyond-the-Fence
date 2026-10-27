@@ -18,6 +18,8 @@ public final class Game {
   public static final String[] BUILDINGS = {"Timber mill", "Market", "Barracks"};
   public static final int[] BUILD_COINS = {50, 80, 70}, BUILD_WOOD = {10, 18, 12};
   public static final int MAX_MERCS = 6;
+  public static final int MAX_ROAMERS = 10;
+  public final ArrayList<Roamer> roamers = new ArrayList<>();
   public int wood = 24;
   public final int[] walls = {1, 0, 1, 0};
   public final boolean[] buildings = new boolean[3];
@@ -36,6 +38,21 @@ public final class Game {
 
   public Game() {
     java.util.Arrays.fill(crop, -1);
+    populateRoamers();
+  }
+
+  public float preparationSeconds() { return Math.max(30, DAY_SECONDS - 5 * Math.min(9, level() - 1)); }
+  public float reinforcementSeconds() { return Math.max(1.2f, 4.8f - .4f * Math.min(9, level() - 1)); }
+  public int raidInSeconds() { return (int) Math.ceil(Math.max(0, preparationSeconds() - elapsed)); }
+
+  /** Bounded, deterministic scouts; these are promoted into real enemies when a raid begins. */
+  void populateRoamers() {
+    if (night || defeated) return;
+    int desired = Math.min(MAX_ROAMERS, 3 + level());
+    while (roamers.size() < desired) {
+      int i = roamers.size();
+      roamers.add(new Roamer(i % Math.min(4, day), (i * 2.472f + .23f) % 4, .65f + i % 3 * .1f));
+    }
   }
 
   public int plots() {
@@ -209,10 +226,18 @@ public final class Game {
     night = true;
     elapsed = 0;
     spawned = 0;
-    spawnClock = 0;
+    for (Roamer roamer : roamers) {
+      if (spawned >= quota()) break;
+      float hp = enemyHealth(roamer.type);
+      int side = (int) roamer.progress;
+      enemies.add(new Enemy(roamer.type, side, roamer.distance, hp, hp, roamer.progress - side));
+      spawned++;
+    }
+    roamers.clear();
+    spawnClock = reinforcementSeconds();
     shotClock = 0;
     focusClock = 0;
-    notice = "Night " + day + " · zombies approach every border. Your watchtower and patrols defend the farm.";
+    notice = "Raid " + day + " · Level " + level() + " · roaming zombies are attacking the fence!";
   }
 
   public boolean focus(int targetLane) {
@@ -259,17 +284,20 @@ public final class Game {
     patrol(dt);
     elapsed += dt;
     if (!night) {
-      if (elapsed >= DAY_SECONDS) startNight();
+      populateRoamers();
+      for (Roamer roamer : roamers)
+        roamer.progress = (roamer.progress + dt * (.045f + roamer.type * .008f)) % 4;
+      if (elapsed >= preparationSeconds()) startNight();
       return;
     }
     focusClock = Math.max(0, focusClock - dt);
     spawnClock = Math.max(-.1f, spawnClock - dt);
     if (spawned < quota() && spawnClock <= 0) {
       int kind = random(Math.min(4, day));
-      float hp = new float[] {25, 18, 68, 32}[kind] + Math.min(day - 1, 20) * 2;
+      float hp = enemyHealth(kind);
       enemies.add(new Enemy(kind, random(4), 1, hp, hp, .12f + random(760) / 1000f));
       spawned++;
-      spawnClock = 34f / quota();
+      spawnClock = reinforcementSeconds();
     }
     shotClock = Math.max(-.1f, shotClock - dt);
     if (shotClock <= 0 && !enemies.isEmpty()) {
@@ -310,6 +338,7 @@ public final class Game {
     focusClock = 0;
     health = Math.min(maxHealth(), health + 15);
     weather = random(4);
+    populateRoamers();
     notice =
         "Dawn · +" + reward + " coins. " + WEATHER[weather] + " ahead. Plant, repair, prepare.";
   }
@@ -329,6 +358,8 @@ public final class Game {
     shotClock = 0;
     focusClock = 0;
     weather = random(4);
+    roamers.clear();
+    populateRoamers();
     notice = "A fresh start. Fence rebuilt. Lost " + lost + " coins; crops and upgrades kept.";
   }
 
@@ -391,20 +422,38 @@ public final class Game {
   }
 
   public static float enemyX(Enemy e) {
-    switch (e.lane) {
-      case 0: return .23f + e.offset * .54f;
-      case 1: return .82f + e.x * .18f;
-      case 2: return .77f - e.offset * .54f;
-      default: return .18f - e.x * .18f;
-    }
+    return ringX(e.lane + e.offset, e.x);
   }
 
   public static float enemyY(Enemy e) {
-    switch (e.lane) {
-      case 0: return .18f - e.x * .18f;
-      case 1: return .23f + e.offset * .54f;
-      case 2: return .82f + e.x * .18f;
-      default: return .77f - e.offset * .54f;
+    return ringY(e.lane + e.offset, e.x);
+  }
+
+  public static float ringX(float progress, float distance) {
+    float left = .18f - distance * .18f, right = .82f + distance * .18f;
+    if (progress < 1) return left + progress * (right - left);
+    if (progress < 2) return right;
+    if (progress < 3) return right - (progress - 2) * (right - left);
+    return left;
+  }
+
+  public static float ringY(float progress, float distance) {
+    float top = .18f - distance * .18f, bottom = .82f + distance * .18f;
+    if (progress < 1) return top;
+    if (progress < 2) return top + (progress - 1) * (bottom - top);
+    if (progress < 3) return bottom;
+    return bottom - (progress - 3) * (bottom - top);
+  }
+
+  private float enemyHealth(int type) {
+    return new float[] {25, 18, 68, 32}[type] + Math.min(day - 1, 20) * 2;
+  }
+
+  public static final class Roamer {
+    public int type;
+    public float progress, distance;
+    public Roamer(int type, float progress, float distance) {
+      this.type = type; this.progress = progress; this.distance = distance;
     }
   }
 
