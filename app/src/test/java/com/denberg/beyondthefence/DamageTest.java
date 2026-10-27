@@ -20,7 +20,7 @@ public class DamageTest {
     Game g = fight(); g.plant(0, 0);
     Game.Enemy e = new Game.Enemy(2, 0, 0, 200, 200); g.enemies.add(e);
     g.tick(.1f);
-    assertEquals(79, g.wallHealth[0], .001f); assertEquals(80, g.wallHealth[2], 0);
+    assertEquals(77.5f, g.wallHealth[0], .001f); assertEquals(80, g.wallHealth[2], 0);
     assertEquals(100, g.health, 0); assertEquals(40, g.cropHealth[0], 0); assertFalse(e.breached);
     g.wallHealth[0] = .1f; g.tick(.1f);
     assertEquals(0, g.wallHealth[0], 0); assertTrue(e.breached);

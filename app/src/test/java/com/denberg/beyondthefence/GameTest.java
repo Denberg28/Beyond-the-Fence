@@ -80,9 +80,9 @@ public class GameTest {
     assertFalse(g.plant(-1, 0));
     assertFalse(g.plant(6, 0));
     assertFalse(g.plant(0, 7));
-    g.xp = 50;
+    g.day = 2;
     assertTrue(g.plant(0, 1));
-    g.xp = 100;
+    g.day = 3;
     assertTrue(g.plant(1, 2));
   }
 
@@ -122,22 +122,25 @@ public class GameTest {
   }
 
   @Test
-  public void firstNightIsWinnableWithoutSpending() {
-    Game g = new Game();
-    g.startNight();
-    seconds(g, 75);
-    assertFalse(g.defeated);
-    assertFalse(g.night);
-    assertEquals(2, g.day);
-    assertTrue(g.kills >= 7);
-    assertTrue(g.coins > 80);
+  public void firstNightIsWinnableThroughTheRealHarvestEconomy() {
+    Game g = new Game(); assertTrue(g.buildWall(1)); assertTrue(g.buildWall(3));
+    for (int t = 0; t < 750; t++) {
+      g.harvestAll(); g.plantAll(0);
+      if (!g.buildings[2] && g.coins >= 94) g.construct(2);
+      if (g.coins >= g.hireCost() + 24) g.hire();
+      g.tick(.1f);
+    }
+    assertEquals(2, g.mercenaries.size());
+    for (int t = 0; t < 2000 && g.day == 1 && !g.defeated; t++) g.tick(.1f);
+    assertFalse(g.defeated); assertEquals(2, g.day); assertEquals(10, g.kills);
+    assertTrue(g.coins >= 4); assertTrue(g.lostCrops > 0);
   }
 
   @Test
   public void defeatAndFreeRecoveryKeepInvestments() {
     Game g = new Game();
     g.plant(0, 0);
-    g.weapon = 2;
+    g.weapon = 2; g.mercenaries.clear();
     g.health = .01f;
     g.night = true;
     Game.Enemy intruder = new Game.Enemy(2, 0, 0, 200, 200);
@@ -190,19 +193,16 @@ public class GameTest {
     assertFalse(g.rally(-1)); assertFalse(g.rally(4));
     assertTrue(g.rally(2)); assertEquals(25, foe.hp, 0);
     float before = g.mercenaries.get(0).progress;
-    seconds(g, 4); assertTrue(g.mercenaries.get(0).progress > before);
+    seconds(g, 10); assertTrue(g.mercenaries.get(0).progress > before);
     assertTrue(g.kills > 0); g.resumePatrol(); assertEquals(-1, g.lane);
   }
 
   @Test
-  public void zeroCoinsStillRecoverEconomy() {
-    Game g = new Game();
-    g.coins = 0;
-    g.startNight();
-    seconds(g, 75);
-    assertFalse(g.defeated);
-    assertTrue(g.coins >= 4);
-    assertTrue(g.plant(0, 0));
+  public void zeroCoinsCanRecoverWithoutWinningAFreeRaid() {
+    Game g = new Game(); g.coins = 0; g.startNight(); seconds(g, 180);
+    assertTrue(g.defeated); int day = g.day; g.recover();
+    assertEquals(day, g.day); assertTrue(g.coins >= 4); assertTrue(g.plant(0, 0));
+    assertEquals(1, g.mercenaries.size());
   }
 
   @Test
@@ -281,32 +281,17 @@ public class GameTest {
   }
 
   @Test
-  public void twentyDayProgressionRemainsSolvent() throws Exception {
-    Game g = new Game();
-    int steps = 0;
-    while (g.day <= 20 && steps++ < 120000) {
-      if (!g.night) {
-        for (int p = 0; p < g.plots(); p++) {
-          if (g.crop[p] < 0) g.plant(p, Math.min(2, g.unlockedCrops() - 1));
-          else g.harvest(p);
-        }
-        if (g.health < g.maxHealth() * .7f) g.repair();
-        if (!g.buildings[2] && g.coins >= 106 && g.wood >= 12) g.construct(2);
-        int desiredGuards = g.day >= 10 ? 3 : 2;
-        if (g.buildings[2] && g.mercenaries.size() < desiredGuards && g.coins >= g.hireCost() + 36 && g.wood >= 6) g.hire();
-        for (int kind = 0; kind < 4; kind++)
-          if (!g.maxed(kind) && g.coins >= g.cost(kind) + 36) g.upgrade(kind);
-      }
-      g.tick(.1f);
-      if (steps % 100 == 0) SaveCodec.decode(SaveCodec.encode(g));
-      assertFalse("Defeat on day " + g.day, g.defeated);
-      assertTrue(g.coins >= 0);
-      assertTrue(g.enemies.size() <= 45);
+  public void repeatedSurvivalLossesKeepEconomyAndSavesRecoverable() throws Exception {
+    Game g = new Game(); g.day = 7; g.mercenaries.clear();
+    for (int attempt = 0; attempt < 20; attempt++) {
+      g.coins = 0; g.startNight(); seconds(g, 180);
+      assertTrue(g.defeated); assertEquals(7, g.day);
+      g = SaveCodec.decode(SaveCodec.encode(g)); g.recover();
+      assertFalse(g.defeated); assertTrue(g.coins >= 12);
+      assertTrue(g.plant(0, 0)); assertTrue(g.enemies.isEmpty());
+      assertTrue(g.mercenaries.size() <= 3);
+      g = SaveCodec.decode(SaveCodec.encode(g));
     }
-    assertEquals(21, g.day);
-    assertTrue(g.harvested > 100);
-    assertTrue(g.level() > 5);
-    assertTrue(g.weapon >= 3);
   }
 
   @Test

@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 5;
+  private static final int MAGIC = 0x42544653, VERSION = 6;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -71,6 +71,7 @@ public final class SaveCodec {
       d.writeBoolean(enemy.breached); d.writeFloat(enemy.advance);
       d.writeFloat(enemy.attackClock); d.writeInt(enemy.target);
     }
+    for (Game.Mercenary merc : g.mercenaries) d.writeFloat(merc.health);
     d.flush();
     CRC32 crc = new CRC32();
     crc.update(body.toByteArray());
@@ -124,10 +125,10 @@ public final class SaveCodec {
     integer(g.land, 0, 1);
     integer(g.kills, 0, Integer.MAX_VALUE);
     integer(g.harvested, 0, Integer.MAX_VALUE);
-    integer(g.spawned, 0, g.quota());
+    integer(g.spawned, 0, version >= 6 ? g.quota() : 45);
     integer(g.lane, version >= 5 ? -1 : 0, version == 1 ? 2 : 3);
     number(g.health, 0, g.maxHealth());
-    number(g.elapsed, 0, 75.2f);
+    number(g.elapsed, 0, version >= 6 ? 86400 : 75.2f);
     number(g.shotClock, -.2f, 1);
     number(g.spawnClock, -.2f, 7);
     number(g.focusClock, 0, 3);
@@ -146,7 +147,7 @@ public final class SaveCodec {
       integer(t, 0, 3);
       integer(lane, 0, version == 1 ? 2 : 3);
       number(x, 0, 1);
-      number(max, 1, 200);
+      number(max, 1, version >= 6 ? 400 : 200);
       number(hp, .001f, max);
       float offset = version == 1 ? .5f : in.readFloat();
       number(offset, 0, 1);
@@ -157,11 +158,11 @@ public final class SaveCodec {
       for (int i = 0; i < 4; i++) { g.walls[i] = in.readInt(); integer(g.walls[i], 0, 3); }
       for (int i = 0; i < 3; i++) g.buildings[i] = in.readBoolean();
       g.productionClock = in.readFloat(); number(g.productionClock, 0, 12);
-      int mercs = in.readInt(); integer(mercs, 0, Game.MAX_MERCS);
+      int mercs = in.readInt(); integer(mercs, 0, version >= 6 ? Game.MAX_MERCS : 6);
       range(version >= 4 || mercs == 0 || g.buildings[2]);
       for (int i = 0; i < mercs; i++) {
         float progress = in.readFloat(), clock = in.readFloat(), tx = in.readFloat(), ty = in.readFloat();
-        number(progress, 0, 3.9999998f); number(clock, 0, .9f);
+        number(progress, 0, 3.9999998f); number(clock, 0, version >= 6 ? 1.2f : .9f);
         number(tx, 0, 1); number(ty, 0, 1);
         g.mercenaries.add(new Game.Mercenary(progress, clock, tx, ty));
       }
@@ -210,6 +211,10 @@ public final class SaveCodec {
       for (int i = 0; i < 9; i++) g.cropHealth[i] = g.crop[i] < 0 ? 0 : Game.CROP_HEALTH;
       for (int i = 0; i < 3; i++) g.buildingHealth[i] = g.buildings[i] ? Game.BUILDING_HEALTH : 0;
     }
+    for (Game.Mercenary merc : g.mercenaries) {
+      merc.health = version >= 6 ? in.readFloat() : g.guardMaxHealth();
+      number(merc.health, .001f, g.guardMaxHealth());
+    }
     range(g.night || count == 0);
     range(!g.defeated || g.health == 0);
     range(in.readLong() == crc.getValue());
@@ -217,6 +222,14 @@ public final class SaveCodec {
     if (version < 5) {
       g.lane = -1; g.shotClock = 0; g.focusClock = 0;
       g.ensureVolunteer();
+    }
+    if (version < 6) {
+      // Honor old six-person investments once, then enforce the survival squad cap.
+      for (int i = g.mercenaries.size() - 1; i >= Game.MAX_MERCS; i--) {
+        g.coins = Math.min(10_000_000, g.coins + 55 + i * 25);
+        g.wood = Math.min(10_000_000, g.wood + 6);
+        g.mercenaries.remove(i);
+      }
     }
     g.notice = version == 1 ? "Farm upgraded to fortress format. Existing crops and upgrades kept."
         : "Fortress restored. Resume when ready.";

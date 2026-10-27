@@ -13,7 +13,8 @@ final class FarmView extends View {
   long renderedFrames;
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final RectF rect = new RectF();
-  private final Path heartShape = new Path();
+  private final Path woods = new Path();
+  private static final int[] UNIFORM_COLORS = {0xff897b60, 0xff4d774b, 0xffb6a36f, 0xff687f8c, 0xff315b42, 0xff303d48};
   private final Supplier<Game> model;
   private final Supplier<Boolean> paused;
   private final BoardGeometry geometry;
@@ -40,6 +41,28 @@ final class FarmView extends View {
     // Every frame starts opaque; weather cannot leak alpha into subsequent backgrounds.
     color(g.night ? 0xff213e32 : 0xff4b793a);
     c.drawRect(0, 0, getWidth(), getHeight(), p);
+    // Distant woodland, worn approach tracks, rock outcrops and abandoned camp debris.
+    for (int band = 0; band < 3; band++) {
+      color(g.night ? 0xff182f2c + band * 0x00050502 : 0xff385a38 + band * 0x00070702);
+      woods.reset(); woods.moveTo(0, 0);
+      for (int tree = 0; tree <= 20; tree++) {
+        float tx = tree * getWidth() / 20f;
+        woods.lineTo(tx - 10 * d, (18 + band * 8 + tree % 3 * 3) * d);
+        woods.lineTo(tx, (3 + band * 6 + tree % 2 * 4) * d);
+        woods.lineTo(tx + 10 * d, (18 + band * 8 + tree % 3 * 3) * d);
+      }
+      woods.lineTo(getWidth(), 0); woods.close(); c.drawPath(woods, p);
+    }
+    float road = geometry.worldX(.50f);
+    line(c, road - 5 * d, getHeight(), road + 16 * d, geometry.fortBottom, g.night ? 0xff4c5140 : 0xffa39b70, 27 * d);
+    for (int stone = 0; stone < 12; stone++) {
+      float sx = stone % 2 == 0 ? 10 * d : getWidth() - 14 * d;
+      float sy = (50 + stone * 47) * d % getHeight();
+      box(c, sx, sy, (8 + stone % 3 * 3) * d, 6 * d, 2 * d, g.night ? 0xff43534d : 0xff87907a);
+      line(c, sx, sy, sx + 6 * d, sy - d, 0x55747c6c, d);
+    }
+    box(c, 3 * d, getHeight() - 39 * d, 22 * d, 12 * d, 2 * d, 0xff58554a);
+    line(c, 5 * d, getHeight() - 40 * d, 20 * d, getHeight() - 30 * d, 0xff99866b, 3 * d);
     float l = geometry.fortLeft, t = geometry.fortTop, r = geometry.fortRight, b = geometry.fortBottom;
     for (int i = 0; i < 50; i++) {
       float x = ((i * 131 + 19) * d) % getWidth(), y = ((i * 97 + 7) * d) % getHeight();
@@ -129,13 +152,6 @@ final class FarmView extends View {
       }
     }
     post(c, l, t, d); post(c, r, t, d); post(c, l, b, d); post(c, r, b, d);
-    for (int side = 0; side < 4; side++) {
-      float hx = side == 1 ? r : side == 3 ? l : (l + r) / 2;
-      float hy = side == 0 ? t - 34 * d : side == 2 ? b + 34 * d : (t + b) / 2 - 34 * d;
-      float hearts = 3 * g.fenceHeartRatio(side);
-      for (int unit = 0; unit < 3; unit++)
-        heart(c, hx + (unit - 1) * 11 * d, hy, 4.5f * d, Math.max(0, Math.min(1, hearts - unit)));
-    }
     for (Game.Roamer roamer : g.roamers) {
       float x = geometry.worldX(Game.ringX(roamer.progress, roamer.distance));
       float y = geometry.worldY(Game.ringY(roamer.progress, roamer.distance));
@@ -163,7 +179,9 @@ final class FarmView extends View {
       float angle = (float) Math.atan2(geometry.worldY(merc.targetY) - y, geometry.worldX(merc.targetX) - x);
       if (merc.shotClock > g.guardInterval() - .16f && !paused.get() && !g.reducedMotion)
         line(c, x, y, geometry.worldX(merc.targetX), geometry.worldY(merc.targetY), 0xb3ffe48c, d);
-      fighter(c, x, y, d, true, 0, angle);
+      fighter(c, x, y, d, true, g.weapon, angle);
+      box(c, x - 7 * d, y - 15 * d, 14 * d, 2 * d, 0, 0xff302f2b);
+      box(c, x - 7 * d, y - 15 * d, 14 * d * merc.health / g.guardMaxHealth(), 2 * d, 0, 0xff7ecddd);
     }
     if (g.weather == 1)
       for (int i = 0; i < 30; i++) {
@@ -176,20 +194,6 @@ final class FarmView extends View {
   private void post(Canvas c, float x, float y, float d) {
     box(c, x - 3 * d, y - 3 * d, 6 * d, 6 * d, d, 0xffb7a073);
     box(c, x - d, y - d, 2 * d, 2 * d, 0, 0xff6f593c);
-  }
-
-  /** Filled, partial and empty hearts show the actual fraction, independently of text/font size. */
-  private void heart(Canvas c, float x, float y, float size, float fill) {
-    heartShape.reset();
-    heartShape.moveTo(x, y + size);
-    heartShape.cubicTo(x - 2 * size, y - .2f * size, x - size, y - 1.7f * size, x, y - .7f * size);
-    heartShape.cubicTo(x + size, y - 1.7f * size, x + 2 * size, y - .2f * size, x, y + size);
-    heartShape.close();
-    color(0xff413b34); c.drawPath(heartShape, p);
-    c.save(); c.clipRect(x - 1.3f * size, y - 1.4f * size, x - 1.3f * size + 2.6f * size * fill, y + 1.2f * size);
-    color(0xffed7867); c.drawPath(heartShape, p); c.restore();
-    color(0xfff0d8ac); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(size * .2f); c.drawPath(heartShape, p);
-    p.setStyle(Paint.Style.FILL);
   }
 
   private void zombie(Canvas c, float x, float y, float d, int type, float phase, boolean attacking) {
@@ -264,10 +268,13 @@ final class FarmView extends View {
   }
   private void fighter(Canvas c, float x, float y, float d, boolean friendly, int type, float angle) {
     circle(c, x, y + 4 * d, 8 * d, 0x44302922);
-    box(c, x - 6 * d, y - 2 * d, 12 * d, 11 * d, 2 * d, friendly ? 0xff2e6596 : COATS[type]);
+    box(c, x - 6 * d, y - 2 * d, 12 * d, 11 * d, 2 * d, UNIFORM_COLORS[type]);
     circle(c, x, y - 5 * d, 5 * d, friendly ? 0xffe2b878 : 0xffa5c06e);
-    box(c, x - 5 * d, y - 10 * d, 10 * d, 4 * d, 1, friendly ? 0xff264c78 : 0xff557044);
+    box(c, x - 5 * d, y - 10 * d, 10 * d, 4 * d, 1, type >= 3 ? 0xff354952 : 0xff596345);
     if (friendly) {
+      if (type >= 2) box(c, x - 4 * d, y - d, 8 * d, 7 * d, d, type >= 4 ? 0xff263d34 : 0xff6a7269);
+      for (int stripe = 0; stripe < Math.min(type, 3); stripe++)
+        line(c, x - 5 * d, y + stripe * 2 * d, x - 2 * d, y + stripe * 2 * d, 0xffe3cc83, d);
       line(c, x + 3 * d, y, x + (float) Math.cos(angle) * 12 * d,
           y + (float) Math.sin(angle) * 12 * d, 0xff2c3029, 3 * d);
       box(c, x - d, y - 8 * d, 2 * d, 2 * d, 0, 0xfff4d26e);

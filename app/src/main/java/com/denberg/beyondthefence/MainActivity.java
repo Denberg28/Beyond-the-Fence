@@ -22,6 +22,8 @@ public final class MainActivity extends Activity {
       MUTED = 0xff52665b,
       GOLD = 0xfff0cd7b;
   Game game;
+  SurvivalMusic music;
+  boolean musicEnabled;
   boolean paused = true, storageBlocked;
   private boolean foreground, ioBusy;
   private int selectedCrop, buildTab, selectedWall;
@@ -86,6 +88,8 @@ public final class MainActivity extends Activity {
       selectedWall = Math.max(0, Math.min(3, state.getInt("wall")));
       selectedCrop = Math.max(0, Math.min(game.unlockedCrops() - 1, state.getInt("seed")));
     }
+    musicEnabled = getPreferences(MODE_PRIVATE).getBoolean("music", true);
+    music = new SurvivalMusic(this);
     buildUi();
     if (buildOpen) showBuild();
     refresh();
@@ -131,6 +135,7 @@ public final class MainActivity extends Activity {
     super.onWindowFocusChanged(hasFocus);
     // System overlays can remove focus before onPause (or without pausing the Activity).
     if (hasFocus) immersive();
+    if (!hasFocus && music != null) music.update(false);
     if (!hasFocus && game != null && !paused) {
       paused = true;
       save();
@@ -141,6 +146,7 @@ public final class MainActivity extends Activity {
   @Override
   protected void onPause() {
     foreground = false;
+    if (music != null) music.update(false);
     paused = true;
     if (session.observer == this) session.observer = null;
     handler.removeCallbacks(frame);
@@ -151,6 +157,7 @@ public final class MainActivity extends Activity {
   @Override
   protected void onDestroy() {
     handler.removeCallbacksAndMessages(null);
+    if (music != null) music.close();
     if (session.observer == this) session.observer = null;
     fileWorker.shutdown();
     super.onDestroy();
@@ -487,9 +494,9 @@ public final class MainActivity extends Activity {
     if (stats == null) return;
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
     label(stats, game.coins + " coins · " + game.wood + " timber");
-    label(status, "Lv " + game.level() + " · Day " + game.day + " · " + Game.WEATHER[game.weather] + " · Farm "
+    label(status, "Day " + game.day + " · " + Game.WEATHER[game.weather] + " · Farm "
         + Math.round(game.health) + "/" + game.maxHealth());
-    stats.setContentDescription(game.coins + " coins, " + game.wood + " timber, level " + game.level());
+    stats.setContentDescription(game.coins + " coins, " + game.wood + " timber");
     label(play, game.defeated ? "Rebuild" : paused ? "Play" : "Pause");
     play.setContentDescription(game.defeated ? "Recover homestead free and resume" : paused ? "Resume game" : "Pause game");
     play.setEnabled(!storageBlocked && !ioBusy && !buildOpen);
@@ -506,16 +513,16 @@ public final class MainActivity extends Activity {
     harvest.setEnabled(available && game.readyPlots() > 0);
     harvest.colors(game.readyPlots() > 0 ? GOLD : 0xffe9e5d3, 0xffd2cba9, INK);
     label(phase, game.defeated ? "Rebuild\nFree" : game.night ? "Raid " + game.day + "\n" + game.enemies.size() + " foes" : "Raid in\n" + game.raidInSeconds() + "s");
-    phase.setContentDescription(game.defeated ? "Rebuild fortress free" : game.night ? "Raid in progress" : "Start the next zombie raid now, automatic raid in " + game.raidInSeconds() + " seconds at level " + game.level());
+    phase.setContentDescription(game.defeated ? "Rebuild fortress free" : game.night ? "Raid in progress" : "Start the next zombie raid now, automatic raid in " + game.raidInSeconds() + " seconds");
     phase.setEnabled(!storageBlocked && !ioBusy && (!game.night || game.defeated));
     phase.colors(0xff536f48, 0xffa8bc87, CREAM);
     for (int i = 0; i < 3; i++) {
       boolean unlocked = i < game.unlockedCrops(), selected = selectedCrop == i;
       label(cropButtons[i], unlocked ? Game.CROPS[i] + "\n" + Game.SEED[i] + "c · sell " + game.sale(i)
-          : Game.CROPS[i] + "\nLevel " + (i + 1));
+          : Game.CROPS[i] + "\nDay " + (i + 1));
       cropButtons[i].setEnabled(unlocked && !storageBlocked && !ioBusy);
       cropButtons[i].setSelected(selected);
-      cropButtons[i].setContentDescription(Game.CROPS[i] + (unlocked ? ", seed " + Game.SEED[i] + " coins, sells for " + game.sale(i) + " coins and " + (2 + 2 * i) + " timber" + (selected ? ", selected" : "") : ", unlocks at level " + (i + 1)));
+      cropButtons[i].setContentDescription(Game.CROPS[i] + (unlocked ? ", seed " + Game.SEED[i] + " coins, sells for " + game.sale(i) + " coins and " + (2 + 2 * i) + " timber" + (selected ? ", selected" : "") : ", available on day " + (i + 1)));
       cropButtons[i].colors(selected ? GOLD : 0xffe9e5d3, selected ? GOLD : 0xff9baf83, INK);
       label(buildingButtons[i], new String[] {"Mill", "Shop", "Camp"}[i]
           + (game.buildingRuins[i] ? "\nRuins" : game.buildings[i] && game.buildingHealth[i] < Game.BUILDING_HEALTH
@@ -536,16 +543,16 @@ public final class MainActivity extends Activity {
     for (int i = 0; i < 4; i++) {
       int tier = game.walls[i];
       boolean damaged = game.wallDamaged(i), breached = tier > 0 && game.wallHealth[i] <= 0;
-      String marker = tier == 0 ? "Gap" : "♥" + Math.round(game.wallHealth[i]);
+      String marker = tier == 0 ? "Gap" : Math.round(game.wallHealth[i]) + "HP";
       label(wallButtons[i], Game.SIDES[i].substring(0, 1)
           + (getResources().getConfiguration().fontScale >= 1.5f ? "" : "\n" + marker));
       wallButtons[i].setContentDescription(Game.SIDES[i] + " fence, " + (tier == 0 ? "open gap" : Game.FENCE_MATERIALS[tier] + " material, tier " + tier
-          + ", three-heart meter, health " + Math.round(game.wallHealth[i]) + " of " + Math.round(game.maxWallHealth(i))
+          + ", health " + Math.round(game.wallHealth[i]) + " of " + Math.round(game.maxWallHealth(i))
           + (breached ? ", breached, zombies can enter" : "")) + ", tap to build or repair");
       wallButtons[i].colors(breached ? 0xdd853c32 : damaged ? 0xdd77532e : tier == 0 ? 0xcc5f4630 : 0xcc263e32,
           selectedWall == i ? GOLD : 0xffc0a274, CREAM);
       if (wallPurchase[i] != null) {
-        label(wallPurchase[i], Game.SIDES[i] + " · " + Game.FENCE_MATERIALS[tier] + " · ♥ " + Math.round(game.wallHealth[i]) + "/" + Math.round(game.maxWallHealth(i)) + "HP\n" + (damaged ? "REPAIR · " + Math.round(game.wallHealth[i]) + "/"
+        label(wallPurchase[i], Game.SIDES[i] + " · " + Game.FENCE_MATERIALS[tier] + " · " + Math.round(game.wallHealth[i]) + "/" + Math.round(game.maxWallHealth(i)) + "HP\n" + (damaged ? "REPAIR · " + Math.round(game.wallHealth[i]) + "/"
             + Math.round(game.maxWallHealth(i)) + "HP\n8 coins · 4 timber · +50 health"
             : tier == 0 ? "BUILD WOOD FENCE\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber"
             : tier >= 3 ? "Steel · MAX · " + Math.round(game.wallHealth[i]) + "HP"
@@ -572,21 +579,22 @@ public final class MainActivity extends Activity {
       repairOverlay.setEnabled(available && game.health < game.maxHealth() && game.coins >= 8);
     }
     if (hireButton != null) {
-      label(hireButton, !game.buildings[2] ? "Build Barracks first in Farm" : game.mercenaries.size() >= Game.MAX_MERCS ? "Squad full · 6 patrols" : "Hire mercenary · " + game.hireCost() + " coins · 6 timber");
+      label(hireButton, !game.buildings[2] ? "Build Barracks first in Farm" : game.mercenaries.size() >= Game.MAX_MERCS ? "Squad full · 3 survivors" : "Hire mercenary · " + game.hireCost() + " coins · 6 timber");
       hireButton.setEnabled(available && game.buildings[2] && game.mercenaries.size() < Game.MAX_MERCS && game.coins >= game.hireCost() && game.wood >= 6);
-      label(roster, "Mercenaries " + game.mercenaries.size() + "/6 · " + Game.TRAINING[game.weapon]
+      label(roster, "Mercenaries " + game.mercenaries.size() + "/3 · " + Game.UNIFORMS[game.weapon]
           + "\n" + game.guardDamage() + " damage per shot · " + (game.lane < 0 ? "Patrolling" : "Rally: " + Game.SIDES[game.lane])
-          + "\nYour guards are the only fighters. Permanent crew · no upkeep.");
+          + "\nShort range: rally to threatened borders. Breached zombies can kill guards. Crew heals during preparation.");
       for (int side = 0; side < 4; side++) if (rallyButtons[side] != null)
         rallyButtons[side].colors(game.lane == side ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
       if (patrolButton != null) patrolButton.setEnabled(available && game.lane >= 0);
     }
-    String[] upgrades = {"Mercenary training · " + Game.TRAINING[game.weapon] + "\n+4 damage for every guard · faster fire", "Fortify · tier " + (game.fence + 1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
+    String[] upgrades = {"Uniform · " + Game.UNIFORMS[game.weapon] + "\n+3 damage · +20 crew health · armor · faster fire", "Fortify · tier " + (game.fence + 1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
     for (int i = 0; i < 4; i++) if (upgradeButtons[i] != null) {
       label(upgradeButtons[i], upgrades[i] + (game.maxed(i) ? " · MAX" : "\n" + game.cost(i) + " coins"));
       upgradeButtons[i].setEnabled(available && !game.maxed(i) && game.coins >= game.cost(i));
     }
     label(buildResources, game.coins + " coins · " + game.wood + " timber · game paused");
+    if (music != null) music.update(musicEnabled && foreground && hasWindowFocus() && !paused && game.night && !game.defeated && !storageBlocked && !ioBusy);
     scene.invalidate();
   }
 
@@ -596,9 +604,9 @@ public final class MainActivity extends Activity {
         .setTitle("Your farm. Your last safe place.")
         .setMessage(
             "1  Open Seeds, then tap farm plots inside your fortress. Harvest ripe crops for coins and timber.\n\n"
-                + "2  Fence hearts show remaining life. Upgrade Wood to Stone to Steel. Zombies damage individual fences. A breach lets them enter and destroy crops and buildings. Tap N/E/S/W to build or repair; Fence sells 10 timber for 12 harvest coins.\n\n"
-                + "3  One volunteer guard starts with you. Your mercenaries are the only fighters. Harvest to build barracks and hire more through Crew. Gear trains all guards; Crew can rally them to a border or resume patrol.\n\n"
-                + "4  Zombies roam the terrain outside your compact farm. The raid countdown gets shorter as your level rises:75 seconds at level1, down to30 at level10. Tap Raid in to start a raid early. Mercenaries fight automatically within range. Progress advances only while playing.")
+                + "2  Fence bars and HP show damage. Upgrade Wood to Stone to Steel. Zombies damage individual fences. A breach lets them enter and destroy crops and buildings. Tap N/E/S/W to build or repair; Fence sells 10 timber for 12 harvest coins.\n\n"
+                + "3  One volunteer guard starts with you. Your mercenaries are the only fighters. Harvest to build barracks and hire more through Crew. Maximum three mercenaries. Gear upgrades their uniforms, firepower and armor; Crew can rally them to a border or resume patrol.\n\n"
+                + "4  Zombies roam the terrain outside your compact farm. Each day brings a faster, stronger horde. Runners rush, Brutes smash, Spitters attack at range. Raids end only when every zombie is killed. A breach can wipe out your crew and farm. Tap Raid in to start a raid early. Mercenaries fight automatically within range. Progress advances only while playing.")
         .setPositiveButton(
             "Plant the first seed",
             (d, w) -> {
@@ -622,7 +630,8 @@ public final class MainActivity extends Activity {
       "Export save backup",
       "Import save backup",
       "New farm (reset progress)",
-      "Resume game"
+      "Resume game",
+      musicEnabled ? "Action music: ON" : "Action music: OFF"
     };
     new AlertDialog.Builder(this)
         .setTitle("Take a breather")
@@ -667,7 +676,11 @@ public final class MainActivity extends Activity {
                         })
                     .setNegativeButton("Cancel", null)
                     .show();
-              else if (!storageBlocked && !ioBusy) {
+              else if (which == 7) {
+                musicEnabled = !musicEnabled;
+                getPreferences(MODE_PRIVATE).edit().putBoolean("music", musicEnabled).apply();
+                refresh(); options();
+              } else if (!storageBlocked && !ioBusy) {
                 paused = false;
                 lastFrame = SystemClock.elapsedRealtime();
                 refresh();

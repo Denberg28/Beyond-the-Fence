@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0-rc.1 — Survival pressure
+
+- Removed player levels/XP progression and all fence hearts; day controls escalation and crop availability.
+- Fixed map-wide guard coverage: short-range three-person crew, with six visible uniform tiers, armor, injury, death and preparation healing.
+- Faster, stronger zombie variants and denser daily hordes. Surviving enemies no longer vanish at75s; defeat retries the same day.
+- Added original procedural woodland/road/debris scenery and a generated120BPM action score with persistent mute and lifecycle/audio-focus handling.
+- Save schema6 migrates old squads with one-time excess-hire refunds; preserves damage and investments.
+- Added deterministic Day3 breach/wipeout versus upgraded survival, Day12 threat, casualty, healing, migration and native audio/cap/uniform checks.
+
 ## 0.6.0-rc.1 · 27 October 2026
 
 - Remove towers, structure auto-fire and instant focus shots. Mercenaries are the only attackers; rally physically moves them to a border, and Patrol releases the order.

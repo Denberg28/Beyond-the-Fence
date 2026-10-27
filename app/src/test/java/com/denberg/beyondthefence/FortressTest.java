@@ -37,7 +37,7 @@ public class FortressTest {
     int coins = g.coins, price = g.hireCost(); assertTrue(g.hire()); assertEquals(coins - price, g.coins);
     for (int i = g.mercenaries.size(); i < Game.MAX_MERCS; i++) assertTrue(g.hire());
     coins = g.coins; int wood = g.wood;
-    assertFalse(g.hire()); assertEquals(6, g.mercenaries.size());
+    assertFalse(g.hire()); assertEquals(3, g.mercenaries.size());
     assertEquals(coins, g.coins); assertEquals(wood, g.wood);
   }
   @Test public void guardsPatrolAndOnlyShootTargetsInSpatialRange() {
@@ -93,7 +93,7 @@ public class FortressTest {
     restored.wood = 1; restored.mercenaries.get(0).progress = Float.NaN;
     try { SaveCodec.decode(SaveCodec.encode(restored)); fail(); } catch (IOException expected) { }
   }
-  @Test public void allFourBordersAreReachableAndFirstWaveHasNoEconomicSoftlock() {
+  @Test public void allFourBordersAreReachableAndDefeatHasNoEconomicSoftlock() {
     Game g = new Game(); boolean[] seen = new boolean[4]; g.day = 4; g.fence = 4; g.health = 300;
     for (int wave = 0; wave < 3; wave++) {
       g.startNight();
@@ -104,6 +104,6 @@ public class FortressTest {
     }
     for (boolean side : seen) assertTrue(side);
     Game poor = new Game(); poor.coins = 0; poor.wood = 0; poor.startNight(); seconds(poor, 75);
-    assertFalse(poor.defeated); assertTrue(poor.coins >= 4); assertTrue(poor.wood >= 6);
+    assertTrue(poor.defeated); poor.recover(); assertTrue(poor.coins >= 12); assertTrue(poor.plant(0, 0));
   }
 }

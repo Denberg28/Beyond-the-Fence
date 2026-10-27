@@ -20,11 +20,11 @@ public class GuardDefenseTest {
     Game saved = SaveCodec.decode(SaveCodec.encode(g)); assertTrue(saved.mercenaries.isEmpty());
   }
 
-  @Test public void volunteerMakesFirstRaidWinnableWithoutBuyingAnything() {
+  @Test public void starterGuardCannotProvideMapWideProtection() {
     Game g = new Game(); assertEquals(1, g.mercenaries.size()); assertFalse(g.buildings[2]);
-    g.coins = 0; g.wood = 0; g.startNight(); seconds(g, 75);
-    assertFalse(g.defeated); assertEquals(2, g.day); assertTrue(g.kills >= 7);
-    assertTrue(g.coins >= 4); assertTrue(g.plant(0, 0));
+    g.coins = 0; g.wood = 0; g.startNight(); seconds(g, 180);
+    assertTrue(g.defeated); assertTrue(g.day == 1);
+    g.recover(); assertTrue(g.coins >= 12); assertTrue(g.plant(0, 0));
   }
 
   @Test public void trainingImprovesActualGuardShotsAndCadence() {
@@ -33,22 +33,22 @@ public class GuardDefenseTest {
       g.night = true; g.roamers.clear(); g.spawned = g.quota();
       g.enemies.add(new Game.Enemy(0, 0, .1f, 200, 200)); g.tick(.1f);
     }
-    assertEquals(184, recruit.enemies.get(0).hp, 0); assertEquals(180, trained.enemies.get(0).hp, 0);
+    assertEquals(184, recruit.enemies.get(0).hp, 0); assertEquals(181, trained.enemies.get(0).hp, 0);
     assertTrue(trained.guardInterval() < recruit.guardInterval());
   }
 
-  @Test public void materialUpgradesAndRepairsDriveRealHeartFractions() {
+  @Test public void materialUpgradesAndRepairsDriveRealHealthFractions() {
     Game g = new Game(); g.coins = 1000; g.wood = 100;
-    assertEquals(0, g.fenceHeartRatio(1), 0);
+    assertEquals(0, g.wallRatio(1), 0);
     for (int material = 1; material <= 3; material++) {
       assertTrue(g.buildWall(1)); assertEquals(material, g.walls[1]);
-      assertEquals(1, g.fenceHeartRatio(1), 0);
+      assertEquals(1, g.wallRatio(1), 0);
     }
     assertEquals("Wood", Game.FENCE_MATERIALS[1]); assertEquals("Stone", Game.FENCE_MATERIALS[2]);
     assertEquals("Steel", Game.FENCE_MATERIALS[3]); assertEquals(160, g.maxWallHealth(1), 0);
-    g.wallHealth[1] = 80; assertEquals(.5f, g.fenceHeartRatio(1), 0);
-    assertTrue(g.repairWall(1)); assertEquals(130f / 160, g.fenceHeartRatio(1), .0001f);
-    g.wallHealth[1] = 0; assertEquals(0, g.fenceHeartRatio(1), 0);
+    g.wallHealth[1] = 80; assertEquals(.5f, g.wallRatio(1), 0);
+    assertTrue(g.repairWall(1)); assertEquals(130f / 160, g.wallRatio(1), .0001f);
+    g.wallHealth[1] = 0; assertEquals(0, g.wallRatio(1), 0);
   }
 
   @Test public void rallyMovementAndPatrolResumeSaveDeterministically() throws Exception {

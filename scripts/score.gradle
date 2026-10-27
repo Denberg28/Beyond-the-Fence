@@ -1,0 +1,33 @@
+// Original 4-bar survival loop, 120 BPM. Synthesized at build time; no samples or downloads.
+def scoreFile = layout.buildDirectory.file('generated/score/raw/survival.wav')
+android.sourceSets.main.res.srcDir(layout.buildDirectory.dir('generated/score'))
+tasks.register('generateScore') {
+    outputs.file(scoreFile)
+    doLast {
+        def file = scoreFile.get().asFile
+        file.parentFile.mkdirs()
+        int rate = 22050, frames = rate * 8
+        def rng = new Random(72419)
+        def out = new ByteArrayOutputStream()
+        def le = { long n, int bytes -> for (int b = 0; b < bytes; b++) out.write((int)(n >> (8 * b)) & 255) }
+        out.write('RIFF'.getBytes('US-ASCII')); le(36 + frames * 2, 4)
+        out.write('WAVEfmt '.getBytes('US-ASCII')); le(16, 4); le(1, 2); le(1, 2)
+        le(rate, 4); le(rate * 2, 4); le(2, 2); le(16, 2)
+        out.write('data'.getBytes('US-ASCII')); le(frames * 2, 4)
+        def notes = [55d, 55d, 65.406d, 49d, 55d, 73.416d, 65.406d, 49d]
+        for (int i = 0; i < frames; i++) {
+            double t = i / (double) rate, beat = t % .5, eighth = t % .25
+            double bass = Math.sin(2 * Math.PI * notes[(int)(t * 2) % 8] * t) * Math.exp(-eighth * 8) * .20
+            double kick = Math.sin(2 * Math.PI * (45 * beat + 7 * (1 - Math.exp(-beat * 30)))) * Math.exp(-beat * 22) * .35
+            double noise = rng.nextDouble() * 2 - 1
+            double snare = ((int)(t * 2) % 2 == 1 ? noise * Math.exp(-beat * 32) * .19 : 0)
+            double hat = noise * Math.exp(-eighth * 95) * .08
+            // Short envelope eliminates any discontinuity where the loop joins.
+            double edge = Math.min(1, Math.min(t / .008, (8 - t) / .008))
+            int sample = (int)((bass + kick + snare + hat) * edge * 28000)
+            le(sample, 2)
+        }
+        file.bytes = out.toByteArray()
+    }
+}
+tasks.named('preBuild').configure { dependsOn('generateScore') }

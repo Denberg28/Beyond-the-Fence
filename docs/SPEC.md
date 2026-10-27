@@ -1,4 +1,22 @@
-# Fences and Mercenaries scope · 0.6.0-rc.1
+# Current acceptance — Survival pressure (0.7)
+
+Baseline:0.6.0-rc.1, commit147ebd7a2740b89ed5c9a0ce456b2fa76ec0315f. Reported defect: Day3 zombies could not damage fences. Source diagnosis: guard range.85 covered nearly the whole map, zombie approach took15–40s and75s raid timeout deleted survivors.
+
+| Criterion | Expected result | Check |
+| --- | --- | --- |
+| S1 Day-driven survival | XP changes no timing/unlocks; days shorten prep75→35s and reinforcements3.2→0.85s | RoamingTest |
+| S2 Threat and agency | Same Day3 seed wipes wood/workwear with3 guards; stone/desert kit survives with damage | SurvivalTest |
+| S3 Opening economy | Fresh80c/24timber farm can fence gaps, farm, build barracks/hire and survive Day1 with real timed growth | GameTest |
+| S4 Real wipeout | Zombies breach, destroy crops/buildings/core and kill nearby crew; defeat freezes simulation and retries same day | DamageTest, SurvivalTest, native breach |
+| S5 Squad |3 maximum; uniforms change rendered gear, damage, armor, health/range/cadence; prep heals only survivors | SurvivalTest, native Squad/Gear |
+| S6 No despawn | A surviving zombie persists past75s and save/reload; dawn requires full quota defeated | SurvivalTest |
+| S7 UI | No levels/hearts/towers; bars/HP and distinct zombie silhouettes retained; background woodland/tracks/debris; native48dp controls, rotation/200% font | native scene/pixel/layout, reviewed screenshots |
+| S8 Audio | Original local loop plays only active raids; mute persists; focus/Home/pause/panels stop audio, release on destruction | native playback/lifecycle; handset listening BLOCKED |
+| S9 Migration | v1–5 read; >3 squad refund once; merc health/casualties deterministic v6 roundtrip; corruption rejected | fixtures, JVM/native checkpoints |
+
+The old AFK/no-spend first-night and20-day invulnerability expectations are superseded by S2–S4. Recovery solvency is checked across20 defeats. No existing economy/persistence/lifecycle gate is waived.
+
+## Fences and Mercenaries scope · 0.6.0-rc.1
 
 Baseline: published0.5.0-rc.1 (`b4d5cfb`),43 JVM tests and660 installed-app checks per API26/35 emulator passed. Confirmed public destination Denberg28/Beyond-the-Fence; commit/push/release authorized. Package unchanged, versionCode8. Native Java/Canvas, local single player, original vector sprites; no paid assets/service.
 

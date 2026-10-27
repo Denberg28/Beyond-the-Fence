@@ -1,10 +1,9 @@
 # Candidate limitations
 
-- Physical-phone endurance, TalkBack, measured performance and production signing/upgrade continuity are not validated; stable promotion remains blocked.
-- Preview is test-signed. A different certificate can require export/uninstall/install/import. Export before replacing any installed preview.
-- Schema1/2/3/4 migrate to schema5. New saves cannot downgrade to0.5 or earlier; retain a pre-upgrade export and APK for rollback.
-- Homestead core and individual fences/crops/buildings have separate health; fixed building sites, maximum6 guards, no mercenary death/upkeep, and initial untested-by-players balance. Daytime scouts are non-damaging until their raid begins; guards engage during raids. Combat uses fixed inward assault lanes and side-based target order; no free building placement/pathfinding. Ruined assets stay lost after recovery, while existing guards survive a destroyed barracks.
-- English only; no audio/music, cloud, multiplayer or offline growth. Short screens/large fonts may require scrolling.
-- Sudden termination may lose the last3 active seconds plus pending writes; recovery/visible save failure and manual backups remain. CRC detects corruption rather than intentional editing.
-
-- Defense balance now uses a volunteer and hired/trained mercenaries exclusively. Material kits use coins plus timber framing rather than separate stone/steel stockpiles. Guard range is an arcade tuning value, not realistic ballistics.
+- Physical-phone endurance, TalkBack, measured frame/thermal/latency behavior and production signing/upgrade continuity remain unvalidated; stable promotion is blocked.
+- Action score playback state is emulator-testable; actual speakers/headphones, volume comfort, Bluetooth routing and interruption listening still need a phone.
+- Preview is test-signed. Export before replacing it; a new certificate can require export/uninstall/install/import. Schema6 cannot downgrade to0.6 or earlier.
+- Balance is intentionally dangerous and has deterministic seeded checks, not broad player playtesting. One idle guard cannot cover the farm. Later hordes can defeat even unattended elite crews. Relaxed mode remains available for half damage. Recovery retries the same day with seed aid and a volunteer if no crew remains; ruins stay lost.
+- Fixed building sites, maximum3 guards, no wages, inward assault lanes/side-based targeting; no free building placement/pathfinding. Daytime scouts only damage at night. No player avatar movement; the player commands the farm and crew.
+- English only; no cloud, multiplayer or offline growth. Short windows/large fonts may scroll. Score is one local8-second loop.
+- Sudden termination can lose the last3 active seconds plus pending writes. Alternating checkpoints and manual backups mitigate this. CRC detects corruption, not intentional editing.

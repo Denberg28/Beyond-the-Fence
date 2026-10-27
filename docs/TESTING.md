@@ -1,4 +1,14 @@
-# Verification and promotion gates
+# 0.7 survival verification
+
+Baseline: verified0.6.0-rc.1/147ebd7. Required candidate gates unchanged: all JVM tests, builds/lint/package audit, and installed exact-APK native suites on API26/35. Local JDK17 can run pure simulation tests; no local Android SDK is installed. CI is authoritative for Android build and native evidence. Self-review is not independent review.
+
+Acceptance map: docs/SPEC.md S1–S9. New seeded tests require Day3 wood/workwear to suffer actual wall damage and lose; stone/desert kit survives the same seed. Later Day12 steel/black-ops must still be vulnerable unattended. The first day must be survivable using real timed harvest/fencing/recruitment. Repeat20 defeat/recovery cycles and save/checksum corruption checks protect solvency. New schema5 fixture is generated with the released source and tests one-time three-excess-guard refunds. v6 health/casualties/healing continue deterministically after reload.
+
+Native suite retains pointer crop/economy/fence/build/repair, rotation, large font, background/pause/save recovery regressions; replaces heart pixels with actual durability-bar full/half/zero pixels. Adds actual MediaPlayer state during raid and stopped on focus/Home, three-guard cap, uniform purchases, survival scene screenshot. Emulator output cannot establish audible quality. Score package audit checks WAV format,8-second length, non-silence and no clipping.10 screenshots per device are reviewed for clipping/visibility.
+
+PASS evidence is recorded by the run producing the released APK. Before publication pending items must not be presented as passed. Phone:30-minute survival session including at least20 background/foreground/focus interruptions, speaker/headphone music/mute/other-app audio tests, TalkBack at200% font, frame timing/thermal/latency and production signing/upgrade remain BLOCKED. HIL N/A: no physical equipment commanded. Stable promotion requires these applicable device gates.
+
+## Verification and promotion gates
 
 Scope: first Android game, no physical machinery/firmware/protocol interfaces. Initial baseline is the rules-only commit; there are no existing client compatibility regressions to preserve. Self-review is not independent review. Test candidate only until required handset checks pass.
 

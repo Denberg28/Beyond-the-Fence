@@ -10,14 +10,15 @@ public final class Game {
   public static final float[] GROW = {16, 29, 43};
   public static final String[] WEATHER = {"Clear", "Rain", "Fog", "Heat"};
   public static final String[] FOES = {"Walker", "Runner", "Brute", "Spitter"};
-  public static final String[] TRAINING = {"Recruit", "Drilled", "Veteran", "Elite", "Ranger", "Sentinel"};
+  public static final String[] UNIFORMS = {"Workwear", "Scout green", "Desert kit", "Urban armor", "Ranger kit", "Black ops"};
   public static final String[] FENCE_MATERIALS = {"Gap", "Wood", "Stone", "Steel"};
-  public static final float GUARD_RANGE = .85f;
+  private static final float[] FOE_HP = {42, 30, 125, 65}, FOE_SPEED = {.105f, .21f, .065f, .085f}, FOE_DAMAGE = {10, 7, 25, 13};
+  public static final float GUARD_RANGE = .28f;
   public static final float DAY_SECONDS = 75;
   public static final String[] SIDES = {"North", "East", "South", "West"};
   public static final String[] BUILDINGS = {"Timber mill", "Market", "Barracks"};
   public static final int[] BUILD_COINS = {50, 80, 70}, BUILD_WOOD = {10, 18, 12};
-  public static final int MAX_MERCS = 6;
+  public static final int MAX_MERCS = 3;
   public static final int MAX_ROAMERS = 10;
   public final ArrayList<Roamer> roamers = new ArrayList<>();
   public static final float CROP_HEALTH = 40, BUILDING_HEALTH = 100;
@@ -34,7 +35,7 @@ public final class Game {
   public final ArrayList<Enemy> enemies = new ArrayList<>();
   public int day = 1, coins = 80, xp, weather, weapon, fence, irrigation, land;
   public int kills, harvested, spawned, lane = -1;
-  // weapon is the retained save-field name for mercenary training; the two legacy clocks never fire.
+  // weapon is the retained save-field name for uniform tier; xp is legacy-only. The two legacy clocks never fire.
   public float health = 100, elapsed, shotClock, spawnClock, focusClock;
   public boolean night, defeated, relaxed, reducedMotion, tutorialDone;
   public int randomState = 72419;
@@ -47,14 +48,14 @@ public final class Game {
     ensureVolunteer();
   }
 
-  public float preparationSeconds() { return Math.max(30, DAY_SECONDS - 5 * Math.min(9, level() - 1)); }
-  public float reinforcementSeconds() { return Math.max(1.2f, 4.8f - .4f * Math.min(9, level() - 1)); }
+  public float preparationSeconds() { return Math.max(35, DAY_SECONDS - 4 * Math.min(10, day - 1)); }
+  public float reinforcementSeconds() { return Math.max(.85f, 3.2f - .18f * Math.min(14, day - 1)); }
   public int raidInSeconds() { return (int) Math.ceil(Math.max(0, preparationSeconds() - elapsed)); }
 
   /** Bounded, deterministic scouts; these are promoted into real enemies when a raid begins. */
   void populateRoamers() {
     if (night || defeated) return;
-    int desired = Math.min(MAX_ROAMERS, 3 + level());
+    int desired = Math.min(MAX_ROAMERS, 3 + day);
     while (roamers.size() < desired) {
       int i = roamers.size();
       roamers.add(new Roamer(i % Math.min(4, day), (i * 2.472f + .23f) % 4, .65f + i % 3 * .1f));
@@ -65,12 +66,8 @@ public final class Game {
     return land == 0 ? 6 : 9;
   }
 
-  public int level() {
-    return 1 + xp / 50;
-  }
-
   public int unlockedCrops() {
-    return Math.min(3, level());
+    return Math.min(3, day);
   }
 
   public int maxHealth() {
@@ -78,7 +75,7 @@ public final class Game {
   }
 
   public int quota() {
-    return Math.min(45, 5 + day * 2);
+    return Math.min(45, 7 + day * 3);
   }
 
   public int cost(int kind) {
@@ -102,10 +99,6 @@ public final class Game {
 
   private void money(int amount) {
     coins = Math.min(10_000_000, Math.max(0, coins + amount));
-  }
-
-  private void experience(int amount) {
-    xp = Math.min(10_000_000, xp + amount);
   }
 
   private int random(int bound) {
@@ -172,7 +165,6 @@ public final class Game {
     int type = crop[plot];
     money(sale(type));
     timber(2 + type * 2);
-    experience(4);
     harvested++;
     crop[plot] = -1;
     growth[plot] = 0; cropHealth[plot] = 0;
@@ -196,8 +188,10 @@ public final class Game {
       return false;
     }
     money(-price);
-    if (kind == 0) weapon++;
-    else if (kind == 1) {
+    if (kind == 0) {
+      weapon++;
+      for (Mercenary merc : mercenaries) merc.health = Math.min(guardMaxHealth(), merc.health + 20);
+    } else if (kind == 1) {
       fence++;
       health += 50;
       for (int side = 0; side < 4; side++) if (walls[side] > 0)
@@ -206,7 +200,7 @@ public final class Game {
     else land = 1;
     notice =
         new String[] {
-              "Mercenary training upgraded. All guards deal more damage and fire faster.",
+              "Uniform upgraded. Better aim, armor and faster fire for all three guards.",
               "Fence reinforced. +50 strength.",
               "Irrigation upgraded. Crops grow 20% faster.",
               "Three more farm plots unlocked."
@@ -246,7 +240,7 @@ public final class Game {
     spawnClock = reinforcementSeconds();
     shotClock = 0;
     focusClock = 0;
-    notice = "Raid " + day + " · Level " + level() + " · roaming zombies are attacking the fence!";
+    notice = "Night " + day + " · Survive the horde. Zombies are attacking the fence!";
   }
 
   public boolean rally(int side) {
@@ -261,12 +255,17 @@ public final class Game {
   }
 
   void ensureVolunteer() {
-    if (mercenaries.isEmpty()) mercenaries.add(new Mercenary(.5f, 0, .5f, .5f));
+    if (mercenaries.isEmpty()) {
+      Mercenary volunteer = new Mercenary(.5f, 0, .5f, .5f);
+      volunteer.health = guardMaxHealth(); mercenaries.add(volunteer);
+    }
   }
 
-  public int guardDamage() { return 16 + weapon * 4; }
-  public float guardInterval() { return Math.max(.5f, .85f - weapon * .06f); }
-  public float fenceHeartRatio(int side) { return walls[side] == 0 ? 0 : Math.max(0, Math.min(1, wallHealth[side] / maxWallHealth(side))); }
+  public int guardDamage() { return 16 + weapon * 3; }
+  public float guardMaxHealth() { return 80 + weapon * 20; }
+  public float guardRange() { return GUARD_RANGE + weapon * .008f; }
+  public float guardInterval() { return Math.max(.75f, 1.15f - weapon * .07f); }
+  public float wallRatio(int side) { return walls[side] == 0 ? 0 : Math.max(0, Math.min(1, wallHealth[side] / maxWallHealth(side))); }
 
   private void removeDead() {
     Iterator<Enemy> it = enemies.iterator();
@@ -275,7 +274,7 @@ public final class Game {
         it.remove();
         kills++;
         money(2);
-        experience(3);
+
       }
   }
 
@@ -290,7 +289,7 @@ public final class Game {
       if (productionClock >= 12) { productionClock -= 12; timber(4); }
     }
     patrol(dt);
-    elapsed += dt;
+    elapsed = Math.min(86400, elapsed + dt);
     if (!night) {
       populateRoamers();
       for (Roamer roamer : roamers)
@@ -308,11 +307,11 @@ public final class Game {
     }
     for (Enemy e : enemies) {
       if (!e.breached) {
-        float speed = new float[] {.040f, .068f, .024f, .033f}[e.type];
+        float speed = enemySpeed(e.type);
         float stop = e.type == 3 && wallHealth[e.lane] > 0 ? .26f : 0;
         e.x = Math.max(stop, e.x - speed * dt * (weather == 1 ? .85f : 1));
         if (e.x <= stop && wallHealth[e.lane] > 0) {
-          float damage = (e.type == 2 ? 10 : 6) * dt * (relaxed ? .5f : 1)
+          float damage = enemyDamage(e.type) * dt * (relaxed ? .5f : 1)
               * (walls[e.lane] == 2 ? .72f : walls[e.lane] >= 3 ? .5f : 1);
           wallHealth[e.lane] = Math.max(0, wallHealth[e.lane] - damage);
           if (wallHealth[e.lane] == 0) notice = SIDES[e.lane] + " fence breached! Repair it before more zombies enter.";
@@ -327,7 +326,17 @@ public final class Game {
         e.attackClock = Math.max(0, e.attackClock - dt);
         if (e.advance >= 1 && e.attackClock <= 0) {
           if (!targetAlive(e.target)) e.target = assaultTarget(e.lane);
-          damageTarget(e.target, (e.type == 2 ? 18 : e.type == 1 ? 8 : 10) * (relaxed ? .5f : 1));
+          float damage = enemyDamage(e.type) * 1.2f * (relaxed ? .5f : 1);
+          Mercenary victim = null; float closest = .20f * .20f;
+          for (Mercenary merc : mercenaries) {
+            float dx = enemyX(e) - patrolX(merc.progress), dy = enemyY(e) - patrolY(merc.progress);
+            float distance = dx * dx + dy * dy;
+            if (distance < closest) { closest = distance; victim = merc; }
+          }
+          if (victim != null) {
+            victim.health = Math.max(0, victim.health - damage * Math.max(.55f, 1 - weapon * .08f));
+            if (victim.health == 0) { mercenaries.remove(victim); notice = "Mercenary lost! The horde can wipe out your crew."; }
+          } else damageTarget(e.target, damage);
           e.attackClock = 1.2f;
         }
       }
@@ -338,14 +347,14 @@ public final class Game {
       notice = "Homestead overrun. Recover free; ruined crops and buildings need replanting or rebuilding.";
       return;
     }
-    if ((spawned >= quota() && enemies.isEmpty()) || elapsed >= 75) dawn();
+    if (spawned >= quota() && enemies.isEmpty()) dawn();
   }
 
   private void dawn() {
     int reward = 20 + Math.min(day, 30) * 3;
     money(reward);
     timber(6);
-    experience(20);
+
     day = Math.min(9999, day + 1);
     night = false;
     elapsed = 0;
@@ -366,7 +375,6 @@ public final class Game {
     int lost = Math.min(30, coins / 5);
     money(-lost);
     defeated = false;
-    day = Math.min(9999, day + 1);
     night = false;
     elapsed = 0;
     health = maxHealth();
@@ -486,7 +494,8 @@ public final class Game {
     if (defeated || !buildings[2] || mercenaries.size() >= MAX_MERCS) return false;
     if (coins < hireCost() || wood < 6) { notice = "Recruitment needs " + hireCost() + " coins and 6 timber."; return false; }
     money(-hireCost()); timber(-6);
-    mercenaries.add(new Mercenary((mercenaries.size() * .65f) % 4, 0, .5f, .5f));
+    Mercenary recruit = new Mercenary((mercenaries.size() * .65f) % 4, 0, .5f, .5f);
+    recruit.health = guardMaxHealth(); mercenaries.add(recruit);
     notice = "Mercenary hired. Patrols roam the fence and fire at nearby zombies.";
     return true;
   }
@@ -531,8 +540,11 @@ public final class Game {
   }
 
   private float enemyHealth(int type) {
-    return new float[] {25, 18, 68, 32}[type] + Math.min(day - 1, 20) * 2;
+    return FOE_HP[type] + Math.min(day - 1, 30) * 6;
   }
+
+  public float enemySpeed(int type) { return FOE_SPEED[type] * (1 + Math.min(day - 1, 20) * .015f); }
+  public float enemyDamage(int type) { return FOE_DAMAGE[type] * (1 + Math.min(day - 1, 30) * .06f); }
 
   public static final class Roamer {
     public int type;
@@ -545,6 +557,7 @@ public final class Game {
   private void patrol(float dt) {
     for (int index = 0; index < mercenaries.size(); index++) {
       Mercenary merc = mercenaries.get(index);
+      if (!night) merc.health = Math.min(guardMaxHealth(), merc.health + dt * 1.5f);
       if (lane < 0) merc.progress = (merc.progress + dt * .14f) % 4;
       else {
         float destination = lane + (mercenaries.size() == 1 ? .5f : .15f + .7f * index / (mercenaries.size() - 1));
@@ -560,7 +573,7 @@ public final class Game {
       for (Enemy e : enemies) {
         if (e.hp <= 0) continue;
         float dx = enemyX(e) - mx, dy = enemyY(e) - my, distance = dx * dx + dy * dy;
-        if (distance > GUARD_RANGE * GUARD_RANGE) continue;
+        if (distance > guardRange() * guardRange()) continue;
         float score = distance + e.x * .05f - (e.breached ? 2 : 0) - (lane >= 0 && e.lane == lane ? .5f : 0);
         if (score < best) { chosen = e; best = score; }
       }
@@ -573,7 +586,7 @@ public final class Game {
   }
 
   public static final class Mercenary {
-    public float progress, shotClock, targetX, targetY;
+    public float progress, shotClock, targetX, targetY, health = 80;
     public Mercenary(float progress, float shotClock, float targetX, float targetY) {
       this.progress = progress; this.shotClock = shotClock; this.targetX = targetX; this.targetY = targetY;
     }

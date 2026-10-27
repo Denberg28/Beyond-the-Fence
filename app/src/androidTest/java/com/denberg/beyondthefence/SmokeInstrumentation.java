@@ -249,7 +249,7 @@ public final class SmokeInstrumentation extends Instrumentation {
           && a.game.health == 100 && a.game.coins == 80), "Daytime zombies visibly roam without harming the farm");
       check(onUi(() -> ((android.widget.TextView) control(a, "night")).getText().toString().contains("Raid in")),
           "Raid countdown is visible in the action dock");
-      checkFenceHeartPixels(a);
+      checkFenceHealthPixels(a);
       screenshot("smoke-roaming.png");
       touch(a, "seeds");
       check(!control(a, "seed1").isEnabled(), "Locked seed is visibly unavailable");
@@ -290,9 +290,10 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> Math.abs(a.game.mercenaries.get(0).progress - progress) > .01f), "Patrol physically moves around the border");
       touch(a, "night");
       check(onUi(() -> a.game.night && !a.paused), "Start night deliberately begins four-border wave");
+      awaitUi(() -> a.music.isPlaying(), "Original action score plays during the active raid");
       screenshot("smoke-night.png");
       runOnMainSync(() -> a.onWindowFocusChanged(false));
-      check(onUi(() -> a.paused), "Focus loss pauses game");
+      check(onUi(() -> a.paused && !a.music.isPlaying()), "Focus loss pauses simulation and music");
       runOnMainSync(() -> a.onWindowFocusChanged(true));
       check(onUi(() -> a.paused), "Focus return does not auto-resume");
       touch(a, "play");
@@ -302,7 +303,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       float[] elapsed = new float[1];
       runOnMainSync(() -> elapsed[0] = a.game.elapsed);
       SystemClock.sleep(400);
-      check(onUi(() -> a.game.elapsed == elapsed[0]), "No background simulation");
+      check(onUi(() -> a.game.elapsed == elapsed[0] && !a.music.isPlaying()), "No background simulation or audio");
       getTargetContext().startActivity(new Intent(getTargetContext(), MainActivity.class)
           .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
       awaitUi(a::hasWindowFocus, "Game foreground return");
@@ -310,7 +311,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       runOnMainSync(() -> { a.game.defeated = true; a.game.health = 0; a.refresh(); });
       touch(a, "night");
       check(onUi(() -> !a.game.defeated && a.game.health == a.game.maxHealth() && a.paused), "Free recovery keeps player paused");
-      runOnMainSync(() -> { a.game.xp = 50; a.refresh(); });
+      runOnMainSync(() -> { a.game.day = 2; a.refresh(); });
       int[] seedBudget = new int[1];
       runOnMainSync(() -> seedBudget[0] = a.game.coins);
       touch(a, "seeds"); touch(a, "seed1");
@@ -375,13 +376,13 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> reopened.game.coins == expected && reopened.game.crop[0] == 1), "Farm persists after activity restart");
       check(onUi(() -> reopened.paused), "Restart requires explicit resume");
       runOnMainSync(() -> {
-        reopened.game.xp = 450;
+        reopened.game.day = 11;
         reopened.game.night = false;
         reopened.game.enemies.clear(); reopened.game.roamers.clear(); reopened.game.populateRoamers();
-        reopened.game.elapsed = 29.95f; reopened.refresh();
+        reopened.game.elapsed = 34.95f; reopened.refresh();
       });
       touch(reopened, "play");
-      awaitUi(() -> reopened.game.night, "Level10 automatically starts a raid after30 active seconds");
+      awaitUi(() -> reopened.game.night, "Day11 automatically starts a raid after35 active seconds");
       check(onUi(() -> reopened.game.roamers.isEmpty() && !reopened.game.enemies.isEmpty()
           && reopened.game.spawned <= reopened.game.quota()), "Roamers become bounded, real attacking enemies");
       touch(reopened, "play");
@@ -421,7 +422,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(reopened, "wall0"); touch(reopened, "constructWall0");
       touch(reopened, "constructWall0"); touch(reopened, "constructWall0");
       check(onUi(() -> threatened.walls[0] == 3 && threatened.wallHealth[0] == 160
-          && threatened.coins == 116 && threatened.wood == 62), "Wood to Stone to Steel upgrades spend both resources and restore fence hearts");
+          && threatened.coins == 116 && threatened.wood == 62), "Wood to Stone to Steel upgrades spend both resources and restore fence health");
       touch(reopened, "constructWall2"); touch(reopened, "constructWall1");
       check(onUi(() -> threatened.walls[2] == 2 && threatened.walls[1] == 1
           && threatened.coins == 64 && threatened.wood == 40), "Each border independently selects its next material kit");
@@ -441,6 +442,15 @@ public final class SmokeInstrumentation extends Instrumentation {
       for (Game.Roamer roamer : threatened.roamers) variants[roamer.type] = true;
       for (boolean visible : variants) check(visible, "Redesigned zombie variant is present in the materials scene");
       screenshot("smoke-materials.png");
+      runOnMainSync(() -> { threatened.coins = 2000; threatened.wood = 200; reopened.refresh(); });
+      touch(reopened, "squad"); touch(reopened, "hire"); touch(reopened, "hire");
+      check(onUi(() -> threatened.mercenaries.size() == 3 && !control(reopened, "hire").isEnabled()),
+          "Three-mercenary cap is visible and enforced");
+      touch(reopened, "buildTab3"); touch(reopened, "upgrade0"); touch(reopened, "upgrade0");
+      check(onUi(() -> threatened.weapon == 2 && threatened.mercenaries.get(0).health == threatened.guardMaxHealth()),
+          "Uniform purchase improves existing crew armor and health");
+      touch(reopened, "closeBuild");
+      screenshot("smoke-survival.png");
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
@@ -458,24 +468,24 @@ public final class SmokeInstrumentation extends Instrumentation {
     }
   }
 
-  private void checkFenceHeartPixels(MainActivity a) {
+  private void checkFenceHealthPixels(MainActivity a) {
     runOnMainSync(() -> {
       GameBoard map = (GameBoard) control(a, "field");
       Bitmap bitmap = Bitmap.createBitmap(map.getWidth(), map.getHeight(), Bitmap.Config.ARGB_8888);
       float original = a.game.wallHealth[0];
-      int[] reds = new int[3];
+      int[] filled = new int[3];
       try {
-        float d = map.geometry.density, x = (map.geometry.fortLeft + map.geometry.fortRight) / 2;
-        float y = map.geometry.fortTop - 34 * d;
+        float d = map.geometry.density;
+        float y = map.geometry.fortTop;
         for (int phase = 0; phase < 3; phase++) {
           a.game.wallHealth[0] = a.game.maxWallHealth(0) * (1 - phase * .5f);
           map.artwork.draw(new Canvas(bitmap));
-          for (int px = (int) (x - 18 * d); px < (int) (x + 18 * d); px++)
-            for (int py = (int) (y - 10 * d); py < (int) (y + 10 * d); py++)
-              if (bitmap.getPixel(px, py) == 0xffed7867) reds[phase]++;
+          for (int px = (int) (map.geometry.fortLeft + 10 * d); px < (int) (map.geometry.fortRight - 10 * d); px++)
+            for (int py = (int) (y - d); py < (int) (y + d); py++)
+              if (bitmap.getPixel(px, py) == 0xffb4d176) filled[phase]++;
         }
-        check(reds[0] > reds[1] && reds[1] > reds[2] && reds[2] == 0,
-            "Fence hearts visibly empty with actual remaining life: full, half and breached");
+        check(filled[0] > filled[1] && filled[1] > filled[2] && filled[2] == 0,
+            "Fence durability bar follows actual HP: full, half and breached");
       } finally { a.game.wallHealth[0] = original; bitmap.recycle(); a.refresh(); }
     });
   }
