@@ -2,7 +2,7 @@
 
 A small farm, a warm home, and something moving past the fence. An offline Android farming and survival game with original vector artwork, quick sessions, and no accounts, ads, purchases or internet permission.
 
-**Current local build: 0.13.0-rc.1 (signed Release.apk and development Preview.apk; not yet published).** Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
+**Current local build: 0.13.0-rc.2 (signed Release.apk and development Preview.apk; not yet published).** Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
 
 ## Play · farm fortress
 

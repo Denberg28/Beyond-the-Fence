@@ -137,6 +137,24 @@ public final class SmokeInstrumentation extends Instrumentation {
     check(false, "Dialog action reachable: " + text);
   }
 
+  private void checkDialogActions(String... labels) {
+    awaitIdle();
+    Bitmap screen = getUiAutomation().takeScreenshot();
+    check(screen != null, "Dialog screen dimensions are available");
+    Rect bounds = new Rect(0, 0, screen.getWidth(), screen.getHeight()); screen.recycle();
+    AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
+    check(root != null, "Dialog has an active accessibility window");
+    for (String label : labels) {
+      boolean found = false;
+      for (AccessibilityNodeInfo node : root.findAccessibilityNodeInfosByText(label)) {
+        if (node.getText() == null || !label.equalsIgnoreCase(node.getText().toString())) continue;
+        Rect rect = new Rect(); node.getBoundsInScreen(rect);
+        if (node.isVisibleToUser() && !rect.isEmpty() && bounds.contains(rect)) found = true;
+      }
+      check(found, "Dialog action is fully on screen at the current font size: " + label);
+    }
+  }
+
   private void dismissSystemHint() {
     for (AccessibilityWindowInfo window : getUiAutomation().getWindows()) {
       AccessibilityNodeInfo root = window.getRoot();
@@ -284,8 +302,10 @@ public final class SmokeInstrumentation extends Instrumentation {
         AccessibilityNodeInfo root = automation.getRootInActiveWindow();
         if (root != null) {
           List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText("Awaken");
-          for (AccessibilityNodeInfo node : nodes)
+          for (AccessibilityNodeInfo node : nodes) {
+            screenshot("smoke-welcome.png");
             welcomed |= node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+          }
         }
         if (!welcomed) SystemClock.sleep(100);
       }
@@ -715,6 +735,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     check(onUi(() -> fantasy.equipped[0] == 3), "Visible assignment flow interchanges potion and magic without spending stock");
     touch(a, "closeBuild");
     runOnMainSync(() -> { fantasy.arenaOfferDay = 10; a.refresh(); }); awaitIdle();
+    checkDialogActions("Enter arena", "Decline", "Equipment");
     screenshot("smoke-arena-offer.png"); dialogAction("Enter arena");
     awaitUi(() -> fantasy.arenaActive && a.paused, "Arena enters paused without advancing the farm");
     dialogAction("Fight"); awaitUi(() -> fantasy.arenaElapsed > .1f, "Arena champion combat runs through real frame loop");
@@ -729,6 +750,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     runOnMainSync(() -> { fantasy.day = 21; fantasy.arenaOfferDay = 20; a.refresh(); }); awaitIdle();
     dialogAction("Decline"); check(onUi(() -> fantasy.arenaDay == 20 && fantasy.arenaOfferDay == 0), "Arena invitation can be declined");
     runOnMainSync(() -> { fantasy.day = 100; fantasy.worldComplete = true; a.refresh(); }); awaitIdle();
+    checkDialogActions("Cross the rift", "Stay here");
     screenshot("smoke-rift.png"); dialogAction("Cross the rift");
     check(onUi(() -> a.game.world == 2 && a.game.day == 1 && a.game.gear[0] == 4 && a.game.coins == 80), "Day100 portal retains relics in a new-world farm");
   }

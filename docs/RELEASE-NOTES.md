@@ -1,6 +1,6 @@
-# TAG: Zombie Survival Fantasy 0.13.0-rc.1
+# TAG: Zombie Survival Fantasy 0.13.0-rc.2
 
-Android8.0+ preview, versionCode16. Renamed from Beyond the Fence; package com.denberg.beyondthefence and pinned signing identity are retained for upgrades.
+Android8.0+ preview, versionCode17. Renamed from Beyond the Fence; package com.denberg.beyondthefence and pinned signing identity are retained for upgrades.
 
 - Reincarnation welcome replaces startup instructions. Optional How to play remains in Options.
 - Visible Assign buttons chooses potion or magic independently in every quick slot.
@@ -17,3 +17,5 @@ Observed local checks: all93 JVM tests, debug/release/test-APK builds, debug/rel
 Latest local packaging: a separately signed Release.apk is available with debugging disabled, alongside the prior development preview. All93 tests pass in each debug/release variant; both variants pass package/audio audits. Certificate/content/alignment checks pass. No new gameplay changes; native installation and phone validation remain pending, and no public GitHub release was published.
 
 Authorized delivery: publish the verified signed Preview.apk and non-debuggable Release.apk, tests/source/checksums and API26/35 evidence as a GitHub prerelease after required gates pass. Both signed APK variants must match a fresh source build and the pinned certificate. Emulator checks run the complete preview suite plus an actual preview-to-release install-r and real checkpoint migration test. Phone validation is still pending; stable is not claimed.
+
+0.13.0-rc.2 shortens arena/portal prompts after screenshot review found clipped choices and title ellipsis at200% font. Native tests now require all arena/portal actions to fit the real screen and capture the welcome screen. The gameplay/save schema/signing identity is unchanged from the local0.13.0-rc.1 development builds.

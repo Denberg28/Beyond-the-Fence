@@ -1,3 +1,7 @@
+# 0.13.0-rc.2 — Large-font dialog review
+
+Shorten arena invitation and Day100 portal copy so every choice remains visible at200% font. Add real-screen action bounds checks and a welcome screenshot. VersionCode17; retains0.13 fantasy features/schema9/signing identity.
+
 # 0.13.0-rc.1 — TAG: Zombie Survival Fantasy
 
 Equipment collection/nine slots/equip best, interchangeable quick assignments, optional tenth-day champion arenas, bounded offline director, reincarnation welcome and Day100 new-world portal. Schema9 reads1–8; package/certificate retained, versionCode16. See docs/RELEASE-NOTES.md for behavior and limits.

@@ -493,16 +493,16 @@ public final class MainActivity extends Activity {
     if (game.arenaActive) { showArena(); return; }
     paused = true; adventureDialog = true;
     if (game.arenaOfferDay > 0) {
-      new AlertDialog.Builder(this).setTitle("The dead have a champion")
-          .setMessage("Day " + game.arenaOfferDay + " survived. Beyond your fence, the arena calls.\n\nFace one random champion. Victory has a55% relic chance, including Epic and Legendary finds. One attempt. No entry fee. Your farm waits safely; used potions and magic are spent.\n\nAccept the challenge—or live to fight another night.")
+      new AlertDialog.Builder(this).setTitle("A champion awaits")
+          .setMessage("Day " + game.arenaOfferDay + " survived. One foe. One attempt.\n\nWin for a55% relic chance, including Epic and Legendary finds.\n\nYour farm pauses. Entry is free; used supplies are spent.")
           .setPositiveButton("Enter arena", (d, w) -> { game.acceptArena(); save(); handler.post(this::showArena); })
           .setNegativeButton("Decline", (d, w) -> { game.declineArena(); changed(); })
           .setNeutralButton("Equipment", (d, w) -> showBuild(4))
           .setCancelable(false).setOnDismissListener(d -> adventureDialog = false).show();
     } else if (game.worldComplete) {
       portalShown = true;
-      new AlertDialog.Builder(this).setTitle("One hundred dawns. One open rift.")
-          .setMessage("You built a haven where hope was buried. Now another sky calls your name.\n\nCross into World " + Math.min(999, game.world + 1) + ". Your relic collection, worn equipment and button assignments travel with you. A fresh farm begins at Day1; buildings, coins, crew and consumables stay behind.")
+      new AlertDialog.Builder(this).setTitle("The rift is open")
+          .setMessage("One hundred dawns. Another sky.\n\nEnter World " + Math.min(999, game.world + 1) + " with your relics, equipment and button assignments.\n\nA fresh farm begins at Day1. Buildings, coins, crew and supplies reset.")
           .setPositiveButton("Cross the rift", (d, w) -> {
             Game next = game.crossRift(); if (next != null) {
               game = next; selectedCrop = 0; selectedWall = selectedBuilding = -1; portalShown = false;

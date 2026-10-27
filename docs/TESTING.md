@@ -1,3 +1,7 @@
+# 0.13.0-rc.2 visual regression
+
+Source9714dc1/run40600732808 passed93 JVM tests in both variants and1469 installed-app checks on each API26/35 emulator. Screenshot self-review found clipped arena choices and portal title ellipsis at200% font despite actions being programmatically reachable. Shorten those prompts; add a native check for every action being visible and fully inside the physical screen, plus a welcome scene capture. Repeat required source and signed-APK gates before publication. Earlier local APKs were development builds, not a published GitHub release.
+
 # Authorized GitHub delivery checks
 
 User explicitly authorized pushing to GitHub and publishing after checks pass. Source publication uses the connected GitHub app because shell Git has no login. Required checks remain unchanged and now include93 unit tests in both variants, auditing optimized release resources, a pinned-signature Release.apk compiled-content comparison, and actual preview-to-release installation/checkpoint retention on both API26 and35. Signed payloads are created locally from passing CI artifacts; no private key enters GitHub.
