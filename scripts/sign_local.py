@@ -15,7 +15,7 @@ for original in [*a.candidate.glob('*Preview.apk'),*a.candidate.glob('*Tests.apk
     name='Upgrade-Baseline.apk' if original==a.baseline else original.name
     target=a.output/name
     subprocess.run(['java','-jar',str(jar),'sign','--ks',str(a.keystore),'--ks-key-alias','fence',
-        '--ks-pass','file:'+str(a.password_file),'--key-pass','file:'+str(a.password_file),
+        '--ks-pass','file:'+str(a.password_file),
         '--out',str(target),str(original)],check=True,capture_output=True)
     report=subprocess.check_output(['java','-jar',str(jar),'verify','--print-certs',str(target)],text=True)
     match=re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-f]+)',report)

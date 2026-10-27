@@ -10,6 +10,8 @@ Upgrade check: install the re-signed released0.11.1 fixture on a clean emulator;
 
 Stable remains BLOCKED for physical phone listening/mixing/routing,30-minute endurance/20 interruptions, TalkBack200% font and measured performance. Source/simulator checks are not handset validation. HIL N/A. Keep pre-upgrade export and APK; schema8 cannot downgrade to0.11.
 
+Initial source b0c4aa3/run40592722412: build/lint/81 JVM/package PASS; both emulators FAIL on startup due to use of a framework ID with View.setTag. Replaced that cache with app-owned integer state. Required startup gates retained. Local signing also exposed apksigner consuming successive password-file lines when the same file is supplied twice; PKCS12 signing now supplies its store password once and uses the identical private-key password. No key was changed or leaked. Re-run full source and signed-delivery gates on corrected source.
+
 ## Earlier evidence
 
 # 0.11.1 verification — First light and clear controls

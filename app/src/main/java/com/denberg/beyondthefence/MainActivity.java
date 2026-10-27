@@ -32,6 +32,7 @@ public final class MainActivity extends Activity {
   private TextView survived, stats, status, notice, saving, buildTitle;
   private GameButton quickUniform, fenceUpgrade, shopHarvest, shopPlant, heroBuy;
   private final GameButton[] itemSlots = new GameButton[3], itemBuy = new GameButton[4], advanced = new GameButton[3];
+  private final int[] slotIcons = {-1, -1, -1};
   private GameButton costButton;
   private String costText;
   private long costToken;
@@ -747,9 +748,9 @@ public final class MainActivity extends Activity {
       itemSlots[slot].setContentDescription(Game.ITEMS[item] + ", " + stock + " owned. Tap to use; hold or tap an empty slot to replace.");
       int[] colors = {0xffb97570, 0xffaa87c7, 0xff77c4df, 0xffdfb475};
       itemSlots[slot].colors(Color.TRANSPARENT, colors[item], CREAM);
-      if (!Integer.valueOf(item).equals(itemSlots[slot].getTag(android.R.id.icon))) {
+      if (slotIcons[slot] != item) {
         itemSlots[slot].setCompoundDrawablesRelativeWithIntrinsicBounds(new ItemIcon(item, dp(30)), null, null, null);
-        itemSlots[slot].setTag(android.R.id.icon, item);
+        slotIcons[slot] = item;
       }
     }
     for (int item = 0; item < Game.ITEMS.length; item++) if (itemBuy[item] != null) {
