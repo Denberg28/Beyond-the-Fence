@@ -482,7 +482,7 @@ public final class MainActivity extends Activity {
   }
 
   private void scheduleAdventure() {
-    if (eventQueued || adventureDialog || buildOpen || !foreground || storageBlocked || ioBusy || !game.tutorialDone) return;
+    if (eventQueued || adventureDialog || buildOpen || !foreground || storageBlocked || ioBusy) return;
     if (!game.arenaActive && game.arenaOfferDay == 0 && (!game.worldComplete || portalShown)) return;
     eventQueued = true;
     handler.post(() -> { eventQueued = false; if (!isFinishing() && !isDestroyed() && foreground && !buildOpen && !adventureDialog) showAdventure(); });
@@ -972,11 +972,11 @@ public final class MainActivity extends Activity {
         .setTitle("TAG: Zombie Survival Fantasy")
         .setMessage("One life ended. Your survival story begins.\n\nYou awaken in a world claimed by the dead. Build a haven. Gather allies. Unearth forgotten magic.\n\nSurvive one hundred days—and the rift will carry you to another world.\n\nA fence. A seed. A second chance.")
         .setPositiveButton("Awaken", (d, w) -> {
-          game.tutorialDone = true; paused = false;
+          game.tutorialDone = true; paused = game.arenaActive || game.arenaOfferDay > 0 || game.worldComplete;
           lastFrame = SystemClock.elapsedRealtime(); changed();
         })
         .setNegativeButton("Later", null)
-        .setOnDismissListener(d -> adventureDialog = false).show();
+        .setOnDismissListener(d -> { adventureDialog = false; refresh(); }).show();
   }
 
   private void howToPlay() {

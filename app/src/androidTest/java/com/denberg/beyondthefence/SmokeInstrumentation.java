@@ -722,7 +722,7 @@ public final class SmokeInstrumentation extends Instrumentation {
   }
 
   private void testFantasy(MainActivity a) throws IOException {
-    Game fantasy = new Game(); fantasy.day = 11; fantasy.tutorialDone = true;
+    Game fantasy = new Game(); fantasy.day = 11; fantasy.tutorialDone = false;
     fantasy.collected[4] = fantasy.collected[9] = fantasy.collected[19] = true;
     runOnMainSync(() -> { a.game = fantasy; a.paused = true; a.refresh(); });
     touch(a, "build"); touch(a, "buildTab4"); touch(a, "equipBest");
@@ -735,6 +735,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     check(onUi(() -> fantasy.equipped[0] == 3), "Visible assignment flow interchanges potion and magic without spending stock");
     touch(a, "closeBuild");
     runOnMainSync(() -> { fantasy.arenaOfferDay = 10; a.refresh(); }); awaitIdle();
+    check(!fantasy.tutorialDone, "Arena invitation remains reachable when the welcome story was deferred");
     checkDialogActions("Enter arena", "Decline", "Equipment");
     screenshot("smoke-arena-offer.png"); dialogAction("Enter arena");
     awaitUi(() -> fantasy.arenaActive && a.paused, "Arena enters paused without advancing the farm");
