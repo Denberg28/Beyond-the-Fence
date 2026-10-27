@@ -170,3 +170,7 @@ Sourcee6fae38/run40486354416: build/lint/package/score and58 JVM tests PASS. Bot
 ##0.8 native follow-up
 
 Source61583ad/run40493349440: build/lint/package/six WAV audits and63 JVM tests PASS; API35 PASS824 checks (including all4 actual SoundPool cues). API26 stopped on a centering assertion after rotation; AndroidRuntime shows the instrumentation AssertionError on the main thread, not an app logic exception. The assertion mixed screen coordinates with Resources display metrics. It now compares the same rendered coordinate space (cross versus full-width command bar), retaining the same<=2px centering requirement and checking vertical visibility against actual window bounds. Failure messages include measured positions/sizes. No touch, affordability, no-pause, audio, persistence or geometry check is removed. API35 screenshots self-reviewed: pinned cross/shortcuts and costs visible,200% font controls usable, farm independently scrollable. All gates rerun before publication.
+
+##0.10 build follow-up
+
+Source8ffe5ab/run40506458288 failed before compilation because compact Groovy multiplication followed by a leading-dot decimal was parsed as spread-dot syntax in the new score. Numeric literals now have explicit leading zeros and obsolete note tables are removed. Release was skipped; all Android/build/package/native gates must run on corrected source. Local gameplay/migration suite72 PASS.
