@@ -36,6 +36,21 @@ public final class SmokeInstrumentation extends Instrumentation {
     checks++;
   }
 
+  /** Same main-queue idle condition as waitForIdleSync, with an explicit failure deadline. */
+  private void awaitIdle() {
+    CountDownLatch idle = new CountDownLatch(1);
+    new Handler(Looper.getMainLooper()).post(() -> Looper.myQueue().addIdleHandler(() -> {
+      idle.countDown();
+      return false;
+    }));
+    try {
+      check(idle.await(10, TimeUnit.SECONDS), "Main queue becomes idle within 10 seconds");
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new AssertionError("Interrupted waiting for main queue", e);
+    }
+  }
+
   private void click(MainActivity a, String tag) {
     runOnMainSync(
         () -> {
@@ -44,7 +59,7 @@ public final class SmokeInstrumentation extends Instrumentation {
           if (!v.isEnabled() || !v.performClick())
             throw new AssertionError("Control unavailable " + tag);
         });
-    waitForIdleSync();
+    awaitIdle();
   }
 
   private MainActivity launch() {
@@ -111,7 +126,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       if (v == null || !v.isEnabled() || !v.isShown()) throw new AssertionError("Unavailable " + tag);
       v.requestRectangleOnScreen(new Rect(0, 0, v.getWidth(), v.getHeight()), true);
     });
-    waitForIdleSync();
+    awaitIdle();
     SystemClock.sleep(100);
     int[] xy = new int[2];
     runOnMainSync(() -> {
@@ -130,7 +145,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     check(getUiAutomation().injectInputEvent(down, true), "Pointer down delivered");
     check(getUiAutomation().injectInputEvent(up, true), "Pointer up delivered");
     down.recycle(); up.recycle();
-    waitForIdleSync();
+    awaitIdle();
   }
 
   private void checkBoard(MainActivity a) {
@@ -152,7 +167,7 @@ public final class SmokeInstrumentation extends Instrumentation {
   }
 
   private void screenshot(String filename) throws IOException {
-    waitForIdleSync();
+    awaitIdle();
     SystemClock.sleep(250); // Include a completed draw after the native layout traversal.
     Bitmap bitmap = getUiAutomation().takeScreenshot();
     check(bitmap != null, "Screenshot available");
@@ -167,7 +182,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     MainActivity next = (MainActivity) monitor.waitForActivityWithTimeout(10000);
     removeMonitor(monitor);
     check(next != null, "Orientation recreates activity within 10 seconds");
-    waitForIdleSync();
+    awaitIdle();
     awaitUi(next::hasWindowFocus, "Rotated board gains focus");
     return next;
   }
@@ -181,7 +196,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
       automation.setServiceInfo(info);
       MainActivity a = launch();
-      waitForIdleSync();
+      awaitIdle();
       boolean welcomed = false;
       long deadline = SystemClock.uptimeMillis() + 10000;
       while (!welcomed && SystemClock.uptimeMillis() < deadline) {
@@ -195,10 +210,12 @@ public final class SmokeInstrumentation extends Instrumentation {
         if (!welcomed) SystemClock.sleep(100);
       }
       check(welcomed, "Welcome visible and actionable within 10 seconds");
-      waitForIdleSync();
+      awaitIdle();
       runOnMainSync(() -> a.paused = true);
       awaitUi(a::hasWindowFocus, "Game window ready");
       checkBoard(a);
+      // A paused farm must stop continuous rendering, including while a panel is open.
+      assertPausedStatic(a);
       touch(a, "seeds");
       check(!control(a, "seed1").isEnabled(), "Locked seed is visibly unavailable");
       touch(a, "seed0");
@@ -217,7 +234,9 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(a, "harvest");
       check(onUi(() -> a.game.coins == 128 && a.game.wood == 36 && a.game.harvested == 6), "Bulk harvest credits resources once");
       screenshot("smoke-farm.png");
-      touch(a, "wall1"); touch(a, "constructWall1");
+      touch(a, "wall1");
+      assertPausedStatic(a);
+      touch(a, "constructWall1");
       check(onUi(() -> a.game.walls[1] == 1 && a.game.coins == 108 && a.game.wood == 28 && a.paused), "Build missing east fence with explicit coin/timber debit");
       touch(a, "closeBuild");
       touch(a, "building0"); touch(a, "construct0"); touch(a, "closeBuild");
@@ -295,7 +314,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       MainActivity large = (MainActivity) fontMonitor.waitForActivityWithTimeout(10000);
       removeMonitor(fontMonitor);
       check(large != null, "Font change recreates board");
-      waitForIdleSync();
+      awaitIdle();
       check(large.getResources().getConfiguration().fontScale >= 1.9f, "200 percent system font active");
       checkBoard(large);
       touch(large, "squad");
@@ -309,7 +328,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       runOnMainSync(large::finish);
       SystemClock.sleep(500);
       MainActivity reopened = launch();
-      waitForIdleSync();
+      awaitIdle();
       check(onUi(() -> reopened.game.coins == expected && reopened.game.crop[0] == 1), "Farm persists after activity restart");
       check(onUi(() -> reopened.paused), "Restart requires explicit resume");
       testStoreRecovery();
@@ -326,6 +345,23 @@ public final class SmokeInstrumentation extends Instrumentation {
       } catch (Throwable ignored) { }
       result.putString("stream", "\nFAILURES!!!\n" + android.util.Log.getStackTraceString(e));
       finish(Activity.RESULT_CANCELED, result);
+    }
+  }
+
+  private void assertPausedStatic(MainActivity a) {
+    // Allow one-off ripples, focus changes and checkpoint labels to finish first.
+    SystemClock.sleep(1000);
+    java.util.concurrent.atomic.AtomicInteger draws = new java.util.concurrent.atomic.AtomicInteger();
+    android.view.ViewTreeObserver.OnDrawListener listener = draws::incrementAndGet;
+    runOnMainSync(() -> {
+      check(a.paused, "Static rendering check runs while paused");
+      control(a, "field").getViewTreeObserver().addOnDrawListener(listener);
+    });
+    try {
+      SystemClock.sleep(600);
+      check(draws.get() <= 1, "Paused board does not continuously redraw");
+    } finally {
+      runOnMainSync(() -> control(a, "field").getViewTreeObserver().removeOnDrawListener(listener));
     }
   }
 

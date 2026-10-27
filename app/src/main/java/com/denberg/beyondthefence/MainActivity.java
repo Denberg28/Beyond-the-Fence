@@ -50,7 +50,8 @@ public final class MainActivity extends Activity {
         public void run() {
           if (!foreground) return;
           long now = SystemClock.elapsedRealtime();
-          if (!paused && !storageBlocked && !ioBusy) {
+          boolean running = !paused && !storageBlocked && !ioBusy;
+          if (running) {
             float dt = Math.min(.1f, (now - lastFrame) / 1000f);
             game.tick(dt);
             if (game.defeated) {
@@ -60,12 +61,14 @@ public final class MainActivity extends Activity {
             if (now - lastSave >= 3000) save();
           }
           lastFrame = now;
-          if (now - lastUi >= 250) {
+          if (running && now - lastUi >= 250) {
             refresh();
             lastUi = now;
           }
-          scene.invalidate();
-          handler.postDelayed(this, game.reducedMotion ? 100 : 33);
+          // Paused screens are static. Actions and save callbacks update their own controls;
+          // repeatedly rebuilding text/layout here starves input on older Android devices.
+          if (running) scene.invalidate();
+          handler.postDelayed(this, !running || game.reducedMotion ? 100 : 33);
         }
       };
 

@@ -74,3 +74,9 @@ Handset validation additionally checks30min castle play with all6 guards and45 e
 Fortress source0b7906b passed27 JVM cases, debug/release/test builds, lint and package/signature gates. During UI self-review, Plant all in Gear retained its former main-board-only guard; remove that guard for the new paused-panel action. Native resource/planting assertions remain unchanged, and the final patched source must pass the full gates before publication.
 
 CI supersession: a newer main commit cancels older candidate workflows for the same branch, preventing obsolete source from blocking the corrected build. The final source still runs every build/unit/lint/package and both emulator gates. The native instrumentation command has a300s limit; timeout fails the pipeline and collects screen/activity/ANR/touch diagnostics. This does not waive a check or promote a timed-out run.
+
+## Fortress release continuation · 27 October 2026
+
+Baseline87034c7, run40399922927: build/lint/package/signature and27 JVM tests PASS; API35 installed-app integration PASS400 checks; API26 timed out after300s while touching Gear in the paused construction panel. No ANR or crash was recorded. Touch logs show increasing delays between actions. MainActivity refreshed native labels/layout and invalidated the full world every frame even while paused.
+
+The paused loop now skips simulation, refresh and drawing; individual UI actions and checkpoint callbacks still refresh their own state. The light100ms scheduler retains bounded resume latency. Native checks require a paused board and paused construction panel to remain static over600ms after transient effects settle. Main-queue idle waits now fail explicitly after10s instead of hanging indefinitely. All existing pointer/action, rotation,200% font, focus/background, restart and checkpoint gates remain required on both APIs. Final run results must be observed before candidate publication.

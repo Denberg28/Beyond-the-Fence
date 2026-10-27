@@ -7,6 +7,7 @@
 - Recruit up to6 persistent blue mercenaries. Their actual perimeter positions determine which nearby zombies they can shoot; four-direction waves use spatial approach offsets.
 - Add Fence/Farm/Squad/Gear panels, compact seed picker and native map actions with shared geometry and >=48dp targets.
 - Save schema2 persists construction, production and patrol combat; schema1 migration preserves old progression. Export a schema1 backup before upgrading because new saves do not downgrade to0.2.
+- Stop refreshing and redrawing static paused scenes, reducing idle work and avoiding Android8 input starvation in construction panels. Bound native-test idle waits to10 seconds and verify paused scenes stay static.
 - Extend economy, spatial-combat, migration, bounds and installed-app fortress interaction checks. Candidate gates/physical-phone and test-signing limitations remain.
 
 ## 0.2.0-rc.2 · 27 October 2026

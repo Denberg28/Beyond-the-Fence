@@ -8,6 +8,7 @@ A top-down castle-defense direction with original colorful arcade artwork.
 - Zombies approach from north/east/south/west. A watchtower provides automatic baseline defense; rally a border from Squad.
 - Tap map plots and wall markers; manage Fence/Farm/Squad/Gear through a paused panel. Compact seed picker and portrait/landscape layout, with native accessible controls and large-font scroll fallback.
 - Day/night, weather, crop/weapon upgrades, free defeat recovery, local checkpoints and backups remain.
+- Paused farms and construction panels stop continuous scene and control refreshes, reducing unnecessary work. Native regression checks cover static paused rendering and bounded UI waits.
 
 **Install Preview.apk** (Android8.0+). This is a debug-test-signed prerelease; Unsigned.apk requires signing. Export your existing save before replacing/uninstalling. Fresh CI certificates may require export→uninstall→install→import.
 
