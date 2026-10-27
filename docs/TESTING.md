@@ -130,3 +130,5 @@ Native coverage adds software-rendered fence-heart pixel counts at full/half/zer
 ##0.7 build follow-up
 
 Source3f981ae/run40486100422 failed before Android compilation: Groovy generated invalid bytecode for a mixed long/int closure in the new score task. Release correctly skipped. Score serialization now uses untyped closure parameters and bounded32-bit values (all WAV lengths/samples fit). All gates must rerun; none is waived. Local updated JVM suite:58 tests PASS.
+
+Sourcee6fae38/run40486354416: build/lint/package/score and58 JVM tests PASS. Both native suites reached confirmed raid playback and actual Options mute, then FAIL at the new dialog helper comparing Close against Android's rendered CLOSE button. Captured API35 failure screen confirms Action music: OFF and a visible enabled CLOSE; no app crash. The helper now accepts case differences for the same label while still requiring an actual accessibility click within10s. All state, playback, persistence, geometry and touch assertions remain; publication was skipped and all gates rerun.

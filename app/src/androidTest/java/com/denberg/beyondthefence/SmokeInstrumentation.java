@@ -126,7 +126,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     while (SystemClock.uptimeMillis() < deadline) {
       AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
       if (root != null) for (AccessibilityNodeInfo node : root.findAccessibilityNodeInfosByText(text)) {
-        if (text.contentEquals(node.getText()) && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
+        if (node.getText() != null && text.equalsIgnoreCase(node.getText().toString()) && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
           check(true, "Dialog action: " + text); awaitIdle(); return;
         }
       }
