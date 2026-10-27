@@ -1,25 +1,13 @@
-# Beyond the Fence 0.7.0-rc.1 — Survival pressure
+# Beyond the Fence 0.8.0-rc.1 — Quick commands and living soundscape
 
-Android8.0+ test preview; package com.denberg.beyondthefence, versionCode9. Builds on verified0.6.0-rc.1. This is a prerelease for playtesting, not a stable promotion.
+Android8.0+ test preview; package com.denberg.beyondthefence, versionCode10. Baseline verified0.7.0-rc.1/edb4941. Prerelease only.
 
-## Gameplay
+The N/W/E/S buttons now form a pinned bottom-center compass cross. Each direction repairs only that fence by up to50HP for8 coins, with no timber, panel or pause. Intact fences cost nothing; gaps are built under Build → Fence. Material upgrades still use their displayed coin/timber prices. Merc + hires directly and Uniform ↑ buys the next uniform directly, keeping normal barracks/budget requirements and the3-person cap. The farm scrolls independently above the commands; all targets remain at least48dp.
 
-No player levels or XP rewards. Survive one escalating day at a time; corn/pumpkins unlock on days2/3. A maximum of3 short-range mercenaries defend the farm. Six uniform tiers visibly change their gear and improve damage, armor, maximum health and firing cadence. Breached zombies can kill guards; surviving guards heal during preparation. Hire replacements at the barracks.
+Sunny original music plays during preparation, creepy music during raids. Zombie growls, nocturnal owl/cricket calls and actual mercenary gunshots use a bounded local effects pool. Independent Background music and Sound effects toggles persist across rotation/restart. Pausing, panels, focus loss and Home stop every voice; no stale shot replay. All6 original PCM assets are generated at build time from source, without downloads, samples, permissions or runtime synthesis.
 
-Walkers approach steadily, Runners rush at twice their speed, Brutes soak shots and smash fences, and Spitters attack fences at range. Every day raises health, speed, damage and horde density. Raids end only after every enemy is killed; the old75-second automatic clear is removed. Wooden defenses can fail on Day3. Stone and uniform investment can survive the same seeded assault. Later hordes can overwhelm even an unattended elite squad.
+Save schema6 is unchanged;0.7 backups remain compatible. Older migrations/refunds remain. Export your .btfs backup before upgrading: preview certificates can differ, requiring export/uninstall/install/import. Uninstall removes local data. Keep a previous export/APK for rollback; Android can reject lower version codes. Production signing remains unconfigured.
 
-Fence hearts removed; existing bars, cracks and numeric HP report damage. Added original woodland, tracks, rocks and camp debris, plus an original120BPM local action loop. Options can mute music; playback stops during pause, panels, backgrounding and audio-focus loss.
+Required candidate gates: all JVM cases, Android debug/release/test builds, lint, package/signature audit (including6 distinct non-silent unclipped WAVs), exact installed-APK native tests on API26/35, and screenshot self-review. CI publishes only after automated gates pass; logs/reports/source/provenance/checksums accompany the artifact.
 
-## Compatibility and recovery
-
-Export your current .btfs save before upgrading. Preview certificates can differ across builds: signing conflicts require export/uninstall/install/import. Uninstall erases local data. Production signing remains unconfigured.
-
-Schema6 reads schemas1–5. Legacy squads keep their first3 guards and refund excess slots once:130/155/180 coins plus6 timber each. Existing investments and damage remain. Old training becomes uniform tier; XP is retained only as a compatibility field. New backups cannot downgrade to0.6 or earlier; keep a prior export/APK for rollback.
-
-Defeat retains ruined crops/buildings, retries the same day and restores the core/invested fences; grants one volunteer only when the crew is empty and seed aid up to12 coins. Recovery is a retry, not a dawn victory or difficulty skip.
-
-## Verification tier
-
-Required automated candidate gates: JVM behavior/migration/corruption tests, debug/release builds, lint, zero-permission package/signature/size checks and native installed-APK tests on API26/35. The workflow publishes only after these pass. Exact logs and screenshots accompany the release.
-
-Physical-phone endurance, actual speaker/headphone listening, TalkBack and measured frame/thermal/latency tests remain BLOCKED. Emulator audio tests prove playback state and lifecycle, not perceived sound quality. Production signing/upgrade continuity remains BLOCKED. Physical equipment control is N/A.
+Physical-phone audio quality, speaker/headphone/Bluetooth mixing and volume comfort,30-minute endurance, TalkBack, measured performance and production signing/upgrade continuity remain BLOCKED for stable promotion. Emulators prove dispatch/playback state, not audible quality. HIL N/A: no equipment control.

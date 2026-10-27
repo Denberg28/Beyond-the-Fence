@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.8.0-rc.1 — Quick commands and living soundscape
+
+- Moved N/W/E/S into a pinned bottom-center compass cross. Tap to repair50HP for8 coins without a panel, pause or timber; intact sides never charge.
+- Added direct Merc + hiring and Uniform ↑ upgrades beside the cross; normal prerequisites, prices and3-person cap remain.
+- Replaced the raid-only action loop with sunny daytime and creepy nighttime music. Added actual guard-shot sounds, zombie growls, owl hoots and crickets.
+- Independent persistent music/effect toggles; bounded six-voice SoundPool, no background/focus-loss playback or replay of stale shots.
+- Save schema6 unchanged and compatible with0.7. Expanded geometry, coin-only repair, sound scheduling and native direct-control/audio tests.
+
 ## 0.7.0-rc.1 — Survival pressure
 
 - Removed player levels/XP progression and all fence hearts; day controls escalation and crop availability.

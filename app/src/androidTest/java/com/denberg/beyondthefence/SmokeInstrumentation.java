@@ -193,8 +193,8 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(map.geometry.fortTop >= 47 * a.getResources().getDisplayMetrics().density,
           "Compact farm leaves roaming terrain above and below");
       float min = 48 * a.getResources().getDisplayMetrics().density - 1;
-      for (String prefix : new String[] {"plot", "wall", "building"}) {
-        int count = prefix.equals("plot") ? 9 : prefix.equals("wall") ? 4 : 3;
+      for (String prefix : new String[] {"plot", "building"}) {
+        int count = prefix.equals("plot") ? 9 : 3;
         for (int i = 0; i < count; i++) {
           View tile = control(a, prefix + i);
           check(tile.getParent() == field, "Native action belongs to the game board");
@@ -204,6 +204,25 @@ public final class SmokeInstrumentation extends Instrumentation {
           check(tile.getContentDescription() != null, "Tile has an accessible action label");
         }
       }
+      View cross = control(a, "fenceCross");
+      View n = control(a, "wall0"), e = control(a, "wall1"), s = control(a, "wall2"), w = control(a, "wall3");
+      for (View command : new View[] {n, e, s, w}) {
+        check(command.getParent() == cross && command.getWidth() >= min && command.getHeight() >= min,
+            "Fence command belongs to the bottom cross and is at least48dp");
+        check(command.getContentDescription() != null, "Direct fence command describes health and coin price");
+      }
+      check(n.getLeft() == s.getLeft() && n.getTop() < e.getTop() && e.getTop() == w.getTop()
+          && w.getLeft() < n.getLeft() && n.getLeft() < e.getLeft() && e.getTop() < s.getTop(), "N/W/E/S forms a compass cross");
+      int[] at = new int[2]; cross.getLocationOnScreen(at);
+      check(Math.abs(at[0] + cross.getWidth() / 2 - a.getResources().getDisplayMetrics().widthPixels / 2) <= 2,
+          "Repair cross is horizontally centered");
+      for (String tag : new String[] {"quickHire", "quickUniform"}) {
+        View shortcut = control(a, tag);
+        check(shortcut.getWidth() >= min && shortcut.getHeight() >= min && shortcut.getContentDescription() != null,
+            "Direct mercenary command is accessible and at least48dp");
+      }
+      check(at[1] + cross.getHeight() <= a.getResources().getDisplayMetrics().heightPixels,
+          "Repair cross is pinned within screen bounds");
     });
   }
 
@@ -263,6 +282,9 @@ public final class SmokeInstrumentation extends Instrumentation {
           && a.game.health == 100 && a.game.coins == 80), "Daytime zombies visibly roam without harming the farm");
       check(onUi(() -> ((android.widget.TextView) control(a, "night")).getText().toString().contains("Raid in")),
           "Raid countdown is visible in the action dock");
+      touch(a, "play");
+      awaitUi(() -> a.music.isPlaying() && !a.music.isNightTrack() && a.music.effectsReady(), "Sunny daytime score and all effects load");
+      touch(a, "play");
       checkFenceHealthPixels(a);
       screenshot("smoke-roaming.png");
       touch(a, "seeds");
@@ -283,7 +305,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(a, "harvest");
       check(onUi(() -> a.game.coins == 128 && a.game.wood == 36 && a.game.harvested == 6), "Bulk harvest credits resources once");
       screenshot("smoke-farm.png");
-      touch(a, "wall1");
+      touch(a, "build"); touch(a, "buildTab0");
       assertPausedStatic(a);
       touch(a, "constructWall1");
       check(onUi(() -> a.game.walls[1] == 1 && a.game.coins == 108 && a.game.wood == 28 && a.paused), "Build missing east fence with explicit coin/timber debit");
@@ -294,7 +316,9 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(a, "building2"); touch(a, "construct2"); touch(a, "closeBuild");
       check(onUi(() -> a.game.buildings[2] && a.game.coins == 36), "Construct barracks using harvest income");
       farmCycle(a);
-      touch(a, "squad"); touch(a, "hire");
+      touch(a, "quickHire");
+      check(onUi(() -> !control(a, "closeBuild").isShown()), "Quick hire does not open a panel");
+      touch(a, "squad");
       check(onUi(() -> a.game.mercenaries.size() == 2 && a.game.coins == 4 && a.paused), "Hire a real patrol through Squad");
       touch(a, "rally3");
       check(onUi(() -> a.game.lane == 3), "Rally sends mercenaries to the west border");
@@ -304,10 +328,10 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> Math.abs(a.game.mercenaries.get(0).progress - progress) > .01f), "Patrol physically moves around the border");
       touch(a, "night");
       check(onUi(() -> a.game.night && !a.paused), "Start night deliberately begins four-border wave");
-      awaitUi(() -> a.music.isPlaying(), "Original action score plays during the active raid");
+      awaitUi(() -> a.music.isNightTrack(), "Creepy score plays during the active raid");
       screenshot("smoke-night.png");
       runOnMainSync(() -> a.onWindowFocusChanged(false));
-      check(onUi(() -> a.paused && !a.music.isPlaying()), "Focus loss pauses simulation and music");
+      check(onUi(() -> a.paused && !a.music.isPlaying() && a.music.effectStreams() == 0), "Focus loss pauses simulation and music");
       runOnMainSync(() -> a.onWindowFocusChanged(true));
       check(onUi(() -> a.paused), "Focus return does not auto-resume");
       touch(a, "play");
@@ -322,8 +346,10 @@ public final class SmokeInstrumentation extends Instrumentation {
           .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
       awaitUi(a::hasWindowFocus, "Game foreground return");
       check(onUi(() -> a.paused), "Foreground return requires explicit resume");
-      touch(a, "options"); dialogAction("Action music: ON");
+      touch(a, "options"); dialogAction("Background music: ON");
       check(onUi(() -> !a.musicEnabled && !a.music.isPlaying()), "Options mutes the action score");
+      dialogAction("Sound effects: ON");
+      check(onUi(() -> !a.effectsEnabled && a.music.effectStreams() == 0), "Effects toggle stops all voices");
       dialogAction("Close"); touch(a, "play");
       check(onUi(() -> !a.paused && !a.music.isPlaying()), "Muted raid continues without playback");
       touch(a, "play");
@@ -338,7 +364,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> a.game.crop[0] == 1 && a.game.coins == seedBudget[0] - Game.SEED[1]), "Seed card changes the planted crop and debit");
       touch(a, "building0");
       MainActivity landscape = rotate(a, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-      check(onUi(() -> landscape.game == a.game && landscape.paused && !landscape.musicEnabled), "Rotation retains farm and pause");
+      check(onUi(() -> landscape.game == a.game && landscape.paused && !landscape.musicEnabled && !landscape.effectsEnabled), "Rotation retains farm and pause");
       check(control(landscape, "closeBuild").isShown(), "Upgrade overlay survives rotation");
       screenshot("smoke-upgrades-landscape.png");
       touch(landscape, "closeBuild");
@@ -382,9 +408,10 @@ public final class SmokeInstrumentation extends Instrumentation {
       });
       touch(large, "squad");
       touch(large, "closeBuild");
+      int fullBudget = large.game.coins;
       touch(large, "wall0");
-      check(control(large, "constructWall0").isShown(), "Large-font fence actions remain reachable");
-      touch(large, "closeBuild");
+      check(onUi(() -> large.game.coins == fullBudget && !control(large, "closeBuild").isShown()),
+          "Intact fence tap at200 percent font spends nothing and opens no settings");
       screenshot("smoke-large-font.png");
       int expected = large.game.coins;
       SystemClock.sleep(600);
@@ -393,7 +420,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       MainActivity reopened = launch();
       awaitIdle();
       check(onUi(() -> reopened.game.coins == expected && reopened.game.crop[0] == 1), "Farm persists after activity restart");
-      check(onUi(() -> reopened.paused && !reopened.musicEnabled), "Restart retains mute and requires explicit resume");
+      check(onUi(() -> reopened.paused && !reopened.musicEnabled && !reopened.effectsEnabled), "Restart retains mute and requires explicit resume");
       runOnMainSync(() -> {
         reopened.game.day = 11;
         reopened.game.night = false;
@@ -427,24 +454,24 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(reopened, "harvest");
       check(onUi(() -> threatened.coins == 100 && threatened.wood == 2 && threatened.harvested == 1),
           "Surviving ripe crop funds repairs through normal harvest");
-      touch(reopened, "wall0"); touch(reopened, "buyTimber");
+      touch(reopened, "build"); touch(reopened, "buildTab0"); touch(reopened, "buyTimber");
       check(onUi(() -> threatened.coins == 88 && threatened.wood == 12), "Harvest coins buy a timber bundle atomically");
       touch(reopened, "constructWall0");
-      check(onUi(() -> threatened.wallHealth[0] == 50 && threatened.coins == 80 && threatened.wood == 8
+      check(onUi(() -> threatened.wallHealth[0] == 50 && threatened.coins == 80 && threatened.wood == 12
           && threatened.enemies.get(0).breached && reopened.paused), "Repair closes a breach without deleting an existing intruder");
-      touch(reopened, "closeBuild"); touch(reopened, "squad"); touch(reopened, "hire");
-      check(onUi(() -> threatened.mercenaries.size() == 1 && threatened.coins == 25 && threatened.wood == 2),
+      touch(reopened, "closeBuild"); touch(reopened, "quickHire");
+      check(onUi(() -> threatened.mercenaries.size() == 1 && threatened.coins == 25 && threatened.wood == 6),
           "Harvest economy funds an actual mercenary after repair");
-      touch(reopened, "closeBuild");
+      check(!control(reopened, "closeBuild").isShown(), "Direct recruitment stays on the field");
       screenshot("smoke-rebuilt.png");
       runOnMainSync(() -> { threatened.coins = 200; threatened.wood = 100; reopened.refresh(); });
-      touch(reopened, "wall0"); touch(reopened, "constructWall0");
+      touch(reopened, "build"); touch(reopened, "buildTab0"); touch(reopened, "constructWall0");
       touch(reopened, "constructWall0"); touch(reopened, "constructWall0");
       check(onUi(() -> threatened.walls[0] == 3 && threatened.wallHealth[0] == 160
-          && threatened.coins == 116 && threatened.wood == 62), "Wood to Stone to Steel upgrades spend both resources and restore fence health");
+          && threatened.coins == 116 && threatened.wood == 66), "Wood to Stone to Steel upgrades spend both resources and restore fence health");
       touch(reopened, "constructWall2"); touch(reopened, "constructWall1");
       check(onUi(() -> threatened.walls[2] == 2 && threatened.walls[1] == 1
-          && threatened.coins == 64 && threatened.wood == 40), "Each border independently selects its next material kit");
+          && threatened.coins == 64 && threatened.wood == 44), "Each border independently selects its next material kit");
       touch(reopened, "closeBuild");
       float enemyHealth = threatened.enemies.get(0).hp;
       touch(reopened, "squad"); touch(reopened, "rally0");
@@ -462,14 +489,44 @@ public final class SmokeInstrumentation extends Instrumentation {
       for (boolean visible : variants) check(visible, "Redesigned zombie variant is present in the materials scene");
       screenshot("smoke-materials.png");
       runOnMainSync(() -> { threatened.coins = 2000; threatened.wood = 200; reopened.refresh(); });
-      touch(reopened, "squad"); touch(reopened, "hire"); touch(reopened, "hire");
-      check(onUi(() -> threatened.mercenaries.size() == 3 && !control(reopened, "hire").isEnabled()),
+      touch(reopened, "quickHire"); touch(reopened, "quickHire");
+      check(onUi(() -> threatened.mercenaries.size() == 3 && !control(reopened, "quickHire").isEnabled()),
           "Three-mercenary cap is visible and enforced");
-      touch(reopened, "buildTab3"); touch(reopened, "upgrade0"); touch(reopened, "upgrade0");
+      touch(reopened, "quickUniform"); touch(reopened, "quickUniform");
       check(onUi(() -> threatened.weapon == 2 && threatened.mercenaries.get(0).health == threatened.guardMaxHealth()),
           "Uniform purchase improves existing crew armor and health");
-      touch(reopened, "closeBuild");
+      check(!control(reopened, "closeBuild").isShown(), "Direct uniforms stay on the field");
+      // Every direction repairs only its own side, with no timber or pause/menu side effect.
+      runOnMainSync(() -> {
+        threatened.coins = 100; threatened.wood = 0; threatened.walls[3] = 1;
+        for (int side = 0; side < 4; side++) threatened.wallHealth[side] = 0;
+        reopened.refresh();
+      });
+      for (int side = 0; side < 4; side++) {
+        int before = threatened.coins;
+        touch(reopened, "wall" + side);
+        final int border = side;
+        check(onUi(() -> threatened.wallHealth[border] == 50 && threatened.coins == before - 8
+            && threatened.wood == 0 && !control(reopened, "closeBuild").isShown()),
+            "Cross direction repairs with coins alone and no settings");
+      }
       screenshot("smoke-survival.png");
+      Game audioFight = new Game(); audioFight.night = true; audioFight.roamers.clear();
+      audioFight.spawned = audioFight.quota(); audioFight.lane = 0;
+      audioFight.enemies.add(new Game.Enemy(2, 0, 0, 400, 400));
+      audioFight.enemies.add(new Game.Enemy(2, 0, .5f, 400, 400));
+      runOnMainSync(() -> {
+        reopened.game = audioFight; reopened.musicEnabled = true; reopened.effectsEnabled = true;
+        reopened.paused = true; reopened.refresh();
+      });
+      int shotsBefore = reopened.music.shotSounds, zombieBefore = reopened.music.zombieSounds;
+      int owlBefore = reopened.music.owlSounds, cricketBefore = reopened.music.cricketSounds;
+      touch(reopened, "play");
+      awaitUi(() -> reopened.music.shotSounds > shotsBefore && reopened.music.zombieSounds > zombieBefore
+          && reopened.music.owlSounds > owlBefore && reopened.music.cricketSounds > cricketBefore,
+          "Real guard fire, nearby zombies and both nocturnal voices reach SoundPool");
+      touch(reopened, "play");
+      check(onUi(() -> !reopened.music.isPlaying() && reopened.music.effectStreams() == 0), "Pause stops every music/effect voice");
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);

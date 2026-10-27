@@ -1,3 +1,13 @@
+# 0.8 UI and sound architecture
+
+MainActivity gameShell contains a weighted ScrollView for HUD/art/notice/seeds, followed by pinned command/global-action docks. Command cross is156dp (48dp targets separated6dp), flanked by weighted Merc + and Uniform ↑. The shell, including pinned commands, is hidden from accessibility traversal when a build overlay is open. GameBoard/BoardGeometry now own12 interior actions, no fence buttons on the artwork. Repair calls Game.repairWall directly, preserving pause state and spending8 coins/0 timber for up to50HP. Construction remains a separate explicit Build flow.
+
+SurvivalMusic retains2 phase MediaPlayers and1 SoundPool capped at6 voices. AudioCues polls transient Game.shots plus simulation dt on each active frame; it never consumes the simulation RNG or changes combat. Time is capped.1s, paused calls consume old shot serials, new Game instances reset cue state. One burst coalesces same-frame shots. Growls are sparse in preparation and more frequent at night; night owl/cricket cues alternate. Effects stop when disabled or focus/foreground/playing state is lost, without replaying old streams on resume. Focus denial/loss blocks retries until pause/play. Music/effect preferences are independent local settings, outside exported saves.
+
+scripts/score.gradle creates16-second sunny/creepy loops and four short procedural effects. SoundPool loads only clips under80KB decoded; bounded stream IDs stop explicitly on pause and replacement. Source-generated assets have quiet boundaries and bounded PCM; packaging audits all6. Perceived mixing and device routing still require handset listening. Schema6 remains byte-compatible with0.7; transient shot counters intentionally reset on load. JVM save determinism remains unchanged.
+
+## Historical verification/design records
+
 # Survival model (0.7)
 
 Pure deterministic Game owns day-based escalation, 3-member squad, armor/injury/casualties, short-range targeting and strict all-enemies-killed dawn. Legacy xp and weapon field names remain in save records; xp has no effect and weapon now indexes six uniform tiers. Guard damage16+3*tier, interval1.15−.07*tier, range.28+.008*tier; crew HP80+20*tier, injury multiplier1−.08*tier. Prep healing1.5HP/s. Uniform purchases heal20HP as maximum rises.

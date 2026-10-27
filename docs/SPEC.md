@@ -1,3 +1,20 @@
+# 0.8 acceptance — Quick commands and soundscape
+
+Baseline0.7.0-rc.1/edb4941bc30eca38b5db93e6d3db10b1eefcd332:58 JVM cases,787 native checks/API26 and35. New scope: bottom-center cross, direct coin repairs, direct hire/uniform, daytime/nighttime music and environmental/combat effects.
+
+| Criterion | Expected/check |
+| --- | --- |
+| Q1 Cross | N above W/E, S below, centered and pinned under the independently scrolling farm; four>=48dp native targets; normal/landscape/200% font native bounds |
+| Q2 Immediate repair |8 coins restores up to50HP on chosen built side,0 timber, no panel/pause change; intact/gap/insufficient/defeat spends nothing; all four sides isolated in JVM/native checks |
+| Q3 Crew shortcuts |Merc + hires under usual camp/coin/timber/cap rules; Uniform ↑ buys one tier at its shown price; no panel; real-pointer native checks |
+| Q4 Phase music |Sunny prep and creepy raid loops switch with actual phase; independently persistent music/effects toggles; native playback/mute/rotation/restart |
+| Q5 Sound cues |Actual shots produce one bounded burst, nearby zombies growl, owl/cricket only at night; pause suppresses elapsed/catch-up/stale shots; pure AudioCues and real SoundPool dispatch checks |
+| Q6 Lifecycle/package |Pause/panels/focus/Home stop tracks and effects; all players/pool/focus released on destruction;6 distinct audited local WAVs, no permissions,<=5MiB; same required API26/35 gates |
+
+Save schema6 unchanged; shot counter is transient presentation-only state, never a combat input or stored field. New field repairs cost coins alone in both shortcut and Build panel. Gaps/material upgrades still require construction. Physical listening/endurance/TalkBack/performance/production identity remain blocked.
+
+## Historical verification/design records
+
 # Current acceptance — Survival pressure (0.7)
 
 Baseline:0.6.0-rc.1, commit147ebd7a2740b89ed5c9a0ce456b2fa76ec0315f. Reported defect: Day3 zombies could not damage fences. Source diagnosis: guard range.85 covered nearly the whole map, zombie approach took15–40s and75s raid timeout deleted survivors.

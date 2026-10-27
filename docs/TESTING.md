@@ -1,3 +1,15 @@
+# 0.8 verification plan and evidence
+
+Baseline0.7.0-rc.1/edb4941 passed58 JVM cases and787 checks on each API26/35 emulator. Local pure JDK17/JUnit run now63 cases PASS; Android build/lint and installed-artifact suites remain required on final source. Acceptance Q1–Q6 is in SPEC.md; self-review is not independent review.
+
+New JVM cases: zero-timber coin repairs on each border, exact debit/cap, invalid/intact/gap/defeat/insufficient no charge; actual combat-shot cues with no repeats or combat mutation; day/night nocturnal restriction, bounded time and stale-event suppression. Existing construction/economy/migration/corruption/Day3 threat/Day12 wipeout/recovery checks stay active. Native checks move fence geometry to the bottom cross; use real pointers for no-panel coin repair, direct hires/uniforms; verify sunny/creepy playback and4 SoundPool effect dispatches from an actual running combat fixture. Pause/focus/Home must stop all streams, and both mute settings persist across orientation/restart. Same10 screenshots per API are self-reviewed.
+
+Package audit checks identity/API/zero permissions/size/signature and6 distinct WAVs with exact length/format, non-silence, unclipped samples and quiet boundaries. Generated scores must match across clean builds. Published APK must match audited candidate checksum and packaged source must match workspace.
+
+Candidate publication is blocked until full builds/lint/JVM/package/API26/API35 pass. Stable still BLOCKED: physical phone30-minute play/endurance with20 interruptions, speakers/headphones/Bluetooth/other-app audio/mute/volume listening, TalkBack200% font, measured frame/thermal/latency behavior, production certificate and real upgrade continuity. No physical-control HIL applies. Keep pre-upgrade export/APK for rollback; schema6 unchanged.
+
+## Historical verification/design records
+
 # 0.7 survival verification
 
 Baseline: verified0.6.0-rc.1/147ebd7. Required candidate gates unchanged: all JVM tests, builds/lint/package audit, and installed exact-APK native suites on API26/35. Local JDK17 can run pure simulation tests; no local Android SDK is installed. CI is authoritative for Android build and native evidence. Self-review is not independent review.

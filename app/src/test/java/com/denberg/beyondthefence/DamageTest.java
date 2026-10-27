@@ -48,7 +48,7 @@ public class DamageTest {
     g.enemies.add(inside); g.enemies.add(outside);
     int coins = g.coins, wood = g.wood;
     assertTrue(g.repairWall(0)); assertEquals(50, g.wallHealth[0], 0);
-    assertEquals(coins - 8, g.coins); assertEquals(wood - 4, g.wood);
+    assertEquals(coins - 8, g.coins); assertEquals(wood, g.wood);
     g.tick(.1f); assertTrue(inside.breached); assertFalse(outside.breached);
     assertTrue(g.wallHealth[0] < 50);
     assertTrue(g.repairWall(0)); assertEquals(80, g.wallHealth[0], 0);
@@ -56,10 +56,11 @@ public class DamageTest {
   }
 
   @Test public void fenceRepairAndMaterialPurchaseAreAtomicAndCapped() {
-    Game g = new Game(); g.wallHealth[0] = 0; g.wood = 3;
+    Game g = new Game(); g.wallHealth[0] = 0; g.wood = 0; g.coins = 7;
     int coins = g.coins;
-    assertFalse(g.repairWall(0)); assertEquals(coins, g.coins); assertEquals(3, g.wood);
-    assertTrue(g.buyTimber()); assertEquals(coins - 12, g.coins); assertEquals(13, g.wood);
+    assertFalse(g.repairWall(0)); assertEquals(coins, g.coins); assertEquals(0, g.wood);
+    g.coins = 80; coins = g.coins;
+    assertTrue(g.buyTimber()); assertEquals(coins - 12, g.coins); assertEquals(10, g.wood);
     assertTrue(g.repairWall(0));
     g.wood = 9_999_995; coins = g.coins;
     assertFalse(g.buyTimber()); assertEquals(coins, g.coins); assertEquals(9_999_995, g.wood);

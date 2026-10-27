@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 final class GameBoard extends FrameLayout {
   final BoardGeometry geometry = new BoardGeometry();
   final FarmView artwork;
-  private final View[] plots = new View[9], walls = new View[4], buildings = new View[3];
+  private final View[] plots = new View[9], buildings = new View[3];
 
   GameBoard(Context context, Supplier<Game> game, Supplier<Boolean> paused) {
     super(context);
@@ -28,7 +28,6 @@ final class GameBoard extends FrameLayout {
   }
 
   void plot(int index, View control) { plots[index] = control; addView(control); }
-  void wall(int index, View control) { walls[index] = control; addView(control); }
   void building(int index, View control) { buildings[index] = control; addView(control); }
 
   @Override
@@ -41,7 +40,6 @@ final class GameBoard extends FrameLayout {
     artwork.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
         MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
     for (int i = 0; i < 9; i++) measureTile(plots[i], geometry.plots[i]);
-    for (int i = 0; i < 4; i++) measureTile(walls[i], geometry.walls[i]);
     for (int i = 0; i < 3; i++) measureTile(buildings[i], geometry.buildings[i]);
   }
 
@@ -54,7 +52,6 @@ final class GameBoard extends FrameLayout {
   protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
     artwork.layout(0, 0, getWidth(), getHeight());
     for (int i = 0; i < 9; i++) place(plots[i], geometry.plots[i]);
-    for (int i = 0; i < 4; i++) place(walls[i], geometry.walls[i]);
     for (int i = 0; i < 3; i++) place(buildings[i], geometry.buildings[i]);
   }
 

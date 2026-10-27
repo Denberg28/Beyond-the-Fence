@@ -1,36 +1,60 @@
-// Original 4-bar survival loop, 120 BPM. Synthesized at build time; no samples or downloads.
-def scoreFile = layout.buildDirectory.file('generated/score/raw/survival.wav')
+// Original synthetic scores and effects. No samples, downloads or runtime synthesis.
+def scoreDir = layout.buildDirectory.dir('generated/score/raw')
 android.sourceSets.main.res.srcDir(layout.buildDirectory.dir('generated/score'))
 tasks.register('generateScore') {
-    outputs.file(scoreFile)
+    inputs.file(rootProject.file('scripts/score.gradle'))
+    outputs.dir(scoreDir)
     doLast {
-        def file = scoreFile.get().asFile
-        file.parentFile.mkdirs()
-        int rate = 22050, frames = rate * 8
-        def rng = new Random(72419)
-        def out = new ByteArrayOutputStream()
-        def le = { value, width ->
-            int n = value as int
-            for (int b = 0; b < (width as int); b++) out.write((n >> (8 * b)) & 255)
+        def dir = scoreDir.get().asFile; project.delete(dir); dir.mkdirs()
+        int rate = 22050
+        def lengths = [sunny:16, creepy:16, shot:.18, zombie:1.4, owl:1.8, cricket:1.6]
+        lengths.each { name, duration ->
+            int frames = (int)(rate * duration)
+            def rng = new Random(72419)
+            def out = new ByteArrayOutputStream()
+            def le = { value, width ->
+                int n = value as int
+                for (int b = 0; b < (width as int); b++) out.write((n >> (8 * b)) & 255)
+            }
+            out.write('RIFF'.getBytes('US-ASCII')); le(36 + frames * 2, 4)
+            out.write('WAVEfmt '.getBytes('US-ASCII')); le(16, 4); le(1, 2); le(1, 2)
+            le(rate, 4); le(rate * 2, 4); le(2, 2); le(16, 2)
+            out.write('data'.getBytes('US-ASCII')); le(frames * 2, 4)
+            def sunny = [261.626d,329.628d,391.995d,523.251d,440d,391.995d,329.628d,293.665d]
+            def bass = [130.813d,174.614d,195.998d,130.813d]
+            for (int i = 0; i < frames; i++) {
+                double t = i / (double) rate, noise = rng.nextDouble() * 2 - 1, sample = 0
+                if (name == 'sunny') {
+                    double note = sunny[(int)(t * 4) % 8], a = t % .25
+                    sample = (.19 * Math.sin(2 * Math.PI * note * t) + .06 * Math.sin(4 * Math.PI * note * t)) * Math.exp(-a * 8)
+                    sample += .12 * Math.sin(2 * Math.PI * bass[(int)(t / 4) % 4] * t) * Math.exp(-(t % .5) * 8)
+                    sample += .08 * Math.sin(2 * Math.PI * 65 * (t % .5)) * Math.exp(-(t % .5) * 25)
+                    sample += noise * Math.exp(-(t % .25) * 110) * .025
+                } else if (name == 'creepy') {
+                    sample = .15 * Math.sin(2 * Math.PI * 55 * t) * (.7 + .3 * Math.sin(t * Math.PI / 2))
+                    sample += .09 * Math.sin(2 * Math.PI * 58.27 * t) + .07 * Math.sin(2 * Math.PI * 82.407 * t)
+                    double a = t % 2
+                    sample += Math.sin(2 * Math.PI * (t < 8 ? 220 : 233.082) * t) * Math.exp(-a * 3) * .10
+                    sample += noise * .02 * (.5 + .5 * Math.sin(t * 3))
+                } else if (name == 'shot') {
+                    sample = (.65 * noise + .20 * Math.sin(2 * Math.PI * 100 * t)) * Math.exp(-t * 38)
+                } else if (name == 'zombie') {
+                    double f = 78 * t + 4 * Math.sin(t * 5)
+                    sample = (.22 * Math.sin(2 * Math.PI * f) + .13 * Math.sin(4 * Math.PI * f)
+                        + .09 * noise) * Math.sin(Math.PI * t / (duration as double))
+                } else if (name == 'owl') {
+                    double a = t % .9
+                    double env = Math.sin(Math.PI * Math.min(1, a / .5))
+                    sample = .34 * Math.sin(2 * Math.PI * (360 * t + 2 * Math.sin(t * 7))) * env * env
+                } else {
+                    double a = t % .13
+                    sample = .30 * Math.sin(2 * Math.PI * 4200 * t) * Math.exp(-a * 65)
+                }
+                double edge = Math.min(1, Math.min(t / .008, ((duration as double) - t) / .008))
+                le((int)(sample * edge * 28000), 2)
+            }
+            new File(dir, name + '.wav').bytes = out.toByteArray()
         }
-        out.write('RIFF'.getBytes('US-ASCII')); le(36 + frames * 2, 4)
-        out.write('WAVEfmt '.getBytes('US-ASCII')); le(16, 4); le(1, 2); le(1, 2)
-        le(rate, 4); le(rate * 2, 4); le(2, 2); le(16, 2)
-        out.write('data'.getBytes('US-ASCII')); le(frames * 2, 4)
-        def notes = [55d, 55d, 65.406d, 49d, 55d, 73.416d, 65.406d, 49d]
-        for (int i = 0; i < frames; i++) {
-            double t = i / (double) rate, beat = t % .5, eighth = t % .25
-            double bass = Math.sin(2 * Math.PI * notes[(int)(t * 2) % 8] * t) * Math.exp(-eighth * 8) * .20
-            double kick = Math.sin(2 * Math.PI * (45 * beat + 7 * (1 - Math.exp(-beat * 30)))) * Math.exp(-beat * 22) * .35
-            double noise = rng.nextDouble() * 2 - 1
-            double snare = ((int)(t * 2) % 2 == 1 ? noise * Math.exp(-beat * 32) * .19 : 0)
-            double hat = noise * Math.exp(-eighth * 95) * .08
-            // Short envelope eliminates any discontinuity where the loop joins.
-            double edge = Math.min(1, Math.min(t / .008, (8 - t) / .008))
-            int sample = (int)((bass + kick + snare + hat) * edge * 28000)
-            le(sample, 2)
-        }
-        file.bytes = out.toByteArray()
     }
 }
 tasks.named('preBuild').configure { dependsOn('generateScore') }

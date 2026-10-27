@@ -10,13 +10,12 @@ final class BoardGeometry {
       left = Math.round(x); top = Math.round(y); right = Math.round(x + w); bottom = Math.round(y + h);
     }
   }
-  final Box[] plots = new Box[9], walls = new Box[4], buildings = new Box[3];
+  final Box[] plots = new Box[9], buildings = new Box[3];
   boolean wide;
   float density, fortLeft, fortTop, fortRight, fortBottom;
   private int width, height;
   BoardGeometry() {
     for (int i = 0; i < 9; i++) plots[i] = new Box();
-    for (int i = 0; i < 4; i++) walls[i] = new Box();
     for (int i = 0; i < 3; i++) buildings[i] = new Box();
   }
   static int minimumHeight(float density, float fontScale, boolean wide) {
@@ -26,7 +25,7 @@ final class BoardGeometry {
   void layout(int width, int height, float density, boolean wide, float fontScale) {
     this.width = width; this.height = height; this.density = density; this.wide = wide;
     // Keep the farm compact as the viewport grows. The surrounding terrain belongs to zombies.
-    float gap = 6 * density, wallHeight = 48 * density;
+    float gap = 6 * density;
     float cell = Math.max(48, 28 * fontScale + 12) * density;
     float farmWidth = Math.min(width - 112 * density, (wide ? 380 : 256) * density);
     float farmHeight = (wide ? 3 : 4) * cell + (wide ? 64 : 70) * density;
@@ -34,10 +33,6 @@ final class BoardGeometry {
     fortTop = (height - farmHeight) / 2; fortBottom = height - fortTop;
     float left = fortLeft + 26 * density, right = fortRight - 26 * density;
     float top = fortTop + 26 * density, bottom = fortBottom - 26 * density;
-    walls[0].set(width / 2f - 24 * density, fortTop - wallHeight / 2, 48 * density, wallHeight);
-    walls[1].set(fortRight - 24 * density, height / 2f - wallHeight / 2, 48 * density, wallHeight);
-    walls[2].set(width / 2f - 24 * density, fortBottom - wallHeight / 2, 48 * density, wallHeight);
-    walls[3].set(fortLeft - 24 * density, height / 2f - wallHeight / 2, 48 * density, wallHeight);
     float cropRight = right, cropTop = top, rowHeight;
     if (wide) {
       float bw = Math.max(64 * density, (right - left) * .22f);

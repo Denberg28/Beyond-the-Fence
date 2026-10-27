@@ -41,6 +41,7 @@ public final class Game {
   public int randomState = 72419;
   public String notice = "Your farm fortress. Harvest crops, close fence gaps and recruit patrols.";
   public long revision;
+  public long shots; // Transient audio event sequence; never drives combat or save state.
 
   public Game() {
     java.util.Arrays.fill(crop, -1);
@@ -401,9 +402,13 @@ public final class Game {
   public boolean wallDamaged(int side) { return walls[side] > 0 && wallHealth[side] < maxWallHealth(side); }
 
   public boolean repairWall(int side) {
-    if (defeated || side < 0 || side > 3 || !wallDamaged(side)) return false;
-    if (coins < 8 || wood < 4) { notice = "Fence repair needs 8 coins and 4 timber. Harvest or buy timber in Fence."; return false; }
-    money(-8); timber(-4); wallHealth[side] = Math.min(maxWallHealth(side), wallHealth[side] + 50);
+    if (defeated || side < 0 || side > 3) return false;
+    if (!wallDamaged(side)) {
+      notice = walls[side] == 0 ? "Open gap. Build this border in Build → Fence." : SIDES[side] + " fence is intact. No coins spent.";
+      return false;
+    }
+    if (coins < 8) { notice = "Fence repair needs8 coins. Harvest crops to fund repairs."; return false; }
+    money(-8); wallHealth[side] = Math.min(maxWallHealth(side), wallHealth[side] + 50);
     notice = SIDES[side] + " fence repaired. Zombies already inside still need to be defeated.";
     return true;
   }
@@ -579,7 +584,7 @@ public final class Game {
       }
       if (chosen != null) {
         merc.targetX = enemyX(chosen); merc.targetY = enemyY(chosen);
-        chosen.hp -= guardDamage(); merc.shotClock = guardInterval();
+        chosen.hp -= guardDamage(); shots++; merc.shotClock = guardInterval();
       }
     }
     removeDead();
