@@ -10,5 +10,6 @@
   "tests_blob": "9d0da99aaf2b76d8f0c06e214945917f61039ac4",
   "tests_sha256": "5e0a840196ea7c2649da48aa03d96540cecf3182c66e71ef2fb7fb9f75c4b42a",
   "baseline_blob": "b6be9af17151e314707001ea2ca5a9bed529e7c7",
-  "baseline_sha256": "8bb18bc0c84869ff918d2ac54a67c1cd2c6b2ea2da40f47afc6924e172736b5a"
+  "baseline_sha256": "8bb18bc0c84869ff918d2ac54a67c1cd2c6b2ea2da40f47afc6924e172736b5a",
+  "delivery_notes": "Run40594499942 stopped before publication because same-step outputs were not available for checkout. Checkout is now a separate step. Only delivery manifest/workflow changes may differ from the verified source ancestor; runtime/source changes require a new passing source run."
 }

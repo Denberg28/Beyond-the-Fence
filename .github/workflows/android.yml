@@ -20,23 +20,29 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - name: Select verified signing payload, if present
         id: identity
         run: |
           python3 - <<'PYCODE'
-          import json, os, pathlib, subprocess
+          import json, os, pathlib, re, subprocess
           head=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
           parent=subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()
           path=pathlib.Path('release/publish.json')
           payload=json.loads(path.read_text()) if path.exists() else {}
-          publish=payload.get('source_sha')==parent
+          source=payload.get('source_sha','')
+          publish=False
+          if re.fullmatch('[0-9a-f]{40}',source) and source!=head and subprocess.run(['git','merge-base','--is-ancestor',source,head]).returncode==0:
+            changed=set(subprocess.check_output(['git','diff','--name-only',source,head],text=True).splitlines())
+            publish=changed <= {'release/publish.json','.github/workflows/android.yml'}
           if publish:
             pathlib.Path(os.environ['RUNNER_TEMP'],'btf-publish.json').write_text(json.dumps(payload))
           with open(os.environ['GITHUB_OUTPUT'],'a') as out:
-            out.write('publish='+str(publish).lower()+'\nsource_sha='+(parent if publish else head)+'\n')
+            out.write('publish='+str(publish).lower()+'\nsource_sha='+(source if publish else head)+'\n')
           PYCODE
-          if [ '${{ steps.identity.outputs.publish }}' = true ]; then git checkout --detach '${{ steps.identity.outputs.source_sha }}'; fi
+      - name: Check out the verified game source
+        if: steps.identity.outputs.publish == 'true'
+        run: git checkout --detach '${{ steps.identity.outputs.source_sha }}'
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
