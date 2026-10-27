@@ -329,6 +329,14 @@ public final class SmokeInstrumentation extends Instrumentation {
       awaitIdle();
       check(large.getResources().getConfiguration().fontScale >= 1.9f, "200 percent system font active");
       checkBoard(large);
+      runOnMainSync(() -> {
+        for (int i = 0; i < 4; i++) {
+          android.widget.TextView marker = (android.widget.TextView) control(large, "wall" + i);
+          check(marker.getLineCount() == 1 && marker.getLayout().getHeight()
+              <= marker.getHeight() - marker.getPaddingTop() - marker.getPaddingBottom(),
+              "Large-font fence marker fits without clipped health text");
+        }
+      });
       touch(large, "squad");
       touch(large, "closeBuild");
       touch(large, "wall0");

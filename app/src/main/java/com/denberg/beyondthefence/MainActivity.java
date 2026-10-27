@@ -282,6 +282,7 @@ public final class MainActivity extends Activity {
       buildingButtons[i] = button("", () -> showBuild(kind == 2 && game.buildings[2] && game.buildingHealth[2] >= Game.BUILDING_HEALTH ? 2 : 1));
       buildingButtons[i].setTag("building" + i);
       buildingButtons[i].setTextSize(11);
+      buildingButtons[i].setPadding(dp(2), dp(4), dp(2), dp(4));
       buildingButtons[i].setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
       board.building(i, buildingButtons[i]);
     }
@@ -489,7 +490,7 @@ public final class MainActivity extends Activity {
     play.setContentDescription(game.defeated ? "Recover homestead free and resume" : paused ? "Resume game" : "Pause game");
     play.setEnabled(!storageBlocked && !ioBusy && !buildOpen);
     play.colors(paused ? GOLD : 0xff314e40, GOLD, paused ? INK : CREAM);
-    label(repair, "Squad\n" + game.mercenaries.size() + "/" + Game.MAX_MERCS);
+    label(repair, "Crew\n" + game.mercenaries.size() + "/" + Game.MAX_MERCS);
     repair.setContentDescription("Open mercenary recruitment and watchtower rally controls");
     label(seedsToggle, "Seeds\n" + Game.CROPS[selectedCrop]);
     label(notice, game.notice);
@@ -531,7 +532,9 @@ public final class MainActivity extends Activity {
     for (int i = 0; i < 4; i++) {
       int tier = game.walls[i];
       boolean damaged = game.wallDamaged(i), breached = tier > 0 && game.wallHealth[i] <= 0;
-      label(wallButtons[i], Game.SIDES[i].substring(0, 1) + "\n" + (tier == 0 ? "Gap" : breached ? "0!" : String.valueOf(Math.round(game.wallHealth[i]))));
+      String marker = tier == 0 ? "Gap" : breached ? "0!" : String.valueOf(Math.round(game.wallHealth[i]));
+      label(wallButtons[i], Game.SIDES[i].substring(0, 1)
+          + (getResources().getConfiguration().fontScale >= 1.5f ? "" : "\n" + marker));
       wallButtons[i].setContentDescription(Game.SIDES[i] + " fence, " + (tier == 0 ? "open gap" : "tier " + tier
           + ", health " + Math.round(game.wallHealth[i]) + " of " + Math.round(game.maxWallHealth(i))
           + (breached ? ", breached, zombies can enter" : "")) + ", tap to build or repair");
