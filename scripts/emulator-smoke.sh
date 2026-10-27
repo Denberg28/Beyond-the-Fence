@@ -13,8 +13,8 @@ collect_diagnostics() {
   adb exec-out run-as com.denberg.beyondthefence cat files/smoke-window.txt > evidence/failure-window.txt || true
 }
 trap collect_diagnostics EXIT
-adb install -r artifacts/Beyond-the-Fence-0.11.0-rc.1-Preview.apk
-adb install -r artifacts/Beyond-the-Fence-0.11.0-rc.1-Tests.apk
+adb install -r artifacts/Beyond-the-Fence-0.11.1-rc.1-Preview.apk
+adb install -r artifacts/Beyond-the-Fence-0.11.1-rc.1-Tests.apk
 adb shell pm clear com.denberg.beyondthefence
 timeout 300s adb shell am instrument -w com.denberg.beyondthefence.test/com.denberg.beyondthefence.SmokeInstrumentation | tee evidence/instrumentation.txt
 grep -Eq '^OK \([0-9]+ checks\)' evidence/instrumentation.txt

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1-rc.1 — Compact caption fit
+
+- Screenshot review of0.11.0 caught awkward Harvest/Barracks word wrapping at200% font. Keep short captions whole with bounded effective text sizes, retaining full system scaling for panel body/purchase text. Added native caption-fit checks; all0.11 features retained.
+
 ## 0.11.0-rc.1 — First light and clear controls
 
 - Transparent bottom command/action padding reveals original terrain, changing with day/night. Mirror-sized mercenary commands and item slots, aligned bottom actions and consistent gaps replace uneven button heights.

@@ -636,6 +636,11 @@ public final class SmokeInstrumentation extends Instrumentation {
         String title = new String[] {"FENCE", "MILL", "SHOP", "BARRACKS"}[page];
         check(onUi(() -> ((android.widget.TextView)control(reopened, "panelTitle")).getText().toString().equals(title)
             && control(reopened, "buildTab" + page).isSelected()), "Title and selected tab match actual page");
+        check(onUi(() -> {
+          android.widget.TextView tab = (android.widget.TextView) control(reopened, "buildTab" + page);
+          return tab.getLineCount() == 1 && tab.getPaint().measureText(tab.getText().toString())
+              <= tab.getWidth() - tab.getPaddingLeft() - tab.getPaddingRight();
+        }), "Building tab label fits as a complete word at200 percent font");
         check(onUi(() -> page == 0 ? control(reopened, "constructWall0") != null && control(reopened, "buyHero") == null
             : control(reopened, "construct" + (page - 1)) != null
                 && (page != 1 || control(reopened, "buyItem0") == null)
@@ -668,6 +673,11 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(left.getWidth() == right.getWidth() && left.getHeight() == right.getHeight(), "Item slot sizes remain symmetric during boost");
       int[] l = new int[2], r = new int[2]; left.getLocationOnScreen(l); right.getLocationOnScreen(r);
       check(l[1] == r[1], "Item slots share one baseline");
+      for (String tag : new String[] {"seeds", "build", "harvest", "night"}) {
+        android.widget.TextView label = (android.widget.TextView) control(a, tag);
+        check(label.getLineCount() <= 2 && label.getLayout().getHeight() <= label.getHeight() - label.getPaddingTop() - label.getPaddingBottom(),
+            "Compact action caption fits in two unclipped lines");
+      }
       int height = control(a, "seeds").getHeight();
       for (String tag : new String[] {"build", "harvest", "night"})
         check(control(a, tag).getHeight() == height, "Bottom action heights match at every font/orientation");

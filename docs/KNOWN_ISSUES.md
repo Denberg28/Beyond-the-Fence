@@ -1,4 +1,4 @@
-# 0.11 current limitations
+# 0.11.1 current limitations
 
 - Android preview; physical phone listening/endurance/TalkBack/performance and production signing continuity remain unvalidated. Stable promotion is blocked.
 - Terrain under controls is static decorative ground; the interactive farm remains independently scrollable for large fonts/short windows.

@@ -333,6 +333,7 @@ public final class MainActivity extends Activity {
     });
     phase.setTag("night");
     for (GameButton action : new GameButton[] {seedsToggle, build, harvest, phase}) {
+      action.setTextSize(compactTextSize(12, 18));
       LinearLayout.LayoutParams item = new LinearLayout.LayoutParams(0, -1, 1);
       item.setMargins(dp(4), 0, dp(4), 0);
       dock.addView(action, item);
@@ -386,6 +387,11 @@ public final class MainActivity extends Activity {
     rightSlots.addView(quickUniform, new LinearLayout.LayoutParams(-1, commandButtonHeight()));
     addItemSlot(rightSlots, 1); controls.addView(rightSlots, new LinearLayout.LayoutParams(0, -1, 1));
     gameShell.addView(controls);
+  }
+
+  // Keep short dock captions whole while still enlarging them by up to50% with system text.
+  private float compactTextSize(float normalSp, float maximumScaledSp) {
+    return Math.min(normalSp, maximumScaledSp / getResources().getConfiguration().fontScale);
   }
 
   private int commandButtonHeight() {
@@ -447,7 +453,8 @@ public final class MainActivity extends Activity {
       final int page = i;
       buildTabs[i] = button(labels[i], () -> selectBuildPage(page));
       buildTabs[i].setTag("buildTab" + i);
-      buildTabs[i].setTextSize(11); buildTabs[i].setPadding(dp(2), dp(4), dp(2), dp(4));
+      buildTabs[i].setTextSize(compactTextSize(11, 16));
+      buildTabs[i].setMaxLines(1); buildTabs[i].setPadding(dp(2), dp(4), dp(2), dp(4));
       LinearLayout.LayoutParams tab = new LinearLayout.LayoutParams(0, -1, 1);
       tab.setMargins(dp(2), 0, dp(2), 0); navigation.addView(buildTabs[i], tab);
     }

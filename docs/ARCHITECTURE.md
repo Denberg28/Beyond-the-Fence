@@ -1,4 +1,4 @@
-# 0.11 presentation and economy decisions
+# 0.11.1 presentation and economy decisions
 
 `TerrainBackdrop` is a static original Canvas view beneath the transparent game shell; it only invalidates on phase change. The existing board renderer and48dp geometry remain unchanged. No new animation loop or third-party dependency. Command sides have equal measured heights/widths and font-aware slots; horizontal action rows use uniform parent heights with baseline alignment disabled.
 

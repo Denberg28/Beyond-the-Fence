@@ -1,4 +1,4 @@
-# 0.11 acceptance — First light and clear controls
+# 0.11.1 acceptance — First light and clear controls
 
 Baseline0.10.0-rc.1/2cdb19a3301a8f976a3f1ce8c530b569d4dfb48a:72 JVM cases,1182 native checks per API26/35. Scope follows the latest phone screenshot: terrain under transparent bottom padding, symmetric controls, minimal zombie income, consistent building tab transitions and new morning music.
 

@@ -1,6 +1,8 @@
-# Beyond the Fence 0.11.0-rc.1 — First light and clear controls
+# Beyond the Fence 0.11.1-rc.1 — First light and clear controls
 
-Android8.0+ test preview; package com.denberg.beyondthefence, versionCode13. Baseline0.10/2cdb19a:72 JVM tests,1182 native checks/API26 and35. Prerelease only.
+Android8.0+ test preview; package com.denberg.beyondthefence, versionCode14. Baseline0.10/2cdb19a:72 JVM tests,1182 native checks/API26 and35. Prerelease only.
+
+Compact dock and tab captions scale within their available space so whole words fit at200% font; larger body/purchase text retains the system scale.
 
 Bottom command/action padding is transparent over original day/night terrain. Mercenary buttons and bottle slots have mirrored sizes and baselines; bottom actions share equal heights with consistent spacing, including large fonts. No extra frame animation or runtime dependency.
 
