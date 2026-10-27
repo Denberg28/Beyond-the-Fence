@@ -502,14 +502,16 @@ public final class SmokeInstrumentation extends Instrumentation {
         for (int side = 0; side < 4; side++) threatened.wallHealth[side] = 0;
         reopened.refresh();
       });
+      touch(reopened, "play");
       for (int side = 0; side < 4; side++) {
         int before = threatened.coins;
         touch(reopened, "wall" + side);
         final int border = side;
         check(onUi(() -> threatened.wallHealth[border] == 50 && threatened.coins == before - 8
-            && threatened.wood == 0 && !control(reopened, "closeBuild").isShown()),
+            && threatened.wood == 0 && !reopened.paused && !control(reopened, "closeBuild").isShown()),
             "Cross direction repairs with coins alone and no settings");
       }
+      touch(reopened, "play");
       screenshot("smoke-survival.png");
       Game audioFight = new Game(); audioFight.night = true; audioFight.roamers.clear();
       audioFight.spawned = audioFight.quota(); audioFight.lane = 0;
