@@ -1,3 +1,36 @@
+# Authorized GitHub delivery checks
+
+User explicitly authorized pushing to GitHub and publishing after checks pass. Source publication uses the connected GitHub app because shell Git has no login. Required checks remain unchanged and now include93 unit tests in both variants, auditing optimized release resources, a pinned-signature Release.apk compiled-content comparison, and actual preview-to-release installation/checkpoint retention on both API26 and35. Signed payloads are created locally from passing CI artifacts; no private key enters GitHub.
+
+# 0.13 verification — TAG fantasy survival
+
+Local JDK17 compiler/JUnit4.13.2: **PASS93 tests** including all critical baseline farm/damage/economy/codec/audio/century tests and12 new fantasy tests. Statistical audit uses100,000 deterministic rolls/source to check scarcity and high-tier eligibility, without altering enemy RNG.100-day scheduler now asserts portal completion at100 rather than101; all20 bosses remain required. New tests cover all100 arena invitation days, decline/replay, all4 champions, actual win/loss/timeout/retreat/stock, farm isolation, live arena save continuation, invalid gear/state, director bounds and new-world carry/reset.
+
+Required candidate gates: full debug/release builds, lint, strict package/version/API/permissions/size/audio audit; all prior API26/35 native flows plus equipment/assignment/arena/rift native interactions and screenshots; fixed-certificate compiled-content comparison and same-key installed checkpoint migration. These gates are pending until their recorded CI result below. No stable promotion until physical-phone endurance/interruptions/TalkBack/audio/performance and human balance checks pass. HIL N/A: no external hardware.
+
+New schema9 strictly bounds equipment ownership/slot identity, collection, rarity, director values, world/arena day consistency, champion/result values, finite HP/clocks and active battle relationships. Schemas1–8 retain old progress and receive empty relics/default director. Legacy schema8 fixture and signed upgrade checks retain real resources/investments. Save corruption and failed imports must keep old checkpoints intact.
+
+## Final local evidence — 28 October 2026
+
+- **PASS — build verified:** JDK Temurin17.0.21+9, checksum-pinned Gradle8.9, AGP8.7.3, API35/build-tools35.0.0. Gradle `testDebugUnitTest assembleDebug assembleDebugAndroidTest assembleRelease lintDebug lintRelease` builds the game and installed-app test harness. All93 JUnit cases pass with zero failures/errors/skips. Debug/release lint report no issues.
+- **PASS — build verified:** strict package audit checks versionCode16/version0.13.0-rc.1, unchanged applicationId/minSdk26/target35, zero permissions, portable DEX, <5MiB size, six distinct correctly formatted/unclipped audio assets and absence of embedded keys/native libraries.
+- **PASS — reviewed/build verified:** private-key signing is checked against the existing public certificate pin. Signing changes no compiled APK entries. No key/password is copied into source, APK or delivery files. Schema7 and released-schema8 JVM migration preserve real progress; accepted arena battle continuation is deterministic.
+- **PASS — simulator tested:** strongest relics still allow an unattended Day30 steel/three-guard farm to be overrun. The prior Day3 investment/danger and Day12 baseline-loss regressions remain. A single Day12 seeded maximum-relic farm can survive longer; equipment intentionally adds survival chance. These checks do not establish broad human balance.
+- **NOT TESTED:** the new API26/35 installed-app suites, actual signed install-r upgrade and new scene screenshots. The test harness compiles, but it has not run for this source. No local emulator/hardware was available; cloud CI awaits the blocked source push. Publication to main was rejected by automatic approval review because it requires explicit user publication authorization. No branch push, public release or alternate publication was attempted after rejection.
+- **NOT TESTED:** physical-phone endurance, audio, performance, TalkBack and human fun/balance. Stable remains blocked. HIL N/A because this game controls no external hardware.
+
+The deliverable is a **locally signed development build**, not a gated published candidate. Required installed-app/upgrade gates remain intact. The source and verification harness are committed locally, ready for the authorized GitHub path once publication is approved.
+
+## Local release-variant build
+
+User requested the latest release build. Public main push was again rejected by automatic approval review; no workaround/publication was attempted. Re-ran `testDebugUnitTest testReleaseUnitTest assembleDebug assembleDebugAndroidTest assembleRelease lintDebug lintRelease`: PASS,93 tests in each variant, zero failures/errors/skips. Built a separate **Release.apk** with debugging disabled and signed it with the retained private identity. Certificate pin, unchanged compiled content after signing, ZIP integrity/alignment, Android package/version/API/title, zero permissions, audio and size checks PASS. Runtime source remains e9c6fa042843567c8d97ef91ae15b50e6d8fee0a; no gameplay changes in this packaging step.
+
+Release APK SHA256: `0e709feab09a265e452343e937ae8f4de3c2509419a75e980585c85c8992c0bb`,3130377 bytes. The package audit now resolves audio through the compiled resource table because AAPT2 shortens release ZIP paths; it checks all six actual assets in both debug and optimized release packages. CI retains these gates and also audits the unsigned release's non-debuggable manifest.
+
+This is an installable local release-variant build, not a stable/public release. Required exact-APK API26/35 installed-app/upgrade tests and physical phone validation remain NOT TESTED. Existing same-key package identity is preserved; export before updating, especially from older disposable-key previews.
+
+## Earlier records
+
 # 0.12 verification — Century survival
 
 Baseline0.11.1/608a451 passed75 JVM tests and1312 native checks per API26/35. Local JDK17/JUnit:81 tests PASS. CampaignTest covers every day1–100, exactly20 boss events with live save/reload, all late ranks/effects/cost caps, stagger/dormancy/new types, single-vs-area/no-target potion accounting, equipment/save continuation, and a literal fixture generated by the released schema7 codec. Existing Day3 danger/Day12 unattended wipeout, resource/recovery/corruption/audio suites remain. Slower daytime starts can now prevent the first-night crop loss; the test still requires economy-funded survival and all10 kills. Reinforcement floor intentionally changes from0.85 to0.6 for later days. These acceptance changes are explicit, not disabled threat gates.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sign audited preview/tests and the emulator upgrade fixture using a private local key."""
+"""Sign audited preview/tests/release and the emulator fixture using a private local key."""
 import argparse, hashlib, pathlib, re, subprocess, zipfile
 
 p=argparse.ArgumentParser()
@@ -11,8 +11,8 @@ p.add_argument('--output',type=pathlib.Path,required=True)
 a=p.parse_args(); a.output.mkdir(parents=True,exist_ok=True)
 jar=a.candidate/'apksigner.jar'
 pin=pathlib.Path('docs/signing-certificate.sha256').read_text().strip()
-for original in [*a.candidate.glob('*Preview.apk'),*a.candidate.glob('*Tests.apk'),a.baseline]:
-    name='Upgrade-Baseline.apk' if original==a.baseline else original.name
+for original in [*a.candidate.glob('*Preview.apk'),*a.candidate.glob('*Tests.apk'),*a.candidate.glob('*Unsigned.apk'),a.baseline]:
+    name='Upgrade-Baseline.apk' if original==a.baseline else original.name.replace('-Unsigned.apk', '-Release.apk')
     target=a.output/name
     subprocess.run(['java','-jar',str(jar),'sign','--ks',str(a.keystore),'--ks-key-alias','fence',
         '--ks-pass','file:'+str(a.password_file),

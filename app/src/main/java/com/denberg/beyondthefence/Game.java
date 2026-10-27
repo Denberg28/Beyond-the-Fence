@@ -31,6 +31,16 @@ public final class Game {
   public boolean bossSpawned;
   public int bolts, blasts;
   public final int[] equipped = {0, 1, 2};
+  public final boolean[] collected = new boolean[Equipment.COUNT];
+  public final int[] gear = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
+  public int lootState = 57391, lastDrop = -1, world = 1;
+  public boolean worldComplete, directorEnabled = true;
+  public int directorPressure, calmNights;
+  public float raidStrain;
+  public int arenaOfferDay, arenaDay, arenaChampion, arenaResult;
+  public boolean arenaActive;
+  public float arenaHealth, arenaEnemyHealth, arenaElapsed, arenaAttackClock, arenaEnemyClock, strikeClock;
+  public static final String[] CHAMPIONS = {"Morrow, the Hollow Knight", "Vex, the Grave Huntress", "Gorath, the Bone Colossus", "Nyra, the Ash Witch"};
   public static final String[] ITEMS = {"Elixir", "Enhancer", "Arc bolt", "Starfall"};
   public float spellTime, spellX, spellY;
   public boolean spellArea; // Transient cosmetic cue; never changes combat or saved randomness.
@@ -69,7 +79,7 @@ public final class Game {
   }
 
   public float preparationSeconds() { return Math.max(35, DAY_SECONDS - 4 * Math.min(10, day - 1)); }
-  public float reinforcementSeconds() { return Math.max(.6f, 3.2f - .18f * Math.min(14, day - 1) - Math.max(0, Campaign.day(day) - 30) * .004f); }
+  public float reinforcementSeconds() { return Math.max(.6f, (3.2f - .18f * Math.min(14, day - 1) - Math.max(0, Campaign.day(day) - 30) * .004f) * (directorEnabled ? directorPressure < 0 ? 1.08f : directorPressure > 0 ? .94f : 1 : 1)); }
   public int raidInSeconds() { return (int) Math.ceil(Math.max(0, preparationSeconds() - elapsed)); }
 
   /** Bounded, deterministic scouts; these are promoted into real enemies when a raid begins. */
@@ -249,7 +259,8 @@ public final class Game {
   }
 
   public void startNight() {
-    if (night || defeated) return;
+    if (night || defeated || arenaActive || arenaOfferDay > 0 || worldComplete) return;
+    raidStrain = 0;
     night = true;
     elapsed = 0;
     spawned = 0; bossSpawned = false;
@@ -285,10 +296,11 @@ public final class Game {
     }
   }
 
-  public int guardDamage() { return Math.round((16 + weapon * 3 + drill * 3) * (enhancerTime > 0 ? 1.4f : 1)); }
+  public int guardDamage() { return Math.round(guardAttackDamage()); }
+  private float guardAttackDamage() { return Math.round((16 + weapon * 3 + drill * 3) * (enhancerTime > 0 ? 1.4f : 1)) * (1 + equipmentBonus(0)); }
   public float guardMaxHealth() { return 80 + weapon * 20 + drill * 10; }
   public float guardRange() { return GUARD_RANGE + weapon * .008f + drill * .005f; }
-  public float guardInterval() { return Math.max(.65f, 1.15f - weapon * .07f - drill * .025f) * (enhancerTime > 0 ? .8f : 1); }
+  public float guardInterval() { return Math.max(.65f, 1.15f - weapon * .07f - drill * .025f) * (enhancerTime > 0 ? .8f : 1) / (1 + equipmentBonus(3)); }
   public float wallRatio(int side) { return walls[side] == 0 ? 0 : Math.max(0, Math.min(1, wallHealth[side] / maxWallHealth(side))); }
 
   private void removeDead() {
@@ -298,12 +310,15 @@ public final class Game {
         it.remove();
         kills++;
         money(dead.type == Campaign.BOSS ? 10 + Math.min(20, day / 5) : 1); // Small salvage reward; harvest remains the primary income.
+        rollEquipment(dead.type == Campaign.BOSS ? 1 : 0);
       } }
   }
 
   public void tick(float dt) {
     if (!Float.isFinite(dt) || dt <= 0 || defeated) return;
     dt = Math.min(dt, 0.1f); // No catch-up damage after frame stalls or backgrounding.
+    if (arenaActive) { tickArena(dt); return; }
+    if (worldComplete || arenaOfferDay > 0) return;
     enhancerTime = Math.max(0, enhancerTime - dt);
     spellTime = Math.max(0, spellTime - dt);
     float rate = growthRate();
@@ -337,9 +352,10 @@ public final class Game {
         float stop = e.type == 3 && wallHealth[e.lane] > 0 ? .26f : 0;
         e.x = Math.max(stop, e.x - speed * dt * (weather == 1 ? .85f : 1));
         if (e.x <= stop && wallHealth[e.lane] > 0) {
-          float damage = enemyDamage(e.type) * dt * (relaxed ? .5f : 1)
+          float damage = enemyDamage(e.type) * dt * (relaxed ? .5f : 1) * (1 - equipmentBonus(1))
               * (walls[e.lane] == 2 ? .72f : walls[e.lane] >= 3 ? Math.max(.3f, .5f - wallRanks[e.lane] * .05f) : 1);
           wallHealth[e.lane] = Math.max(0, wallHealth[e.lane] - damage);
+          raidStrain = Math.min(1, raidStrain + damage / (maxWallHealth(e.lane) + maxHealth()) / 4);
           if (wallHealth[e.lane] == 0) notice = SIDES[e.lane] + " fence breached! Repair it before more zombies enter.";
         }
         if (wallHealth[e.lane] <= 0 && e.x <= 0) {
@@ -352,7 +368,8 @@ public final class Game {
         e.attackClock = Math.max(0, e.attackClock - dt);
         if (e.advance >= 1 && e.attackClock <= 0) {
           if (!targetAlive(e.target)) e.target = assaultTarget(e.lane);
-          float damage = enemyDamage(e.type) * 1.2f * (relaxed ? .5f : 1);
+          float damage = enemyDamage(e.type) * 1.2f * (relaxed ? .5f : 1) * (1 - equipmentBonus(1));
+          raidStrain = Math.min(1, raidStrain + damage / maxHealth());
           Mercenary victim = null; float closest = .20f * .20f;
           for (int person = 0; person < mercenaries.size() + (hero == null ? 0 : 1); person++) {
             Mercenary merc = person < mercenaries.size() ? mercenaries.get(person) : hero;
@@ -381,10 +398,14 @@ public final class Game {
   }
 
   private void dawn() {
+    int finished = day;
+    evaluateDirector();
+    if (finished <= 100 && finished % 10 == 0 && arenaDay < finished) arenaOfferDay = finished;
+    worldComplete = finished >= 100; // Older endless-mode farms finish their current night before the rift.
     int reward = 20 + Math.min(day, 30) * 3;
     money(reward);
     timber(6);
-    day = Math.min(9999, day + 1); bossSpawned = false;
+    day = worldComplete ? 100 : Math.min(9999, day + 1); bossSpawned = false;
     night = false;
     elapsed = 0;
     enemies.clear();
@@ -404,6 +425,8 @@ public final class Game {
     int lost = Math.min(30, coins / 5);
     money(-lost);
     defeated = false;
+    if (directorEnabled) { directorPressure = -1; calmNights = 0; }
+    raidStrain = 0;
     enhancerTime = 0; spellTime = 0; bossSpawned = false;
     night = false;
     elapsed = 0;
@@ -577,6 +600,7 @@ public final class Game {
   }
   public boolean useItem(int type) {
     if (defeated || type < 0 || type >= ITEMS.length) return false;
+    if (arenaActive) return useArenaItem(type);
     if (type == 0) {
       boolean injured = health < maxHealth() || hero != null && hero.health < heroMaxHealth();
       for (Mercenary m : mercenaries) injured |= m.health < guardMaxHealth();
@@ -601,13 +625,157 @@ public final class Game {
       for (Enemy e : enemies) {
         float dx = foeX(e) - x, dy = foeY(e) - y;
         if (e == target || type == 3 && dx * dx + dy * dy <= .32f * .32f)
-          e.hp -= damage * (e.type == Campaign.BOSS ? .6f : 1);
+          e.hp -= damage * (e.type == Campaign.BOSS ? .6f : 1) * (1 + equipmentBonus(2));
       }
       if (type == 2) bolts--; else blasts--;
       spellX = x; spellY = y; spellTime = .7f; spellArea = type == 3;
       removeDead(); notice = ITEMS[type] + " cast on the nearest threat.";
     }
     return true;
+  }
+
+  public float equipmentBonus(int stat) {
+    float sum = 0;
+    for (int code : gear) if (code >= 0 && Equipment.stat(Equipment.slot(code)) == stat) sum += Equipment.value(code);
+    return Math.min(stat == 0 || stat == 1 ? .12f : stat == 2 ? .10f : .06f, sum);
+  }
+
+  public boolean equipGear(int slot, int code) {
+    if (defeated || arenaActive || slot < 0 || slot >= gear.length || code < -1 || code >= collected.length
+        || code >= 0 && (!collected[code] || Equipment.slot(code) != slot)) return false;
+    gear[slot] = code;
+    notice = Equipment.SLOTS[slot] + (code < 0 ? " removed." : ": " + Equipment.name(code) + " equipped.");
+    return true;
+  }
+
+  public void equipBest() {
+    if (defeated || arenaActive) return;
+    for (int slot = 0; slot < gear.length; slot++) {
+      for (int quality = 4; quality >= 0; quality--) if (collected[slot * 5 + quality]) {
+        gear[slot] = slot * 5 + quality; break;
+      }
+    }
+    notice = "Best collected equipment fitted. Relics help; your defenses still decide survival.";
+  }
+
+  private int lootRandom(int bound) {
+    lootState = lootState * 1664525 + 1013904223;
+    return (lootState >>> 1) % bound;
+  }
+
+  /** Per kill: 0.4% ordinary, 12% boss, 55% arena. No luck/economy multiplier. */
+  int rollEquipment(int source) {
+    if (lootRandom(1000) >= (source == 2 ? 550 : source == 1 ? 120 : 4)) return -1;
+    int roll = lootRandom(1000);
+    int quality = source == 2 ? (roll < 20 ? 4 : roll < 160 ? 3 : roll < 650 ? 2 : 1)
+        : source == 1 ? (roll < 5 ? 4 : roll < 55 ? 3 : roll < 300 ? 2 : roll < 650 ? 1 : 0)
+        : (roll < 10 ? 2 : roll < 200 ? 1 : 0);
+    int code = lootRandom(9) * 5 + quality;
+    boolean duplicate = collected[code]; collected[code] = true; lastDrop = code;
+    notice = duplicate ? "A familiar relic: " + Equipment.name(code) + ". Collection already holds it."
+        : "Relic found: " + Equipment.name(code) + " · " + Equipment.RARITIES[quality] + ". Open Equipment.";
+    return code;
+  }
+
+  void evaluateDirector() {
+    if (!directorEnabled || day < 3) { raidStrain = 0; return; }
+    if (raidStrain > .55f || health < maxHealth() * .5f) { directorPressure = -1; calmNights = 0; }
+    else if (raidStrain < .15f) {
+      calmNights = Math.min(2, calmNights + 1);
+      if (calmNights == 2) directorPressure = Math.min(1, directorPressure + 1);
+    } else { calmNights = 0; directorPressure = 0; }
+    raidStrain = 0;
+  }
+
+  public String directorDescription() {
+    return !directorEnabled ? "Director off · fixed pacing" : "Director · " + (directorPressure < 0 ? "breathing room" : directorPressure > 0 ? "rising tension" : "steady tension");
+  }
+
+  public boolean acceptArena() {
+    if (arenaOfferDay == 0 || arenaActive || defeated || night) return false;
+    arenaDay = arenaOfferDay; arenaOfferDay = 0; arenaChampion = lootRandom(CHAMPIONS.length);
+    arenaActive = true; arenaResult = 0;
+    arenaHealth = arenaMaxHealth(); arenaEnemyHealth = arenaMaxEnemyHealth();
+    arenaElapsed = arenaAttackClock = strikeClock = 0; arenaEnemyClock = 1.6f;
+    notice = "The arena opens. " + CHAMPIONS[arenaChampion] + " awaits.";
+    return true;
+  }
+
+  public boolean declineArena() {
+    if (arenaOfferDay == 0 || arenaActive) return false;
+    arenaDay = arenaOfferDay; arenaOfferDay = 0; arenaResult = 4;
+    notice = "The arena fades. Your survival comes first."; return true;
+  }
+
+  public float arenaMaxHealth() { return 180 + weapon * 8 + drill * 4 + heroLevel * 5; }
+  public float arenaMaxEnemyHealth() { return 240 + arenaDay * 9 + (arenaChampion == 2 ? 100 : 0); }
+  public float arenaDamage() { return (14 + weapon * 2 + drill + heroLevel) * (1 + equipmentBonus(0)) * (enhancerTime > 0 ? 1.4f : 1); }
+
+  public boolean arenaStrike() {
+    if (!arenaActive || strikeClock > 0) return false;
+    arenaEnemyHealth = Math.max(0, arenaEnemyHealth - arenaDamage() * 1.6f);
+    strikeClock = 2.4f; shots++;
+    if (arenaEnemyHealth == 0) finishArena(1);
+    return true;
+  }
+
+  public void retreatArena() { if (arenaActive) finishArena(3); }
+
+  private boolean useArenaItem(int type) {
+    if (itemStock(type) == 0) return false;
+    if (type == 0) {
+      if (arenaHealth >= arenaMaxHealth()) return false;
+      elixirs--; arenaHealth = Math.min(arenaMaxHealth(), arenaHealth + 60);
+    } else if (type == 1) {
+      if (enhancerTime > 0) return false;
+      enhancers--; enhancerTime = 20;
+    } else {
+      if (type == 2) bolts--; else blasts--;
+      arenaEnemyHealth = Math.max(0, arenaEnemyHealth - (type == 2 ? 70 : 45) * (1 + equipmentBonus(2)));
+      if (arenaEnemyHealth == 0) finishArena(1);
+    }
+    return true;
+  }
+
+  private void tickArena(float dt) {
+    arenaElapsed = Math.min(45, arenaElapsed + dt);
+    enhancerTime = Math.max(0, enhancerTime - dt);
+    strikeClock = Math.max(0, strikeClock - dt);
+    arenaAttackClock = Math.max(0, arenaAttackClock - dt);
+    arenaEnemyClock = Math.max(0, arenaEnemyClock - dt);
+    if (arenaAttackClock == 0) {
+      arenaEnemyHealth = Math.max(0, arenaEnemyHealth - arenaDamage()); shots++;
+      arenaAttackClock = (enhancerTime > 0 ? .8f : 1) / (1 + equipmentBonus(3));
+      if (arenaEnemyHealth == 0) { finishArena(1); return; }
+    }
+    if (arenaEnemyClock == 0) {
+      float damage = (11 + arenaDay * .17f) * (arenaChampion == 2 ? 1.7f : arenaChampion == 3 ? 1.2f : 1);
+      if (arenaChampion == 0 && (int)arenaElapsed % 4 < 2) damage *= 1.35f;
+      if (arenaChampion == 3 && (int)arenaElapsed % 6 < 2) damage *= 1.4f;
+      arenaHealth = Math.max(0, arenaHealth - damage * (1 - equipmentBonus(1)) * (relaxed ? .5f : 1));
+      arenaEnemyClock = arenaChampion == 1 ? 1.05f : arenaChampion == 2 ? 2.4f : 1.6f;
+    }
+    if (arenaHealth == 0 || arenaElapsed >= 45) finishArena(2);
+  }
+
+  private void finishArena(int result) {
+    if (!arenaActive) return;
+    arenaActive = false; arenaResult = result;
+    notice = result == 1 ? "Champion defeated. The rift offers no relic this time." : result == 3 ? "You withdrew. Your farm and crew are safe." : "The champion prevails. Your farm and crew are safe.";
+    if (result == 1) rollEquipment(2);
+  }
+
+  public Game crossRift() {
+    if (!worldComplete || arenaActive || arenaOfferDay > 0) return null;
+    Game next = new Game(); next.world = Math.min(999, world + 1); next.revision = revision;
+    System.arraycopy(collected, 0, next.collected, 0, collected.length);
+    System.arraycopy(gear, 0, next.gear, 0, gear.length);
+    System.arraycopy(equipped, 0, next.equipped, 0, equipped.length);
+    next.lootState = lootState; next.randomState = randomState; next.weather = next.random(4);
+    next.tutorialDone = true; next.directorEnabled = directorEnabled;
+    next.relaxed = relaxed; next.reducedMotion = reducedMotion;
+    next.notice = "World " + next.world + " · A new sky. A new fence. Your relics remember.";
+    return next;
   }
 
   /** Clockwise perimeter in normalized world coordinates, shared with the renderer. */
@@ -700,8 +868,8 @@ public final class Game {
       }
       if (chosen != null) {
         merc.targetX = foeX(chosen); merc.targetY = foeY(chosen);
-        chosen.hp -= champion ? Math.round((32 + heroLevel * 8) * (enhancerTime > 0 ? 1.4f : 1)) : guardDamage();
-        shots++; merc.shotClock = champion ? (enhancerTime > 0 ? .72f : .9f) : guardInterval();
+        chosen.hp -= champion ? Math.round((32 + heroLevel * 8) * (enhancerTime > 0 ? 1.4f : 1)) * (1 + equipmentBonus(0)) : guardAttackDamage();
+        shots++; merc.shotClock = champion ? (enhancerTime > 0 ? .72f : .9f) / (1 + equipmentBonus(3)) : guardInterval();
       }
     }
     removeDead();

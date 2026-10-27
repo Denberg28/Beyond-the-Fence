@@ -1,19 +1,19 @@
-# Beyond the Fence 0.12.0-rc.1 — Century survival
+# TAG: Zombie Survival Fantasy 0.13.0-rc.1
 
-Android8.0+ test preview; com.denberg.beyondthefence, versionCode15. Baseline0.11.1/608a451:75 JVM/1312 native checks per emulator. Prerelease.
+Android8.0+ preview, versionCode16. Renamed from Beyond the Fence; package com.denberg.beyondthefence and pinned signing identity are retained for upgrades.
 
-Daytime zombies shuffle slowly and some lie dormant in six-second phases; at night they approach with individual uneven gaits. Ghoul, Ironhide and Wraith unlock on days16/31/46. One Grave Warden arrives midway through every fifth night, including Day100, with larger art/crown and a real top health bar. Boss state survives saves without duplicates. The raid ends only after every enemy is defeated.
+- Reincarnation welcome replaces startup instructions. Optional How to play remains in Options.
+- Visible Assign buttons chooses potion or magic independently in every quick slot.
+- Equipment tab: nine slots, five rarities, Equip best and a bounded45-relic collection. Scarce ordinary/boss drops; optional capped survival bonuses.
+- Optional arena after every tenth completed boss night: accept/decline, four random champions, automatic combat, manual Strike, real shared consumables, pause/retreat,45s timeout and a55% equipment reward chance on victory. No farm damage or duplicate attempt rewards.
+- Offline adaptive director varies future reinforcement spacing within narrow bounds and can be disabled. Enemy statistics, quotas, boss schedule and loot remain fixed.
+- Day100 opens a portal to a fresh-world farm with relics and assignments retained. Later worlds reuse the same campaign.
+- Schema9 reads1–8; equipment/loot RNG, arena continuation, director state and worlds are saved with strict validation. Export before updating; schema9 exports cannot downgrade to0.12.
 
-Progression extends through Day100, then remains bounded for endless play: up to80 enemies,0.6s reinforcement floor,20 uniform/fortify/Steel/drill/hero ranks and10 mill/irrigation tiers. Chapters open additional ranks over time; they change real combat/health/output. Three mercenaries plus one hero remain the cap. Regular kills pay1coin, boss salvage10+day/5 (max30).
+Required candidate checks: JVM regressions, builds/lint/package audit, API26/35 installed-app suites and private-key signature/content/upgrade checks. Stable remains blocked on physical-phone endurance, accessibility, audio/performance and human balance playtesting. See docs/TESTING.md for observed evidence. No claim of maximum satisfaction or100-day human playtesting.
 
-Shop adds Arc bolt30c (single nearest threat) and Starfall65c (area0.32 radius). Damage scales with day and hero training; bosses resist40%. No live targets means no charge. Three quick slots share saved inventory,9 per potion; hold a slot or tap an empty slot to assign any of four potions. Upper-left slot replaces Merc+; hire through Barracks. Merc↑ remains. Actual spell rings identify the cast area.
+Observed local checks: all93 JVM tests, debug/release/test-APK builds, debug/release lint, package/audio/version audit and pinned private signature/content comparison PASS. Installed-app API26/35 and actual install-r checks are NOT TESTED on this source. This locally signed development build has not been published to GitHub; publication requires the source push approval and unchanged required native gates.
 
-A larger Survived-days heading counts completed nights, with full-width resource/status rows and three equal HUD buttons. Transparent dock/slot symmetry stays. New original32s Bard at Dawn lute/recorder/frame-drum and The Hunt haunting strings/bells replace phase scores; gun/zombie/owl/cricket effects and independent mutes/pause/focus cleanup remain.
+Latest local packaging: a separately signed Release.apk is available with debugging disabled, alongside the prior development preview. All93 tests pass in each debug/release variant; both variants pass package/audio audits. Certificate/content/alignment checks pass. No new gameplay changes; native installation and phone validation remain pending, and no public GitHub release was published.
 
-Schema8 reads1–7, preserving existing resources, crops, damage, hero and consumables, adding empty attack inventory/default equipped slots. New exports cannot downgrade to0.11. Keep the old APK and export before updating.
-
-Published0.12 APKs start one privately retained signing identity, with certificate pinned in source. Future higher-version builds signed with this identity can install as updates and retain progress. The earlier disposable preview keys were not saved; this new key cannot update those installations directly. Moving from0.11 or earlier still requires ONE export/install/import transfer. Do not uninstall before exporting. Emulator install-r tests re-sign an old baseline to test same-key migration; this does not bypass Android's real certificate requirement.
-
-Candidate gates:81 JVM, Android build/lint/package/signature/version/API/zero-permission/size/six-WAV audit, full exact signed-APK API26/35 tests plus actual install-r/schema7→8 checkpoint retention and screenshot self-review. Signing payloads must match a fresh source build and fixed certificate. Private key/password never appear in Git, CI cache, logs or public releases.
-
-Physical-phone listening/mixing/routing,30-minute endurance/20 interruptions, TalkBack/200% font and measured performance remain BLOCKED for stable. No claim of100-day human balance playtesting; HIL N/A.
+Authorized delivery: publish the verified signed Preview.apk and non-debuggable Release.apk, tests/source/checksums and API26/35 evidence as a GitHub prerelease after required gates pass. Both signed APK variants must match a fresh source build and the pinned certificate. Emulator checks run the complete preview suite plus an actual preview-to-release install-r and real checkpoint migration test. Phone validation is still pending; stable is not claimed.

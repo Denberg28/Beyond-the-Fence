@@ -1,3 +1,21 @@
+# 0.13 acceptance — TAG fantasy survival
+
+Baseline main70191f4, century source3d1e94c. Preserve package/signing identity and all critical farm survival/economy/lifecycle gates.
+
+| Criterion | Required check |
+| --- | --- |
+| Assignments | Three interchangeable potion/magic assignments; visible chooser and old hold flow; shared stock, no assignment debit |
+| Relics | All nine slots/five rarities/equip-best/unequip; owned-slot validation,45-item bound and bonus caps; independent saved loot RNG |
+| Drops | Ordinary0.4%, boss12%, arena victory55%; no ordinary Epic/Legendary, no duplicated kill/reward, no income amplification |
+| Arena | Invitation only after tenth full boss night; pause/preparation/accept/decline; four actual distinct champion cadences; saved45s battle, Strike cooldown, consumable debit, timeout/retreat/loss and once-only win reward; farm frozen |
+| Director | Persisted optional future pacing only,0.6s floor,8% relief/6% tension bounds; never modifies enemy HP/damage/quota/loot; no network |
+| Lore/worlds | Catchy welcome; instructions only on demand; Day100 portal waits for arena decision, fresh farm keeps collection/settings/assignments; campaign reuse disclosed |
+| Persistence/delivery | Schema9 reads1–8, rejects invalid extension; retains old package/certificate with higher version; exact signed APK API26/35 gates |
+
+Assumptions: equipment benefits your crew, hero and farm; the arena uses a separate survival avatar. Each slot's effect is fixed, so Equip best is unambiguous. Duplicates deduplicate, no salvage inflation. Arena is optional and consumes only used supplies; no fee/farm casualty. New worlds reuse the campaign. No purchased dependency, server or generative director.
+
+## Earlier records
+
 # 0.12 acceptance — Century survival
 
 Baseline0.11.1/608a451:75 JVM tests and1312 native checks/API26/35, published APK SHA2565814f5dde0a9a071e25d34c7143dacd21c12c1fa308e7ac0a614784cc105e1b4. User scope: sleepy morning/active night zombies, fifth-day boss, Day100 progression, single/area magic, replaceable slots, bard/horror scores, symmetric survived-day HUD, retained-progress updates.

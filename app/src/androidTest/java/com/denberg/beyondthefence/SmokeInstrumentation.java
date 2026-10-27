@@ -274,7 +274,7 @@ public final class SmokeInstrumentation extends Instrumentation {
             && a.game.elixirs == 3 && a.game.hero != null && a.game.hero.health == 200), "Upgrade preserves investments, crops, damage, stock and hero");
         runOnMainSync(() -> { a.game.equipItem(2, 3); a.finish(); });
         awaitUi(() -> ((FarmApp)getTargetContext().getApplicationContext()).store.load().game.equipped[2] == 3,
-            "Migrated schema8 checkpoint saves and reloads after an in-place update");
+            "Migrated schema9 checkpoint saves and reloads after an in-place update");
         result.putString("stream", "\nOK (" + checks + " upgrade checks)\n"); finish(Activity.RESULT_OK, result); return;
       }
       boolean welcomed = false;
@@ -283,7 +283,7 @@ public final class SmokeInstrumentation extends Instrumentation {
         dismissSystemHint();
         AccessibilityNodeInfo root = automation.getRootInActiveWindow();
         if (root != null) {
-          List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText("Plant the first seed");
+          List<AccessibilityNodeInfo> nodes = root.findAccessibilityNodeInfosByText("Awaken");
           for (AccessibilityNodeInfo node : nodes)
             welcomed |= node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
         }
@@ -683,6 +683,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       checkDock(reopened);screenshot("smoke-boss.png");
       runOnMainSync(() -> {century.enemies.clear();century.night=false;century.bossSpawned=false;century.roamers.clear();century.populateRoamers();reopened.refresh();});
       screenshot("smoke-century.png");
+      testFantasy(reopened);
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
@@ -698,6 +699,38 @@ public final class SmokeInstrumentation extends Instrumentation {
       result.putString("stream", "\nFAILURES!!!\n" + android.util.Log.getStackTraceString(e));
       finish(Activity.RESULT_CANCELED, result);
     }
+  }
+
+  private void testFantasy(MainActivity a) throws IOException {
+    Game fantasy = new Game(); fantasy.day = 11; fantasy.tutorialDone = true;
+    fantasy.collected[4] = fantasy.collected[9] = fantasy.collected[19] = true;
+    runOnMainSync(() -> { a.game = fantasy; a.paused = true; a.refresh(); });
+    touch(a, "build"); touch(a, "buildTab4"); touch(a, "equipBest");
+    check(onUi(() -> fantasy.gear[0] == 4 && fantasy.gear[1] == 9 && fantasy.gear[3] == 19), "Equipment tab fits best owned relic in each slot");
+    check(onUi(() -> control(a, "gear8") != null && control(a, "buyItem0") == null), "All nine equipment slots replace building actions");
+    touch(a, "gear0"); dialogAction("Unequip");
+    check(onUi(() -> fantasy.gear[0] == -1), "Equipment selector can unequip a relic");
+    touch(a, "equipBest"); screenshot("smoke-equipment.png");
+    touch(a, "assignButtons"); dialogAction("Button 1 · Elixir"); dialogAction("Starfall · 0 owned");
+    check(onUi(() -> fantasy.equipped[0] == 3), "Visible assignment flow interchanges potion and magic without spending stock");
+    touch(a, "closeBuild");
+    runOnMainSync(() -> { fantasy.arenaOfferDay = 10; a.refresh(); }); awaitIdle();
+    screenshot("smoke-arena-offer.png"); dialogAction("Enter arena");
+    awaitUi(() -> fantasy.arenaActive && a.paused, "Arena enters paused without advancing the farm");
+    dialogAction("Fight"); awaitUi(() -> fantasy.arenaElapsed > .1f, "Arena champion combat runs through real frame loop");
+    shell("cmd statusbar expand-notifications");
+    awaitUi(() -> a.paused, "Arena dialog losing focus pauses combat for system overlays");
+    shell("cmd statusbar collapse"); awaitIdle();
+    dialogAction("Fight"); awaitUi(() -> !a.paused, "Arena requires explicit resume after overlay interruption");
+    dialogAction("Pause");
+    check(onUi(() -> fantasy.health == 100 && fantasy.elapsed == 0 && fantasy.day == 11), "Arena combat leaves farm health and clock unchanged");
+    screenshot("smoke-arena.png"); dialogAction("Retreat"); dialogAction("Return to haven");
+    check(onUi(() -> !fantasy.arenaActive && fantasy.arenaResult == 3 && !fantasy.acceptArena()), "Retreat completes one attempt without repeat rewards");
+    runOnMainSync(() -> { fantasy.day = 21; fantasy.arenaOfferDay = 20; a.refresh(); }); awaitIdle();
+    dialogAction("Decline"); check(onUi(() -> fantasy.arenaDay == 20 && fantasy.arenaOfferDay == 0), "Arena invitation can be declined");
+    runOnMainSync(() -> { fantasy.day = 100; fantasy.worldComplete = true; a.refresh(); }); awaitIdle();
+    screenshot("smoke-rift.png"); dialogAction("Cross the rift");
+    check(onUi(() -> a.game.world == 2 && a.game.day == 1 && a.game.gear[0] == 4 && a.game.coins == 80), "Day100 portal retains relics in a new-world farm");
   }
 
   private void checkDock(MainActivity a) {

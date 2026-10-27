@@ -1,3 +1,16 @@
+# 0.13 current limitations
+
+- Local build/lint/all93 JVM/package/signature checks pass; installed-app API26/35/upgrade gates are not yet run. GitHub push was blocked by automatic approval review pending explicit publication authorization. Development build only; no public0.13 release.
+
+- Candidate; physical-phone performance/endurance/accessibility/audio and human balance remain unvalidated. Automated mechanics cannot establish maximum user satisfaction.
+- Local adaptive director is a transparent bounded pacing rule, not an LLM; late reinforcement floors can limit its effect.
+- Nine equipment slots use fixed effects;45 collectible combinations. Duplicates add no power or currency. Extremely scarce Legendary finds are not guaranteed.
+- Arena is an isolated survival-avatar battle. Farm/crew remain safe, supplies are actually consumed, and one attempt ends on loss/retreat/45s timeout. No new arena pathfinding or playable avatar movement.
+- Further worlds reuse the same campaign/art, retaining relics and settings while resetting the farm. They are not distinct authored worlds.
+- Schema9 reads old exports; older apps cannot read schema9. Keep pre-upgrade backup/APK. Existing0.12 private certificate is retained; earlier disposable-key installs still need one-time export/import.
+
+## Earlier records
+
 # 0.12 current limitations
 
 - Century progression has deterministic mechanical/scheduler checks;100 days are not human playtested for balance. Max80 enemies,3 mercenaries and1 hero bound simulation cost.

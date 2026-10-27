@@ -1,8 +1,8 @@
-# Beyond the Fence
+# TAG: Zombie Survival Fantasy
 
 A small farm, a warm home, and something moving past the fence. An offline Android farming and survival game with original vector artwork, quick sessions, and no accounts, ads, purchases or internet permission.
 
-**Current test candidate: 0.12.0-rc.1.** Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
+**Current local build: 0.13.0-rc.1 (signed Release.apk and development Preview.apk; not yet published).** Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
 
 ## Play · farm fortress
 
@@ -21,7 +21,22 @@ The144dp transparent cross and mercenary commands stay pinned above equal-height
 
 Scouts shuffle slowly and some stand dormant during each six-second daylight phase; no daytime damage. At night, each enemy has an individual shuffling cadence. Ghoul/Ironhide/Wraith join after days15/30/45. Every fifth night, one Grave Warden replaces a reinforcement midway through the quota; it has a distinct large silhouette and a top health bar. Clear all enemies, including the boss, to reach dawn. Boss state saves without duplicating the event. Failure/recovery retries the same day.
 
-Progression scales through Day100, then remains bounded for endless play: at most80 enemies,0.6s reinforcement floor, four Steel fences with up to20 reinforcement ranks,20 uniform/fortify/drill/hero ranks,10 mill/irrigation tiers. Five-day chapters unlock ranks beyond the early caps; mill/irrigation open every10 days. Existing prices remain linear. Larger later investments improve actual damage/armor/health/output. Survived days means completed nights, displayed prominently above consistently sized HUD buttons. Three mercenaries plus one hero remain the maximum.
+Progression scales through Day100, then opens a rift to a fresh world: at most80 enemies,0.6s reinforcement floor, four Steel fences with up to20 reinforcement ranks,20 uniform/fortify/drill/hero ranks,10 mill/irrigation tiers. Five-day chapters unlock ranks beyond the early caps; mill/irrigation open every10 days. Existing prices remain linear. Larger later investments improve actual damage/armor/health/output. Survived days means completed nights, displayed prominently above consistently sized HUD buttons. Three mercenaries plus one hero remain the maximum.
+
+
+## Fantasy survival
+
+One life ended. Your survival story begins. Reincarnate in a world claimed by the dead, build a haven, and survive one hundred days. The Day100 rift starts another world with a fresh farm while retaining relics, worn equipment, button assignments and accessibility/audio preferences. The new world reuses the century campaign; it is not a separate authored biome/story campaign.
+
+**Equipment** is a dedicated tab, also reachable through Options. Fit Helmet, Boots, Gloves, Weapon, Ring, Necklace, Talisman, Belt and Shoulder pad, or use **Equip best**. Every slot has Common/Uncommon/Rare/Epic/Legendary relics with fixed transparent effects. The45-entry collection deduplicates exact finds; no inventory overflow or automatic sale. Bonuses cap at12% crew/hero attack,12% farm/crew protection,10% magic power and6% attack speed. They do not raise income, range, base health, loot chance or upgrade caps. Relics are optional advantages; farms still need defenses.
+
+Per defeated ordinary zombie, equipment drops at0.4%; bosses12%; arena victory55%. Ordinary drops are at most Rare. Among arena drops,2% are Legendary,14% Epic,49% Rare and35% Uncommon. This means1.1% unconditional Legendary chance per arena win. Duplicate finds do not stack or grant coins. A separate persisted loot RNG leaves enemy/weather randomness unchanged.
+
+After clearing each tenth night, including its boss, an invitation pauses the farm. Accept or decline; Equipment can be changed before entry. One attempt per invitation against one of four random champions: a heavy-blow knight, rapid huntress, slow colossus or pulsing witch. Battles use their own180+ hero resolve, not farm/crew HP; farm clocks and crops freeze. Crew upgrades and worn relics affect your arena avatar, which attacks automatically. **Strike** adds a2.4s cooldown attack, and all three assigned potions/magic work with real shared stock. A45s timeout or defeat ends the attempt without farm damage; retreat grants no reward. There is no replay reward or entry fee. Pausing/backgrounding/rotation freezes and resumes the saved fight. You can remain safely in a completed world before crossing the rift.
+
+**Assign buttons** explicitly lets every one of the three buttons use Elixir, Enhancer, Arc bolt or Starfall interchangeably. Holding a quick slot and tapping an empty slot still work. Assignments never buy or consume stock.
+
+The optional offline **adaptive director** measures raid strain and recent clean nights. It adjusts only future reinforcement spacing, by at most8% slower or6% faster, retaining the0.6s floor. It never changes live enemy health/damage, quotas, bosses, upgrade costs or loot odds, and never guarantees a win. The current pacing state is shown in Equipment; Options disables adaptation. No service, analytics, paid AI or network is used. Human fun/balance validation remains outstanding.
 
 ## Install / upgrade / rollback
 
@@ -29,7 +44,7 @@ Download **Preview.apk** from [GitHub Releases](https://github.com/Denberg28/Bey
 
 Starting with0.12, published previews use one privately retained key with its public fingerprint pinned in docs/signing-certificate.sha256. Future higher-version APKs signed with that same key install over the app and retain its local checkpoints. Private keys are never committed, cached in public CI or included in releases. Earlier disposable preview keys were not retained; the existing0.11.1 APK cannot be updated by this new key. A one-time export/import is required when moving from those older builds. Do not uninstall until you have exported and kept the backup. **Export your current `.btfs` save before upgrading or uninstalling.** A signing conflict requires export→uninstall→install→import. Uninstall removes local data. Production signing continuity remains unconfigured.
 
-Save schema8 adds three assignable slots, attack-potion inventory and boss state; it reads schema1–7 backups. It also expands validated century ranks/enemy limits. Schema7 added consumables, hero state, drills, mill tiers and per-border reinforcement ranks. It also retains mercenary health. Schema1–6 backups migrate; older combat upgrades become uniforms. Legacy squads above3 retain their first3 guards and receive each excess recruit's original hire cost plus6 timber once (slots4–6:130/155/180 coins). Existing crops, resources, assets and damage remain. Legacy XP is read for compatibility but earns nothing and affects no gameplay. Crop availability and difficulty now depend on day. Schema8 cannot be opened by0.11 or older; keep a pre-upgrade export and previous APK for rollback.
+Save schema9 adds equipment, arena, director and world state; it reads schemas1–8. Schema8 added three assignable slots, attack-potion inventory and boss state; it reads schema1–7 backups. It also expands validated century ranks/enemy limits. Schema7 added consumables, hero state, drills, mill tiers and per-border reinforcement ranks. It also retains mercenary health. Schema1–6 backups migrate; older combat upgrades become uniforms. Legacy squads above3 retain their first3 guards and receive each excess recruit's original hire cost plus6 timber once (slots4–6:130/155/180 coins). Existing crops, resources, assets and damage remain. Legacy XP is read for compatibility but earns nothing and affects no gameplay. Crop availability and difficulty now depend on day. Schema9 cannot be opened by0.12 or older; keep a pre-upgrade export and previous APK for rollback.
 
 Atomic alternating local checkpoints and validated backup import/export remain. Corrupt imports leave the farm intact; damaged checkpoints recover from the other slot. Keep on-device backups for offline use. No simulation happens while backgrounded or closed.
 

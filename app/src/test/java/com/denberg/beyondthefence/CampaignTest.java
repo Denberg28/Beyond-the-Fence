@@ -13,6 +13,7 @@ public class CampaignTest {
       int seen = 0;
       for (int t=0;t<6000 && g.day==day;t++) {
         g.tick(.1f);
+        if (g.worldComplete) break;
         if (g.boss() != null) {
           seen++; total++;
           g=SaveCodec.decode(SaveCodec.encode(g));
@@ -20,7 +21,7 @@ public class CampaignTest {
         }
         for (Game.Enemy e:g.enemies) e.hp=0;
       }
-      assertEquals(day+1,g.day); assertFalse(g.defeated);
+      assertEquals(day == 100 ? 100 : day+1,g.day); assertEquals(day == 100, g.worldComplete); assertFalse(g.defeated);
       assertEquals(day%5==0 ? 1 : 0,seen);
     }
     assertEquals(20,total);

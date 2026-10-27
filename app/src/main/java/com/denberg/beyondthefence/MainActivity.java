@@ -40,7 +40,7 @@ public final class MainActivity extends Activity {
   private final GameButton[] cropButtons = new GameButton[3],
       plotButtons = new GameButton[9], upgradeButtons = new GameButton[4],
       wallButtons = new GameButton[4], buildingButtons = new GameButton[3],
-      wallPurchase = new GameButton[4], construction = new GameButton[3], buildTabs = new GameButton[4], rallyButtons = new GameButton[4];
+      wallPurchase = new GameButton[4], construction = new GameButton[3], buildTabs = new GameButton[5], rallyButtons = new GameButton[4];
   private LinearLayout seedTray, buildItems;
   private TextView buildResources, roster;
   private FrameLayout window, buildOverlay;
@@ -50,6 +50,12 @@ public final class MainActivity extends Activity {
   private TerrainBackdrop terrain;
   private ScrollView buildScroll;
   private int panelRevision;
+  private AlertDialog arenaDialog;
+  private TextView arenaStatus;
+  private ArenaView arenaView;
+  private GameButton arenaStrike, arenaPause;
+  private final GameButton[] arenaItems = new GameButton[3];
+  private boolean adventureDialog, eventQueued, portalShown;
   private SaveStore store;
   private FarmApp session;
   private final Handler handler = new Handler(Looper.getMainLooper());
@@ -64,7 +70,9 @@ public final class MainActivity extends Activity {
           boolean running = !paused && !storageBlocked && !ioBusy;
           if (running) {
             float dt = Math.min(.1f, (now - lastFrame) / 1000f);
+            boolean arenaWasActive = game.arenaActive;
             game.tick(dt);
+            if (arenaWasActive && !game.arenaActive) { paused = true; save(); refresh(); }
             updateAudio(dt);
             if (game.defeated) {
               paused = true;
@@ -94,7 +102,7 @@ public final class MainActivity extends Activity {
     saveMessage = session.saveMessage;
     if (state != null) {
       buildOpen = state.getBoolean("buildOpen");
-      buildTab = Math.max(0, Math.min(3, state.getInt("buildTab")));
+      buildTab = Math.max(0, Math.min(4, state.getInt("buildTab")));
       selectedWall = Math.max(-1, Math.min(3, state.getInt("wall", -1)));
       selectedBuilding = Math.max(-1, Math.min(2, state.getInt("building", -1)));
       selectedCrop = Math.max(0, Math.min(game.unlockedCrops() - 1, state.getInt("seed")));
@@ -332,6 +340,7 @@ public final class MainActivity extends Activity {
     harvest.setTag("harvest");
     phase = button("Night", () -> {
       if (storageBlocked || ioBusy || buildOpen) return;
+      if (game.worldComplete) { portalShown = false; showAdventure(); return; }
       if (game.defeated) { game.recover(); paused = true; }
       else { game.startNight(); paused = false; lastFrame = SystemClock.elapsedRealtime(); }
       changed();
@@ -421,6 +430,140 @@ public final class MainActivity extends Activity {
         .setNegativeButton("Close", null).show();
   }
 
+  private void assignButtons() {
+    paused = true; refresh();
+    String[] slots = new String[3];
+    for (int i = 0; i < 3; i++) slots[i] = "Button " + (i + 1) + " · " + Game.ITEMS[game.equipped[i]];
+    new AlertDialog.Builder(this).setTitle("Potion or magic")
+        .setItems(slots, (d, slot) -> chooseItem(slot)).setNegativeButton("Close", null).show();
+  }
+
+  private void addEquipment() {
+    int found = 0; for (boolean owned : game.collected) if (owned) found++;
+    TextView summary = text(found + "/45 relics · " + game.directorDescription()
+        + "\nAttack +" + Math.round(game.equipmentBonus(0) * 100) + "% · Protection +" + Math.round(game.equipmentBonus(1) * 100)
+        + "%\nMagic +" + Math.round(game.equipmentBonus(2) * 100) + "% · Speed +" + Math.round(game.equipmentBonus(3) * 100) + "%", 13, INK);
+    summary.setPadding(dp(4), dp(8), dp(4), dp(8)); buildItems.addView(summary);
+    if (game.lastDrop >= 0) buildItems.addView(text("Latest find · " + Equipment.name(game.lastDrop), 12, MUTED));
+    GameButton best = button("Equip best", () -> { if (canAct()) { game.equipBest(); rebuildBuildItems(); changed(); } });
+    best.setTag("equipBest"); best.setEnabled(!game.arenaActive && !game.defeated); addBuildAction(best);
+    for (int i = 0; i < game.gear.length; i++) {
+      final int slot = i; int code = game.gear[i];
+      GameButton action = button(Equipment.SLOTS[i] + " · " + (code < 0 ? "Empty" : Equipment.RARITIES[Equipment.rarity(code)]
+          + "\n" + Equipment.name(code) + " · " + Equipment.effect(code)), () -> chooseEquipment(slot));
+      action.setTag("gear" + i); action.setEnabled(!game.arenaActive && !game.defeated);
+      action.setCompoundDrawablesRelativeWithIntrinsicBounds(new EquipmentIcon(i, code < 0 ? -1 : Equipment.rarity(code), dp(32)), null, null, null);
+      action.setCompoundDrawablePadding(dp(8)); addBuildAction(action);
+    }
+    TextView rarity = text("Common · Uncommon · Rare · Epic · Legendary\nScarce zombie finds. Bosses may carry relics. Arena wins can reveal higher tiers. Duplicate relics never stack.\nMaximum bonuses: attack12%, protection12%, magic10%, speed6%.", 12, MUTED);
+    rarity.setPadding(dp(4), dp(12), dp(4), dp(8)); buildItems.addView(rarity);
+    if (game.arenaOfferDay > 0) {
+      GameButton arena = button("Day " + game.arenaOfferDay + " · Arena invitation", () -> { closeBuild(); showAdventure(); });
+      arena.setTag("arenaInvitation"); addBuildAction(arena);
+    }
+  }
+
+  private void chooseEquipment(int slot) {
+    if (game.arenaActive || !canAct()) return;
+    java.util.ArrayList<Integer> codes = new java.util.ArrayList<>(); codes.add(-1);
+    java.util.ArrayList<String> labels = new java.util.ArrayList<>(); labels.add("Unequip");
+    int selected = game.gear[slot] == -1 ? 0 : -1;
+    for (int rarity = 4; rarity >= 0; rarity--) {
+      int code = slot * 5 + rarity;
+      if (game.collected[code]) {
+        if (code == game.gear[slot]) selected = codes.size();
+        codes.add(code); labels.add(Equipment.RARITIES[rarity] + " · " + Equipment.name(code) + "\n" + Equipment.effect(code));
+      }
+    }
+    new AlertDialog.Builder(this).setTitle(Equipment.SLOTS[slot])
+        .setSingleChoiceItems(labels.toArray(new String[0]), selected, (d, choice) -> {
+          game.equipGear(slot, codes.get(choice)); d.dismiss(); rebuildBuildItems(); changed();
+        }).setNegativeButton("Close", null).show();
+  }
+
+  private void scheduleAdventure() {
+    if (eventQueued || adventureDialog || buildOpen || !foreground || storageBlocked || ioBusy || !game.tutorialDone) return;
+    if (!game.arenaActive && game.arenaOfferDay == 0 && (!game.worldComplete || portalShown)) return;
+    eventQueued = true;
+    handler.post(() -> { eventQueued = false; if (!isFinishing() && !isDestroyed() && foreground && !buildOpen && !adventureDialog) showAdventure(); });
+  }
+
+  private void showAdventure() {
+    if (adventureDialog || storageBlocked || ioBusy) return;
+    if (game.arenaActive) { showArena(); return; }
+    paused = true; adventureDialog = true;
+    if (game.arenaOfferDay > 0) {
+      new AlertDialog.Builder(this).setTitle("The dead have a champion")
+          .setMessage("Day " + game.arenaOfferDay + " survived. Beyond your fence, the arena calls.\n\nFace one random champion. Victory has a55% relic chance, including Epic and Legendary finds. One attempt. No entry fee. Your farm waits safely; used potions and magic are spent.\n\nAccept the challenge—or live to fight another night.")
+          .setPositiveButton("Enter arena", (d, w) -> { game.acceptArena(); save(); handler.post(this::showArena); })
+          .setNegativeButton("Decline", (d, w) -> { game.declineArena(); changed(); })
+          .setNeutralButton("Equipment", (d, w) -> showBuild(4))
+          .setCancelable(false).setOnDismissListener(d -> adventureDialog = false).show();
+    } else if (game.worldComplete) {
+      portalShown = true;
+      new AlertDialog.Builder(this).setTitle("One hundred dawns. One open rift.")
+          .setMessage("You built a haven where hope was buried. Now another sky calls your name.\n\nCross into World " + Math.min(999, game.world + 1) + ". Your relic collection, worn equipment and button assignments travel with you. A fresh farm begins at Day1; buildings, coins, crew and consumables stay behind.")
+          .setPositiveButton("Cross the rift", (d, w) -> {
+            Game next = game.crossRift(); if (next != null) {
+              game = next; selectedCrop = 0; selectedWall = selectedBuilding = -1; portalShown = false;
+              paused = true; changed();
+            }
+          }).setNegativeButton("Stay here", null)
+          .setOnDismissListener(d -> adventureDialog = false).show();
+    } else adventureDialog = false;
+    refresh();
+  }
+
+  private void showArena() {
+    if (isFinishing() || isDestroyed() || !foreground) return;
+    if (arenaDialog != null && arenaDialog.isShowing()) return;
+    adventureDialog = true; paused = true;
+    LinearLayout content = column(); content.setPadding(dp(16), dp(8), dp(16), dp(8));
+    arenaView = new ArenaView(this, game); content.addView(arenaView, new LinearLayout.LayoutParams(-1, dp(148)));
+    arenaStatus = text("", 13, INK); arenaStatus.setTag("arenaStatus"); content.addView(arenaStatus);
+    arenaStrike = button("Strike", () -> { if (!paused && game.arenaStrike()) changed(); });
+    arenaStrike.setTag("arenaStrike"); content.addView(arenaStrike);
+    for (int i = 0; i < 3; i++) {
+      final int slot = i;
+      arenaItems[i] = button("", () -> { if (!paused && game.arenaActive && game.useItem(game.equipped[slot])) changed(); });
+      arenaItems[i].setTag("arenaItem" + i); content.addView(arenaItems[i]);
+    }
+    arenaPause = button("Fight", () -> {
+      if (!game.arenaActive) { arenaDialog.dismiss(); arenaDialog = null; refresh(); return; }
+      paused = !paused; lastFrame = SystemClock.elapsedRealtime(); refresh();
+    }); arenaPause.setTag("arenaPause"); content.addView(arenaPause);
+    ScrollView scroll = new ScrollView(this); scroll.addView(content);
+    arenaDialog = new AlertDialog.Builder(this).setTitle(Game.CHAMPIONS[game.arenaChampion]).setView(scroll)
+        .setNegativeButton("Retreat", null).setCancelable(false)
+        .setOnDismissListener(d -> { paused = true; adventureDialog = false; }).create();
+    arenaDialog.setOnShowListener(d -> arenaDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
+      if (game.arenaActive) game.retreatArena(); paused = true; changed();
+    }));
+    arenaDialog.show();
+    arenaDialog.getWindow().getDecorView().getViewTreeObserver().addOnWindowFocusChangeListener(focused -> {
+      if (!focused && game.arenaActive && !paused) {
+        paused = true; save(); refresh();
+      }
+    });
+    refresh();
+  }
+
+  private void refreshArena() {
+    if (arenaDialog == null || !arenaDialog.isShowing()) return;
+    label(arenaStatus, game.arenaActive ? "You " + Math.round(game.arenaHealth) + "/" + Math.round(game.arenaMaxHealth())
+        + " HP · Champion " + Math.round(game.arenaEnemyHealth) + "/" + Math.round(game.arenaMaxEnemyHealth())
+        + " HP\n" + (45 - (int)game.arenaElapsed) + "s remain · Farm paused" : game.notice);
+    label(arenaStrike, game.strikeClock > 0 ? "Strike · " + (int)Math.ceil(game.strikeClock) + "s" : "Strike");
+    arenaStrike.setEnabled(game.arenaActive && !paused && game.strikeClock == 0);
+    for (int i = 0; i < 3; i++) {
+      int type = game.equipped[i]; label(arenaItems[i], Game.ITEMS[type] + " · " + game.itemStock(type) + " owned");
+      arenaItems[i].setEnabled(game.arenaActive && !paused && game.itemStock(type) > 0);
+    }
+    label(arenaPause, !game.arenaActive ? "Return to haven" : paused ? "Fight" : "Pause");
+    arenaDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(game.arenaActive);
+    arenaView.invalidate();
+  }
+
   private void clearHint() { costButton = null; costToken++; }
 
   private void showPrice(GameButton button, int coins, int timber) {
@@ -432,7 +575,9 @@ public final class MainActivity extends Activity {
   }
 
   private void updateAudio(float dt) {
-    if (music != null) music.update(foreground && hasWindowFocus() && !paused && !game.defeated
+    boolean focused = hasWindowFocus() || arenaDialog != null && arenaDialog.isShowing()
+        && arenaDialog.getWindow() != null && arenaDialog.getWindow().getDecorView().hasWindowFocus();
+    if (music != null) music.update(foreground && focused && !paused && !game.defeated
         && !storageBlocked && !ioBusy, game, musicEnabled, effectsEnabled, dt);
   }
 
@@ -472,6 +617,15 @@ public final class MainActivity extends Activity {
       tab.setMargins(dp(2), 0, dp(2), 0); navigation.addView(buildTabs[i], tab);
     }
     card.addView(navigation);
+    LinearLayout loadout = row();
+    buildTabs[4] = button("Equipment", () -> selectBuildPage(4));
+    buildTabs[4].setTag("buildTab4");
+    loadout.addView(buildTabs[4], new LinearLayout.LayoutParams(0, -2, 1));
+    GameButton assignments = button("Assign buttons", this::assignButtons);
+    assignments.setTag("assignButtons");
+    LinearLayout.LayoutParams assignSize = new LinearLayout.LayoutParams(0, -2, 1);
+    assignSize.setMargins(dp(4), 0, 0, 0); loadout.addView(assignments, assignSize);
+    card.addView(loadout);
     buildScroll = new ScrollView(this); buildScroll.setTag("panelScroll");
     buildScroll.setSmoothScrollingEnabled(false);
     buildItems = column(); buildItems.setTag("panelItems");
@@ -493,7 +647,7 @@ public final class MainActivity extends Activity {
   private void rebuildBuildItems() {
     final int revision = ++panelRevision;
     buildItems.removeAllViews();
-    selectedBuilding = buildTab - 1;
+    selectedBuilding = buildTab > 0 && buildTab < 4 ? buildTab - 1 : -1;
     java.util.Arrays.fill(upgradeButtons, null);
     java.util.Arrays.fill(wallPurchase, null);
     java.util.Arrays.fill(construction, null);
@@ -501,7 +655,7 @@ public final class MainActivity extends Activity {
     java.util.Arrays.fill(rallyButtons, null);
     shopHarvest = null; shopPlant = null; heroBuy = null; costButton = null;
     java.util.Arrays.fill(itemBuy, null); java.util.Arrays.fill(advanced, null);
-    label(buildTitle, selectedBuilding < 0 ? "FENCE" : new String[] {"MILL", "SHOP", "BARRACKS"}[selectedBuilding]);
+    label(buildTitle, buildTab == 4 ? "EQUIPMENT" : selectedBuilding < 0 ? "FENCE" : new String[] {"MILL", "SHOP", "BARRACKS"}[selectedBuilding]);
     if (selectedBuilding >= 0) {
       addConstruction(selectedBuilding);
       if (selectedBuilding == 0) { addTimber(); addAdvanced(0); addUpgrade(1); }
@@ -534,6 +688,7 @@ public final class MainActivity extends Activity {
         wallPurchase[i].setTag("constructWall" + i); addBuildAction(wallPurchase[i]);
       }
     }
+    if (buildTab == 4) addEquipment();
     // Cancel stale scroll/focus from the detached page, then settle the new page at its start.
     buildScroll.scrollTo(0, 0);
     buildScroll.post(() -> {
@@ -651,7 +806,7 @@ public final class MainActivity extends Activity {
   void refresh() {
     if (stats == null) return;
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
-    label(survived, "Survived " + (game.day - 1) + (game.day == 2 ? " day" : " days"));
+    label(survived, "Survived " + (game.worldComplete ? 100 : game.day - 1) + (game.day == 2 ? " day" : " days") + (game.world > 1 ? " · World " + game.world : ""));
     label(stats, game.coins + " coins · " + game.wood + " timber");
     label(status, "Day " + game.day + " · " + Settlement.NAMES[game.settlementStyle()] + " · " + Game.WEATHER[game.weather] + " · Farm "
         + Math.round(game.health) + "/" + game.maxHealth() + (game.boss() != null ? " · BOSS" : game.bossDay() ? " · Boss tonight" : ""));
@@ -670,7 +825,8 @@ public final class MainActivity extends Activity {
     harvest.colors(game.readyPlots() > 0 ? GOLD : 0xffe9e5d3, 0xffd2cba9, INK);
     label(phase, game.defeated ? "Rebuild\nFree" : game.night ? "Raid " + game.day + "\n" + game.enemies.size() + " foes" : "Raid in\n" + game.raidInSeconds() + "s");
     phase.setContentDescription(game.defeated ? "Rebuild fortress free" : game.night ? "Raid in progress" : "Start the next zombie raid now, automatic raid in " + game.raidInSeconds() + " seconds");
-    phase.setEnabled(!storageBlocked && !ioBusy && (!game.night || game.defeated));
+    phase.setEnabled(!storageBlocked && !ioBusy && !game.arenaActive && game.arenaOfferDay == 0 && (!game.night || game.defeated));
+    if (game.worldComplete) label(phase, "Rift\nOpen");
     phase.colors(0xff536f48, 0xffa8bc87, CREAM);
     for (int i = 0; i < 3; i++) {
       boolean unlocked = i < game.unlockedCrops(), selected = selectedCrop == i;
@@ -720,6 +876,8 @@ public final class MainActivity extends Activity {
       buildTabs[i].setSelected(buildTab == i);
       buildTabs[i].colors(buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
     }
+    buildTabs[4].setSelected(buildTab == 4);
+    buildTabs[4].colors(buildTab == 4 ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
     for (int i = 0; i < 9; i++) {
       boolean unlocked = i < game.plots(); int crop = game.crop[i]; boolean ripe = crop >= 0 && game.growth[i] >= 1;
       label(plotButtons[i], !unlocked ? "Land +" : crop < 0 ? game.scorched[i] ? "Replant" : "+" : ripe ? "+" + game.sale(crop) + "c" : game.harvestSeconds(i) + "s");
@@ -804,27 +962,27 @@ public final class MainActivity extends Activity {
     board.refreshSettlement();
     updateAudio(0);
     scene.invalidate();
+    refreshArena();
+    scheduleAdventure();
   }
 
   private void welcome() {
-    paused = true;
+    paused = true; adventureDialog = true;
     new AlertDialog.Builder(this)
-        .setTitle("Your farm. Your last safe place.")
-        .setMessage(
-            "1  Open Seeds, then tap farm plots inside your fortress. Harvest ripe crops for coins and timber.\n\n"
-                + "2  Fence bars and HP show damage. Upgrade Wood to Stone to Steel. Zombies damage individual fences. A breach lets them enter and destroy crops and buildings. Tap N/E/S/W to select a border and repair50HP for8 coins; the center ↑ builds or upgrades that selected fence. Tap Mill, Shop or Camp for their features; Fence sells 10 timber for 12 harvest coins.\n\n"
-                + "3  One volunteer guard starts with you. Your mercenaries are the only fighters. Harvest to build barracks and hire more through Crew. Maximum three mercenaries. Hold a potion slot to assign Elixir, Enhancer, Arc bolt or Starfall. Merc ↑ upgrades directly. Barracks upgrades uniforms, firepower and armor; Crew can rally them to a border or resume patrol.\n\n"
-                + "4  Zombies roam the terrain outside your compact farm. Each day brings a faster, stronger horde. Runners rush, Brutes smash, Spitters attack at range. Raids end only when every zombie is killed. A breach can wipe out your crew and farm. Tap Raid in to start a raid early. Mercenaries fight automatically within range. Progress advances only while playing.")
-        .setPositiveButton(
-            "Plant the first seed",
-            (d, w) -> {
-              game.tutorialDone = true;
-              paused = false;
-              lastFrame = SystemClock.elapsedRealtime();
-              changed();
-            })
-        .setNegativeButton("Later", (d, w) -> {})
-        .show();
+        .setTitle("TAG: Zombie Survival Fantasy")
+        .setMessage("One life ended. Your survival story begins.\n\nYou awaken in a world claimed by the dead. Build a haven. Gather allies. Unearth forgotten magic.\n\nSurvive one hundred days—and the rift will carry you to another world.\n\nA fence. A seed. A second chance.")
+        .setPositiveButton("Awaken", (d, w) -> {
+          game.tutorialDone = true; paused = false;
+          lastFrame = SystemClock.elapsedRealtime(); changed();
+        })
+        .setNegativeButton("Later", null)
+        .setOnDismissListener(d -> adventureDialog = false).show();
+  }
+
+  private void howToPlay() {
+    new AlertDialog.Builder(this).setTitle("Build. Fight. Survive.")
+        .setMessage("Plant and harvest for coins and timber. Close fence gaps; upgrade defenses. Hire and rally crew in Barracks.\n\nHold any quick slot, or open Assign buttons, to choose a potion or magic. Buy supplies in Shop.\n\nRare relics go to Equipment. Equip Best fits your strongest collection. Bosses come every fifth night; optional champion arenas follow every tenth victory.\n\nThe local director varies the spacing of future reinforcements slightly. Enemy damage, health, quotas and loot odds stay fixed. Disable it in Options for fixed pacing. Export a backup before updating.")
+        .setPositiveButton("Ready", null).show();
   }
 
   private void options() {
@@ -840,14 +998,16 @@ public final class MainActivity extends Activity {
       "New farm (reset progress)",
       "Resume game",
       musicEnabled ? "Background music: ON" : "Background music: OFF",
-      effectsEnabled ? "Sound effects: ON" : "Sound effects: OFF"
+      effectsEnabled ? "Sound effects: ON" : "Sound effects: OFF",
+      game.directorEnabled ? "Adaptive director: ON" : "Adaptive director: OFF",
+      "Equipment & button assignments"
     };
     new AlertDialog.Builder(this)
         .setTitle("Take a breather")
         .setItems(
             items,
             (dialog, which) -> {
-              if (which == 0) welcome();
+              if (which == 0) howToPlay();
               else if (which == 1) {
                 game.relaxed = !game.relaxed;
                 changed();
@@ -893,7 +1053,11 @@ public final class MainActivity extends Activity {
                 effectsEnabled = !effectsEnabled;
                 getPreferences(MODE_PRIVATE).edit().putBoolean("effects", effectsEnabled).apply();
                 refresh(); options();
-              } else if (!storageBlocked && !ioBusy) {
+              } else if (which == 9) {
+                game.directorEnabled = !game.directorEnabled;
+                game.directorPressure = 0; game.calmNights = 0; changed(); options();
+              } else if (which == 10) showBuild(4);
+              else if (!storageBlocked && !ioBusy) {
                 paused = false;
                 lastFrame = SystemClock.elapsedRealtime();
                 refresh();
@@ -912,7 +1076,7 @@ public final class MainActivity extends Activity {
         new Intent(Intent.ACTION_CREATE_DOCUMENT)
             .setType("application/octet-stream")
             .addCategory(Intent.CATEGORY_OPENABLE)
-            .putExtra(Intent.EXTRA_TITLE, "Beyond-the-Fence-Day-" + game.day + ".btfs");
+            .putExtra(Intent.EXTRA_TITLE, "TAG-Zombie-Survival-Fantasy-Day-" + game.day + ".btfs");
     try {
       startActivityForResult(intent, 41);
     } catch (ActivityNotFoundException e) {

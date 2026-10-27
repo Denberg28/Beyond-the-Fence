@@ -1,3 +1,15 @@
+# Fantasy extension (0.13)
+
+Game remains the deterministic Android-independent simulation. Equipment describes a finite45-item collection with9 fixed stat slots and5 rarities; Game applies aggregate caps and an independently saved loot RNG. SaveCodec9 appends validated collection/gear/director/arena/world data to the existing layout, retaining schemas1–8. No timers use wall time.
+
+Farm night completion -> dawn -> tenth-night invitation -> accept/decline -> optional isolated champion battle -> result -> preparation. Day100 completion freezes the finished world; its optional arena resolves before the portal can carry collection/settings/assignments into a fresh Game. New-world campaign content is reused. Arena frames exit before farm clocks, patrol, production, growth or damage. Arena HP/cooldowns/champion and RNG persist; accepted/resolved day prevents reward replay. UI dialogs reopen paused after lifecycle recreation. Shared consumables are real costs; equipment changes are locked during battle.
+
+The local director changes only subsequent reinforcement spacing based on capped raid strain/clean nights. The saved pressure has3 states. It changes neither loot stream nor live foe stats. Options can disable it; Equipment exposes pacing state. Survival failure remains possible. No AI service/network/telemetry.
+
+MainActivity retains native accessible controls and provides a separate Equipment tab, explicit assignment chooser and scrollable arena dialog. EquipmentIcon/ArenaView are original Canvas artwork. Welcome is story-only; Help is user-invoked. Fixed package/certificate permits renamed-app updates.
+
+## Earlier records
+
 # 0.12 century and signed delivery
 
 Campaign owns bounded Day1–100 unlocks and enemy limits; Game retains deterministic simulation time/randomness. Daytime dormancy uses elapsed six-second phases and stable roamer position/type. Night gait is a bounded per-enemy sinusoidal multiplier; health/damage remain gameplay state. New enemy types use the same perimeter/collision/targeting geometry. Boss type7 is excluded from ordinary random selection and scheduled exactly once midway through fifth-night quota using a persisted flag. Imported older active raids are marked handled so their existing wave can finish; the next new raid resets the flag.

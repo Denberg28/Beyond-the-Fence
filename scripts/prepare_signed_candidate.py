@@ -6,6 +6,7 @@ manifest, signer = pathlib.Path(sys.argv[1]), sys.argv[2]
 data = json.loads(manifest.read_text())
 source = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
 assert data['source_sha'] == source
+assert re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+', data['version'])
 pin = pathlib.Path('docs/signing-certificate.sha256').read_text().strip()
 assert re.fullmatch('[0-9a-f]{64}', pin) and data['signer_sha256'] == pin
 repo = os.environ['GITHUB_REPOSITORY']
@@ -31,10 +32,16 @@ def blob(field, target):
     certificate(target)
 
 with tempfile.TemporaryDirectory() as folder:
-    for field, target in [('apk', 'app/build/outputs/apk/debug/app-debug.apk'), ('tests', 'app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk')]:
+    pathlib.Path('artifacts').mkdir(exist_ok=True)
+    release_target = 'artifacts/TAG-Zombie-Survival-Fantasy-' + data['version'] + '-Release.apk'
+    for field, built, target in [
+        ('apk', 'app/build/outputs/apk/debug/app-debug.apk', 'app/build/outputs/apk/debug/app-debug.apk'),
+        ('tests', 'app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk', 'app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk'),
+        ('release', 'app/build/outputs/apk/release/app-release-unsigned.apk', release_target),
+    ]:
         signed = pathlib.Path(folder) / (field + '.apk')
         blob(field, signed)
-        assert entries(target) == entries(signed), field + ' differs from fresh source build'
+        assert entries(built) == entries(signed), field + ' differs from fresh source build'
         pathlib.Path(target).write_bytes(signed.read_bytes())
     # The old package is re-signed ONLY for the emulator update test. It cannot update old phones.
     baseline = pathlib.Path(folder) / 'baseline.apk'

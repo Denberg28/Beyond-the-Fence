@@ -49,7 +49,7 @@ final class SurvivalMusic {
       focused = manager.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
       if (!focused) { blocked = true; return; }
     }
-    int desired = game.night ? 1 : 0;
+    int desired = game.night || game.arenaActive ? 1 : 0;
     if (!musicOn) stopMusic();
     else if (activeTrack != desired) {
       stopMusic(); activeTrack = desired;

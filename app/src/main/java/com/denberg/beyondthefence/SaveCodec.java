@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 8;
+  private static final int MAGIC = 0x42544653, VERSION = 9;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -81,6 +81,13 @@ public final class SaveCodec {
     d.writeInt(g.bolts); d.writeInt(g.blasts);
     for (int item : g.equipped) d.writeInt(item);
     d.writeBoolean(g.bossSpawned);
+    for (boolean owned : g.collected) d.writeBoolean(owned);
+    for (int code : g.gear) d.writeInt(code);
+    for (int value : new int[] {g.lootState, g.lastDrop, g.world, g.directorPressure, g.calmNights,
+        g.arenaOfferDay, g.arenaDay, g.arenaChampion, g.arenaResult}) d.writeInt(value);
+    d.writeBoolean(g.worldComplete); d.writeBoolean(g.directorEnabled); d.writeBoolean(g.arenaActive);
+    for (float value : new float[] {g.raidStrain, g.arenaHealth, g.arenaEnemyHealth, g.arenaElapsed,
+        g.arenaAttackClock, g.arenaEnemyClock, g.strikeClock}) d.writeFloat(value);
     d.flush();
     CRC32 crc = new CRC32();
     crc.update(body.toByteArray());
@@ -244,6 +251,32 @@ public final class SaveCodec {
       range(bosses <= 1 && (bosses == 0 || g.bossSpawned && g.bossDay()));
       range(!g.bossSpawned || g.night && g.bossDay());
     } else g.bossSpawned = g.night && g.bossDay(); // Existing raids finish under their original quota.
+    if (version >= 9) {
+      for (int i = 0; i < g.collected.length; i++) g.collected[i] = in.readBoolean();
+      for (int i = 0; i < g.gear.length; i++) {
+        int code = in.readInt(); integer(code, -1, Equipment.COUNT - 1);
+        range(code == -1 || g.collected[code] && Equipment.slot(code) == i); g.gear[i] = code;
+      }
+      g.lootState = in.readInt(); g.lastDrop = in.readInt(); g.world = in.readInt();
+      g.directorPressure = in.readInt(); g.calmNights = in.readInt();
+      g.arenaOfferDay = in.readInt(); g.arenaDay = in.readInt(); g.arenaChampion = in.readInt(); g.arenaResult = in.readInt();
+      g.worldComplete = in.readBoolean(); g.directorEnabled = in.readBoolean(); g.arenaActive = in.readBoolean();
+      g.raidStrain = in.readFloat(); g.arenaHealth = in.readFloat(); g.arenaEnemyHealth = in.readFloat();
+      g.arenaElapsed = in.readFloat(); g.arenaAttackClock = in.readFloat(); g.arenaEnemyClock = in.readFloat(); g.strikeClock = in.readFloat();
+      integer(g.lastDrop, -1, Equipment.COUNT - 1); range(g.lastDrop < 0 || g.collected[g.lastDrop]);
+      integer(g.world, 1, 999); integer(g.directorPressure, -1, 1); integer(g.calmNights, 0, 2);
+      integer(g.arenaOfferDay, 0, 100); integer(g.arenaDay, 0, 100); integer(g.arenaChampion, 0, Game.CHAMPIONS.length - 1); integer(g.arenaResult, 0, 4);
+      range(g.arenaDay % 10 == 0 && g.arenaOfferDay % 10 == 0);
+      range(g.arenaOfferDay == 0 || !g.night && !g.defeated && !g.arenaActive && g.arenaOfferDay > g.arenaDay
+          && (g.day == g.arenaOfferDay + 1 || g.day == 100 && g.arenaOfferDay == 100 && g.worldComplete));
+      range(!g.worldComplete || g.day == 100 && !g.night && !g.defeated);
+      range(!g.arenaActive || !g.night && !g.defeated && g.arenaDay > 0 && g.arenaResult == 0
+          && (g.day == g.arenaDay + 1 || g.day == 100 && g.arenaDay == 100 && g.worldComplete));
+      number(g.raidStrain, 0, 1); number(g.arenaHealth, 0, g.arenaMaxHealth());
+      number(g.arenaEnemyHealth, 0, g.arenaMaxEnemyHealth()); number(g.arenaElapsed, 0, 45);
+      number(g.arenaAttackClock, 0, 1); number(g.arenaEnemyClock, 0, 2.4f); number(g.strikeClock, 0, 2.4f);
+      range(!g.arenaActive || g.arenaHealth > 0 && g.arenaEnemyHealth > 0 && g.arenaElapsed < 45);
+    }
     for (int side = 0; side < 4; side++) number(g.wallHealth[side], 0, g.maxWallHealth(side));
     for (Game.Mercenary merc : g.mercenaries) number(merc.health, Float.MIN_VALUE, g.guardMaxHealth());
     range(g.night || count == 0);
