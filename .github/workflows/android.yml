@@ -13,8 +13,29 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    outputs:
+      publish: ${{ steps.identity.outputs.publish }}
+      source_sha: ${{ steps.identity.outputs.source_sha }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - name: Select verified signing payload, if present
+        id: identity
+        run: |
+          python3 - <<'PYCODE'
+          import json, os, pathlib, subprocess
+          head=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+          parent=subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()
+          path=pathlib.Path('release/publish.json')
+          payload=json.loads(path.read_text()) if path.exists() else {}
+          publish=payload.get('source_sha')==parent
+          if publish:
+            pathlib.Path(os.environ['RUNNER_TEMP'],'btf-publish.json').write_text(json.dumps(payload))
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:
+            out.write('publish='+str(publish).lower()+'\nsource_sha='+(parent if publish else head)+'\n')
+          PYCODE
+          if [ '${{ steps.identity.outputs.publish }}' = true ]; then git checkout --detach '${{ steps.identity.outputs.source_sha }}'; fi
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -27,6 +48,11 @@ jobs:
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'platform-tools'
       - name: Build, unit tests and lint
         run: ./gradlew --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest assembleRelease lintDebug lintRelease
+      - name: Verify fixed-key payload against freshly built source
+        if: steps.identity.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/prepare_signed_candidate.py "$RUNNER_TEMP/btf-publish.json" "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar"
       - name: Audit package and signature
         run: |
           python3 scripts/check_package.py "$ANDROID_HOME/build-tools/35.0.0/aapt" app/build/outputs/apk/debug/app-debug.apk
@@ -35,14 +61,17 @@ jobs:
       - name: Package exact source and candidate
         run: |
           mkdir -p artifacts
-          cp app/build/outputs/apk/debug/app-debug.apk artifacts/Beyond-the-Fence-0.11.1-rc.1-Preview.apk
-          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk artifacts/Beyond-the-Fence-0.11.1-rc.1-Tests.apk
-          cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/Beyond-the-Fence-0.11.1-rc.1-Unsigned.apk
-          git archive --format=zip HEAD -o artifacts/Beyond-the-Fence-0.11.1-rc.1-Source.zip
+          cp app/build/outputs/apk/debug/app-debug.apk artifacts/Beyond-the-Fence-0.12.0-rc.1-Preview.apk
+          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk artifacts/Beyond-the-Fence-0.12.0-rc.1-Tests.apk
+          cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/Beyond-the-Fence-0.12.0-rc.1-Unsigned.apk
+          git archive --format=zip HEAD -o artifacts/Beyond-the-Fence-0.12.0-rc.1-Source.zip
           cp docs/RELEASE-NOTES.md artifacts/RELEASE-NOTES.md
           cp app/build/test-results/testDebugUnitTest/*.xml artifacts/
-          printf 'commit=%s\nversion=0.11.1-rc.1\napplicationId=com.denberg.beyondthefence\nminSdk=26\ntargetSdk=35\nJDK=17\nGradle=8.9\nAGP=8.7.3\nbuildTools=35.0.0\ntier=prerelease\nsigning=debug test only\n' "$GITHUB_SHA" > artifacts/BUILD-INFO.txt
+          printf 'commit=%s\nversion=0.12.0-rc.1\napplicationId=com.denberg.beyondthefence\nminSdk=26\ntargetSdk=35\nJDK=17\nGradle=8.9\nAGP=8.7.3\nbuildTools=35.0.0\ntier=prerelease\nsigning=see certificate/payload evidence\n' '${{ steps.identity.outputs.source_sha }}' > artifacts/BUILD-INFO.txt
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs artifacts/*Preview.apk >> artifacts/BUILD-INFO.txt
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" artifacts/apksigner.jar
+          cp docs/signing-certificate.sha256 artifacts/signing-certificate.sha256
+          if [ '${{ steps.identity.outputs.publish }}' = true ]; then printf 'fixed private key; public certificate pinned\n' >> artifacts/BUILD-INFO.txt; fi
           cd artifacts
           sha256sum ./* > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
@@ -98,7 +127,7 @@ jobs:
           name: emulator-api-${{ matrix.api }}
           path: evidence/
   release:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.build.outputs.publish == 'true'
     needs: [build, emulator]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -121,14 +150,15 @@ jobs:
           cd artifacts
           sha256sum -c SHA256SUMS.txt
           cd ..
-          if gh release view v0.11.1-rc.1 >/dev/null 2>&1; then
+          if gh release view v0.12.0-rc.1 >/dev/null 2>&1; then
             echo 'Version already published; preserving existing release. Bump version to publish changes.'
             exit 0
           fi
           printf 'PASS: unit tests, debug/release builds, lint, package audit, APK signature\nPASS: native tile touch, orientation/font, lifecycle/checkpoint tests on API 26 and 35 emulators\nBLOCKED: physical handset endurance, TalkBack/font/device performance, production signing\nEvidence: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > artifacts/VERIFICATION.txt
-          zip -r artifacts/Beyond-the-Fence-0.11.1-rc.1-Emulator-Evidence.zip evidence
+          rm -f artifacts/Upgrade-Baseline.apk artifacts/apksigner.jar
+          zip -r artifacts/Beyond-the-Fence-0.12.0-rc.1-Emulator-Evidence.zip evidence
           cd artifacts
           rm SHA256SUMS.txt
           sha256sum ./* > SHA256SUMS.txt
           cd ..
-          gh release create v0.11.1-rc.1 artifacts/* --target "$GITHUB_SHA" --prerelease --title 'Beyond the Fence 0.11.1-rc.1 — Android preview' --notes-file docs/RELEASE-NOTES.md
+          gh release create v0.12.0-rc.1 artifacts/* --target '${{ needs.build.outputs.source_sha }}'  --prerelease --title 'Beyond the Fence 0.12.0-rc.1 — Android preview' --notes-file docs/RELEASE-NOTES.md

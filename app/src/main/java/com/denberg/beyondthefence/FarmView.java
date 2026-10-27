@@ -18,7 +18,7 @@ final class FarmView extends View {
   private final Supplier<Game> model;
   private final Supplier<Boolean> paused;
   private final BoardGeometry geometry;
-  private static final int[] COATS = {0xff8a6246, 0xffa64e3c, 0xff687d8b, 0xff9a933f};
+  private static final int[] COATS = {0xff8a6246, 0xffa64e3c, 0xff687d8b, 0xff9a933f, 0xff66527e, 0xff505b63, 0xff668889, 0xff652e42};
 
   FarmView(Context context, Supplier<Game> model, Supplier<Boolean> paused, BoardGeometry geometry) {
     super(context);
@@ -131,11 +131,11 @@ final class FarmView extends View {
     for (Game.Roamer roamer : g.roamers) {
       float x = geometry.worldX(g.ringXAt(roamer.progress, roamer.distance));
       float y = geometry.worldY(g.ringYAt(roamer.progress, roamer.distance));
-      zombie(c, x, y, d, roamer.type, g.reducedMotion ? 0 : roamer.progress * 12, false);
+      zombie(c, x, y, d, roamer.type, g.reducedMotion || !g.roamerActive(roamer) ? 0 : g.elapsed * 2 + roamer.progress * 8, false);
     }
     for (Game.Enemy enemy : g.enemies) {
       float x = geometry.worldX(g.foeX(enemy)), y = geometry.worldY(g.foeY(enemy));
-      float size = d;
+      float size = d * (enemy.type == Campaign.BOSS ? 1.65f : enemy.type == 5 ? 1.15f : 1);
       if (enemy.breached && enemy.advance >= 1 && enemy.attackClock > 1 && !paused.get() && !g.reducedMotion) {
         float tx = (l + r) / 2, ty = (t + b) / 2;
         if (enemy.target >= 0) {
@@ -150,6 +150,17 @@ final class FarmView extends View {
       box(c, x - 8 * d, y - 22 * d, 16 * d, 2 * d, 0, 0xff172e26);
       box(c, x - 8 * d, y - 22 * d, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
     }
+    Game.Enemy boss = g.boss();
+    if (boss != null) {
+      float width = Math.min(getWidth() - 24 * d, 240 * d), bx = (getWidth() - width) / 2;
+      box(c, bx, 16 * d, width, 5 * d, 2 * d, 0xff291e2b);
+      box(c, bx, 16 * d, width * boss.hp / boss.maxHp, 5 * d, 2 * d, 0xffce6b87);
+    }
+    if (g.spellTime > 0) {
+      float sx = geometry.worldX(g.spellX), sy = geometry.worldY(g.spellY);
+      color(g.spellArea ? 0xffe5ac68 : 0xff8bdcf0); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(3*d);
+      c.drawCircle(sx, sy, (g.spellArea ? 42 : 15) * d * (1.2f-g.spellTime), p); p.setStyle(Paint.Style.FILL);
+    }
     for (int person = 0; person < g.mercenaries.size() + (g.hero == null ? 0 : 1); person++) {
       Game.Mercenary merc = person < g.mercenaries.size() ? g.mercenaries.get(person) : g.hero;
       boolean hero = merc == g.hero;
@@ -157,7 +168,7 @@ final class FarmView extends View {
       float angle = (float) Math.atan2(geometry.worldY(merc.targetY) - y, geometry.worldX(merc.targetX) - x);
       if (merc.shotClock > g.guardInterval() - .16f && !paused.get() && !g.reducedMotion)
         line(c, x, y, geometry.worldX(merc.targetX), geometry.worldY(merc.targetY), 0xb3ffe48c, d);
-      fighter(c, x, y, d * (hero ? 1.2f : 1), true, hero ? 5 : g.weapon, angle);
+      fighter(c, x, y, d * (hero ? 1.2f : 1), true, hero ? 5 : Math.min(5, g.weapon), angle);
       if (hero) { circle(c, x, y - 12 * d, 3 * d, 0xfff1cb68); line(c, x - 5 * d, y + 8 * d, x + 5 * d, y + 8 * d, 0xffc75b45, 3 * d); }
       if (g.enhancerTime > 0) circle(c, x + 8 * d, y, 2 * d, 0xffe5bcff);
       box(c, x - 7 * d, y - 15 * d, 14 * d, 2 * d, 0, 0xff302f2b);
@@ -198,8 +209,8 @@ final class FarmView extends View {
 
   private void zombie(Canvas c, float x, float y, float d, int type, float phase, boolean attacking) {
     c.save(); c.translate(x, y); c.scale(d, d);
-    float gait = (float) Math.sin(phase), bulk = type == 2 ? 10 : type == 1 ? 5 : type == 3 ? 8 : 7;
-    int skin = type == 2 ? 0xff91a286 : type == 3 ? 0xffbdc768 : 0xffa8bd82;
+    float gait = (float) Math.sin(phase), bulk = type == Campaign.BOSS ? 11 : type == 2 ? 10 : type == 1 ? 5 : type == 3 ? 8 : 7;
+    int skin = type == Campaign.BOSS ? 0xffc4a9b2 : type == 6 ? 0xff9fd3ca : type == 2 ? 0xff91a286 : type == 3 ? 0xffbdc768 : 0xffa8bd82;
     color(0x55302b23); rect.set(-11, 5, 11, 13); c.drawOval(rect, p);
     // Uneven trouser legs and a shuffling gait keep the silhouette recognizably undead.
     line(c, -3, 5, -5 - gait * 2, 12, 0xff44483a, 4);
@@ -211,6 +222,10 @@ final class FarmView extends View {
     line(c, bulk - 1, -3, bulk + 5, armY - gait * 2, COATS[type], type == 2 ? 5 : 3);
     circle(c, -bulk - 5, armY + gait * 2, 2.4f, skin);
     circle(c, bulk + 5, armY - gait * 2, 2.4f, skin);
+    if (type == 5) { box(c, -8, -6, 16, 12, 2, 0xff677580); line(c,-6,-5,6,7,0xffa4afb5,2); }
+    if (type == 4) line(c,-5,-7,5,9,0xffb5a0d1,2);
+    if (type == 6) { line(c,-6,8,0,13,0xff9dd5cb,2); line(c,0,13,6,8,0xff9dd5cb,2); }
+    if (type == Campaign.BOSS) { box(c,-10,-6,20,12,2,0xff522734); line(c,-7,-15,0,-21,0xffcbb675,3); line(c,0,-21,7,-15,0xffcbb675,3); }
     if (type == 1) line(c, -3, -4, 4, 7, 0xffe1b88b, 2); // Torn runner jersey.
     if (type == 2) {
       box(c, -10, -7, 5, 7, 1, 0xff67717a); box(c, 5, -7, 5, 7, 1, 0xff67717a);

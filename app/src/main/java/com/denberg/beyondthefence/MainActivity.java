@@ -29,9 +29,9 @@ public final class MainActivity extends Activity {
   private int selectedCrop, buildTab, selectedWall = -1, selectedBuilding = -1;
   private boolean buildOpen;
   private long lastFrame, lastUi, lastSave;
-  private TextView stats, status, notice, saving, buildTitle;
-  private GameButton quickHire, quickUniform, fenceUpgrade, shopHarvest, shopPlant, heroBuy;
-  private final GameButton[] itemSlots = new GameButton[2], itemBuy = new GameButton[2], advanced = new GameButton[3];
+  private TextView survived, stats, status, notice, saving, buildTitle;
+  private GameButton quickUniform, fenceUpgrade, shopHarvest, shopPlant, heroBuy;
+  private final GameButton[] itemSlots = new GameButton[3], itemBuy = new GameButton[4], advanced = new GameButton[3];
   private GameButton costButton;
   private String costText;
   private long costToken;
@@ -229,18 +229,22 @@ public final class MainActivity extends Activity {
     viewport.addView(boardContent);
     gameShell.addView(viewport, new LinearLayout.LayoutParams(-1, 0, 1));
 
-    LinearLayout hud = row();
+    LinearLayout hud = column();
+    LinearLayout hudActions = row(); hudActions.setTag("hudActions"); hudActions.setPadding(0, dp(8), 0, dp(8));
     LinearLayout resources = column();
-    stats = text("", 14, CREAM);
+    survived = text("", 16, CREAM); survived.setTag("survived"); survived.setTypeface(null, Typeface.BOLD);
+    resources.addView(survived);
+    stats = text("", 12, CREAM);
     stats.setTypeface(null, Typeface.BOLD);
     status = text("", 11, 0xffd0dfc5);
     resources.addView(stats);
     resources.addView(status);
-    hud.addView(resources, new LinearLayout.LayoutParams(0, -2, 1));
+    hud.addView(resources, new LinearLayout.LayoutParams(-1, -2));
+    hud.addView(hudActions);
     repair = button("Squad", () -> showBuild(3));
     repair.setTag("squad");
     repair.setTextSize(11);
-    hud.addView(repair, new LinearLayout.LayoutParams(dp(64), -1));
+    hudActions.addView(repair, new LinearLayout.LayoutParams(0, -1, 1));
     play = button("Play", () -> {
       if (storageBlocked || ioBusy || buildOpen) return;
       if (game.defeated) { game.recover(); changed(); }
@@ -249,12 +253,12 @@ public final class MainActivity extends Activity {
       refresh();
     });
     play.setTag("play");
-    LinearLayout.LayoutParams playSize = new LinearLayout.LayoutParams(dp(58), -1);
-    playSize.setMargins(dp(4), 0, dp(4), 0); hud.addView(play, playSize);
+    LinearLayout.LayoutParams playSize = new LinearLayout.LayoutParams(0, -1, 1);
+    playSize.setMargins(dp(4), 0, dp(4), 0); hudActions.addView(play, playSize);
     GameButton menu = button("☰", this::options);
     menu.setContentDescription("Pause and open options, help and save backups");
     menu.setTag("options");
-    hud.addView(menu, new LinearLayout.LayoutParams(dp(48), -1));
+    hudActions.addView(menu, new LinearLayout.LayoutParams(0, -1, 1));
     boardContent.addView(hud);
 
     seedTray = row();
@@ -341,7 +345,7 @@ public final class MainActivity extends Activity {
     gameShell.addView(dock);
     saving = text(saveMessage, 10, 0xffc2d2be);
     saving.setPadding(dp(8), dp(4), dp(8), dp(4));
-    for (TextView label : new TextView[] {stats, status, saving}) label.setShadowLayer(dp(2), 0, dp(1), INK);
+    for (TextView label : new TextView[] {survived, stats, status, saving}) label.setShadowLayer(dp(2), 0, dp(1), INK);
     gameShell.addView(saving);
     createBuildOverlay();
   }
@@ -349,12 +353,8 @@ public final class MainActivity extends Activity {
   private void createCommandDock() {
     LinearLayout controls = row(); controls.setPadding(dp(8), dp(12), dp(8), dp(12));
     controls.setTag("commands");
-    quickHire = button("", () -> { if (canAct() && !buildOpen) {
-      if (!game.hire()) showPrice(quickHire, game.hireCost(), 6); else clearHint(); changed();
-    } });
-    quickHire.setTag("quickHire"); quickHire.setTextSize(11);
     LinearLayout leftSlots = column(); leftSlots.setGravity(Gravity.CENTER);
-    leftSlots.addView(quickHire, new LinearLayout.LayoutParams(-1, commandButtonHeight()));
+    addItemSlot(leftSlots, 2);
     addItemSlot(leftSlots, 0); controls.addView(leftSlots, new LinearLayout.LayoutParams(0, -1, 1));
     FrameLayout cross = new FrameLayout(this); cross.setTag("fenceCross");
     LinearLayout.LayoutParams crossParams = new LinearLayout.LayoutParams(dp(144), dp(144));
@@ -398,14 +398,26 @@ public final class MainActivity extends Activity {
     return dp(Math.max(48, (int)Math.ceil(28 * getResources().getConfiguration().fontScale + 8)));
   }
 
-  private void addItemSlot(LinearLayout side, int type) {
+  private void addItemSlot(LinearLayout side, int slotIndex) {
     GameButton slot = button("", () -> { if (canAct() && !buildOpen) {
-      if (!game.useItem(type)) showHint(itemSlots[type], type == 0 ? "Full HP" : "Active"); else clearHint(); changed();
+      int type = game.equipped[slotIndex];
+      if (game.itemStock(type) == 0) { chooseItem(slotIndex); return; }
+      if (!game.useItem(type)) showHint(itemSlots[slotIndex], type == 0 ? "Full HP" : type == 1 ? "Active" : "No foes"); else clearHint(); changed();
     } });
-    itemSlots[type] = slot; slot.setTag("itemSlot" + type); slot.setTextSize(11);
-    slot.setCompoundDrawablesRelativeWithIntrinsicBounds(new ItemIcon(type, dp(30)), null, null, null);
+    itemSlots[slotIndex] = slot; slot.setTag("itemSlot" + slotIndex); slot.setTextSize(11);
+    slot.setCompoundDrawablesRelativeWithIntrinsicBounds(new ItemIcon(game.equipped[slotIndex], dp(30)), null, null, null);
     slot.setCompoundDrawablePadding(dp(4));
-    LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(-1, commandButtonHeight()); size.topMargin = dp(8); side.addView(slot, size);
+    LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(-1, commandButtonHeight()); size.topMargin = slotIndex == 2 ? 0 : dp(8); side.addView(slot, size);
+    slot.setOnLongClickListener(v -> { if (canAct() && !buildOpen) chooseItem(slotIndex); return true; });
+  }
+
+  private void chooseItem(int slot) {
+    paused = true; clearHint(); refresh();
+    String[] choices = new String[Game.ITEMS.length];
+    for (int i = 0; i < choices.length; i++) choices[i] = Game.ITEMS[i] + " · " + game.itemStock(i) + " owned";
+    new AlertDialog.Builder(this).setTitle("Quick slot " + (slot + 1))
+        .setItems(choices, (d, choice) -> { game.equipItem(slot, choice); changed(); })
+        .setNegativeButton("Close", null).show();
   }
 
   private void clearHint() { costButton = null; costToken++; }
@@ -498,7 +510,7 @@ public final class MainActivity extends Activity {
         shopPlant = button("", () -> { if (canAct()) { game.plantAll(selectedCrop); changed(); } });
         shopPlant.setTag("shopPlant"); addBuildAction(shopPlant);
         addUpgrade(2); addUpgrade(3);
-        for (int type = 0; type < 2; type++) {
+        for (int type = 0; type < Game.ITEMS.length; type++) {
           final int item = type;
           itemBuy[type] = button("", () -> { if (canAct()) { if (!game.buyItem(item)) showPrice(itemBuy[item], game.itemPrice(item), 0); else clearHint(); changed(); } });
           itemBuy[type].setTag("buyItem" + type);
@@ -638,9 +650,10 @@ public final class MainActivity extends Activity {
   void refresh() {
     if (stats == null) return;
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
+    label(survived, "Survived " + (game.day - 1) + (game.day == 2 ? " day" : " days"));
     label(stats, game.coins + " coins · " + game.wood + " timber");
     label(status, "Day " + game.day + " · " + Settlement.NAMES[game.settlementStyle()] + " · " + Game.WEATHER[game.weather] + " · Farm "
-        + Math.round(game.health) + "/" + game.maxHealth());
+        + Math.round(game.health) + "/" + game.maxHealth() + (game.boss() != null ? " · BOSS" : game.bossDay() ? " · Boss tonight" : ""));
     stats.setContentDescription(game.coins + " coins, " + game.wood + " timber");
     label(play, game.defeated ? "Rebuild" : paused ? "Play" : "Pause");
     play.setContentDescription(game.defeated ? "Recover homestead free and resume" : paused ? "Resume game" : "Pause game");
@@ -697,7 +710,7 @@ public final class MainActivity extends Activity {
         label(wallPurchase[i], Game.SIDES[i] + " · " + Game.FENCE_MATERIALS[tier] + " · " + Math.round(game.wallHealth[i]) + "/" + Math.round(game.maxWallHealth(i)) + "HP\n" + (damaged ? "REPAIR · " + Math.round(game.wallHealth[i]) + "/"
             + Math.round(game.maxWallHealth(i)) + "HP\n8 coins · +50 health"
             : tier == 0 ? "BUILD WOOD FENCE\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber"
-            : tier >= 3 ? "Steel · reinforcement " + game.wallRanks[i] + "/4\n" + (game.borderMaxed(i) ? "MAX" : game.borderCoinCost(i) + " coins · " + game.borderWoodCost(i) + " timber")
+            : tier >= 3 ? "Steel · reinforcement " + game.wallRanks[i] + "/" + game.wallRankCap() + "\n" + (game.borderMaxed(i) ? "MAX" : game.borderCoinCost(i) + " coins · " + game.borderWoodCost(i) + " timber")
             : "UPGRADE " + Game.FENCE_MATERIALS[tier] + " → " + Game.FENCE_MATERIALS[tier + 1] + "\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber")
             + "\n" + (damaged ? "Closes the breach for new zombies; fight intruders inside" : "Material kits strengthen fences; coins buy supplies and timber frames them"));
         wallPurchase[i].setEnabled(available && (damaged || !game.borderMaxed(i)));
@@ -715,13 +728,8 @@ public final class MainActivity extends Activity {
           : Game.CROPS[crop] + ", health " + Math.round(game.cropHealth[i]) + " of40" + (ripe ? ", tap to harvest " + game.sale(crop) + " coins and " + (2 + crop * 2) + " timber" : ", growing, " + game.harvestSeconds(i) + " seconds")));
       plotButtons[i].colors(0x00583c28, ripe ? GOLD : unlocked ? 0xffb9965c : 0xff8cb061, ripe ? GOLD : CREAM);
     }
-    label(quickHire, "Merc +");
-    quickHire.setContentDescription("Hire mercenary, " + game.mercenaries.size() + " of3, "
-        + (!game.buildings[2] ? "requires Barracks" : game.hireCost() + " coins and6 timber"));
-    quickHire.setEnabled(available && game.buildings[2] && game.mercenaries.size() < Game.MAX_MERCS);
-    quickHire.colors(Color.TRANSPARENT, Color.TRANSPARENT, CREAM);
     label(quickUniform, "Merc ↑");
-    quickUniform.setContentDescription("Upgrade mercenary uniform, " + Game.UNIFORMS[game.weapon]
+    quickUniform.setContentDescription("Upgrade mercenary uniform, " + Game.UNIFORMS[Math.min(5, game.weapon)]
         + (game.maxed(0) ? ", maximum" : ", " + game.cost(0) + " coins"));
     quickUniform.setEnabled(available && !game.maxed(0));
     quickUniform.colors(Color.TRANSPARENT, Color.TRANSPARENT, CREAM);
@@ -732,20 +740,26 @@ public final class MainActivity extends Activity {
     fenceUpgrade.setContentDescription(selectedWall < 0 ? "Select a fence direction first"
         : Game.SIDES[selectedWall] + (canUpgradeFence ? " fence upgrade, " + game.borderCoinCost(selectedWall)
             + " coins and " + game.borderWoodCost(selectedWall) + " timber" : " fence, maximum reinforcement"));
-    for (int item = 0; item < 2; item++) {
-      int stock = item == 0 ? game.elixirs : game.enhancers;
-      label(itemSlots[item], "×" + stock + (item == 1 && game.enhancerTime > 0 ? "\n" + (int)Math.ceil(game.enhancerTime) + "s" : ""));
-      itemSlots[item].setEnabled(available && stock > 0);
-      itemSlots[item].setContentDescription((item == 0 ? "Elixir, heals farm and surviving crew" : "Enhancer,20 seconds of stronger faster fire") + ", " + stock + " in slot");
-      itemSlots[item].colors(Color.TRANSPARENT, item == 0 ? 0xffb97570 : 0xffaa87c7, CREAM);
-      if (itemBuy[item] != null) {
-        label(itemBuy[item], (item == 0 ? "Elixir · heals crew/farm" : "Enhancer ·20 seconds of combat boost") + "\n" + game.itemPrice(item) + " coins · " + stock + "/9 in slot");
-        itemBuy[item].setEnabled(available && game.buildings[1] && stock < Game.MAX_ITEMS);
+    for (int slot = 0; slot < itemSlots.length; slot++) {
+      int item = game.equipped[slot], stock = game.itemStock(item);
+      label(itemSlots[slot], "×" + stock + (item == 1 && game.enhancerTime > 0 ? "\n" + (int)Math.ceil(game.enhancerTime) + "s" : ""));
+      itemSlots[slot].setEnabled(available);
+      itemSlots[slot].setContentDescription(Game.ITEMS[item] + ", " + stock + " owned. Tap to use; hold or tap an empty slot to replace.");
+      int[] colors = {0xffb97570, 0xffaa87c7, 0xff77c4df, 0xffdfb475};
+      itemSlots[slot].colors(Color.TRANSPARENT, colors[item], CREAM);
+      if (!Integer.valueOf(item).equals(itemSlots[slot].getTag(android.R.id.icon))) {
+        itemSlots[slot].setCompoundDrawablesRelativeWithIntrinsicBounds(new ItemIcon(item, dp(30)), null, null, null);
+        itemSlots[slot].setTag(android.R.id.icon, item);
       }
     }
+    for (int item = 0; item < Game.ITEMS.length; item++) if (itemBuy[item] != null) {
+      String[] detail = {"heals surviving crew/farm", "20s combat boost", "single target · nearest threat", "area blast · nearby group"};
+      label(itemBuy[item], Game.ITEMS[item] + " · " + detail[item] + "\n" + game.itemPrice(item) + " coins · " + game.itemStock(item) + "/9 owned");
+      itemBuy[item].setEnabled(available && game.buildings[1] && game.itemStock(item) < Game.MAX_ITEMS);
+    }
     for (int kind = 0; kind < 3; kind++) if (advanced[kind] != null) {
-      String title = kind == 0 ? "Mill output " + game.millLevel + "/3 · " + game.millYield() + " timber /" + (int)game.millPeriod() + "s"
-          : kind == 1 ? "Mercenary drills " + game.drill + "/3 · aim, armor and health" : "Hero training " + game.heroLevel + "/3";
+      String title = kind == 0 ? "Mill output " + game.millLevel + "/" + game.advancedCap(0) + " · " + game.millYield() + " timber /" + (int)game.millPeriod() + "s"
+          : kind == 1 ? "Mercenary drills " + game.drill + "/" + game.advancedCap(1) + " · aim, armor and health" : "Hero training " + game.heroLevel + "/" + game.advancedCap(2);
       label(advanced[kind], title + (game.advancedMaxed(kind) ? " · MAX" : "\n" + game.advancedCost(kind) + " coins · " + game.advancedWood(kind) + " timber"));
       advanced[kind].setEnabled(available && !game.advancedMaxed(kind) && (kind == 0 ? game.buildings[0] : game.buildings[2]) && (kind != 2 || game.hero != null));
     }
@@ -768,14 +782,14 @@ public final class MainActivity extends Activity {
     if (hireButton != null) {
       label(hireButton, !game.buildings[2] ? "Build Barracks first" : game.mercenaries.size() >= Game.MAX_MERCS ? "Squad full · 3 survivors" : "Hire mercenary · " + game.hireCost() + " coins · 6 timber");
       hireButton.setEnabled(available && game.buildings[2] && game.mercenaries.size() < Game.MAX_MERCS);
-      label(roster, "Mercenaries " + game.mercenaries.size() + "/3 · " + Game.UNIFORMS[game.weapon]
+      label(roster, "Mercenaries " + game.mercenaries.size() + "/3 · " + Game.UNIFORMS[Math.min(5, game.weapon)]
           + "\n" + game.guardDamage() + " damage per shot · " + (game.lane < 0 ? "Patrolling" : "Rally: " + Game.SIDES[game.lane])
           + "\nShort range: rally to threatened borders. Breached zombies can kill guards. Crew heals during preparation.");
       for (int side = 0; side < 4; side++) if (rallyButtons[side] != null)
         rallyButtons[side].colors(game.lane == side ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
       if (patrolButton != null) patrolButton.setEnabled(available && game.lane >= 0);
     }
-    String[] upgrades = {"Uniform · " + Game.UNIFORMS[game.weapon] + "\n+3 damage · +20 crew health · armor · faster fire", "Fortify · rank " + game.fence + "/4" + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
+    String[] upgrades = {"Uniform " + game.weapon + "/" + game.upgradeCap(0) + " · " + Game.UNIFORMS[Math.min(5, game.weapon)] + "\n+3 damage · +20 crew health · armor · faster fire", "Fortify · rank " + game.fence + "/" + game.upgradeCap(1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
     for (int i = 0; i < 4; i++) if (upgradeButtons[i] != null) {
       label(upgradeButtons[i], upgrades[i] + (game.maxed(i) ? " · MAX" : "\n" + game.cost(i) + " coins"));
       upgradeButtons[i].setEnabled(available && !game.maxed(i));
@@ -798,7 +812,7 @@ public final class MainActivity extends Activity {
         .setMessage(
             "1  Open Seeds, then tap farm plots inside your fortress. Harvest ripe crops for coins and timber.\n\n"
                 + "2  Fence bars and HP show damage. Upgrade Wood to Stone to Steel. Zombies damage individual fences. A breach lets them enter and destroy crops and buildings. Tap N/E/S/W to select a border and repair50HP for8 coins; the center ↑ builds or upgrades that selected fence. Tap Mill, Shop or Camp for their features; Fence sells 10 timber for 12 harvest coins.\n\n"
-                + "3  One volunteer guard starts with you. Your mercenaries are the only fighters. Harvest to build barracks and hire more through Crew. Maximum three mercenaries. Merc + hires directly and Merc ↑ upgrades directly. Gear also upgrades their uniforms, firepower and armor; Crew can rally them to a border or resume patrol.\n\n"
+                + "3  One volunteer guard starts with you. Your mercenaries are the only fighters. Harvest to build barracks and hire more through Crew. Maximum three mercenaries. Hold a potion slot to assign Elixir, Enhancer, Arc bolt or Starfall. Merc ↑ upgrades directly. Barracks upgrades uniforms, firepower and armor; Crew can rally them to a border or resume patrol.\n\n"
                 + "4  Zombies roam the terrain outside your compact farm. Each day brings a faster, stronger horde. Runners rush, Brutes smash, Spitters attack at range. Raids end only when every zombie is killed. A breach can wipe out your crew and farm. Tap Raid in to start a raid early. Mercenaries fight automatically within range. Progress advances only while playing.")
         .setPositiveButton(
             "Plant the first seed",

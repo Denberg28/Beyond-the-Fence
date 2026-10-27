@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.0-rc.1 — A century beyond the fence
+
+- Slower, intermittently dormant daylight scouts; individual night shuffling rhythms and three later enemy variants.
+- Grave Warden boss every fifth night; persistent one-per-raid state, distinctive art and a real health bar. Bounded progression/upgrades through Day100 and beyond.
+- Arc bolt/Starfall single-target/area potions. Three assignable quick slots; upper-left replaces Merc +, recruitment stays in Barracks. Hold or tap empty slots to assign owned inventory.
+- New original Bard at Dawn lute/recorder music and The Hunt night score. Symmetric full-width HUD rows and larger survived-day heading.
+- Schema8 migrates1–7, retaining resources/damage/hero/crops and adding empty attack inventory/default slots. Bosses do not replay after reload.
+- Persistent private signing identity begins here; verified payload/source/certificate pipeline plus same-key install-r progress-retention tests. Earlier disposable-key previews still require one-time export/import.
+
 ## 0.11.1-rc.1 — Compact caption fit
 
 - Screenshot review of0.11.0 caught awkward Harvest/Barracks word wrapping at200% font. Keep short captions whole with bounded effective text sizes, retaining full system scaling for panel body/purchase text. Added native caption-fit checks; all0.11 features retained.

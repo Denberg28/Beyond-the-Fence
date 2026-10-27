@@ -1,3 +1,13 @@
+# 0.12 century and signed delivery
+
+Campaign owns bounded Day1–100 unlocks and enemy limits; Game retains deterministic simulation time/randomness. Daytime dormancy uses elapsed six-second phases and stable roamer position/type. Night gait is a bounded per-enemy sinusoidal multiplier; health/damage remain gameplay state. New enemy types use the same perimeter/collision/targeting geometry. Boss type7 is excluded from ordinary random selection and scheduled exactly once midway through fifth-night quota using a persisted flag. Imported older active raids are marked handled so their existing wave can finish; the next new raid resets the flag.
+
+Schema8 appends attack inventories, three equipped IDs and boss flag after schema7; older1–7 parsing retains original bounds, while8 expands count/health/rank bounds. Actual final health bounds are checked after rank fields. Equipment and inventory persist; spell-ring visuals are transient. Potions resolve one nearest threat, or enemies within0.32 of it, before the common dead-removal transaction, preventing repeated kill rewards. Bosses resist40% magic.
+
+Source and release signing are separate. The private PKCS12 identity is backed up privately as Beyond-the-Fence-Private-Signing-Recovery-v1.zip; restore that same identity for future releases. Only its certificate hash enters the repo. scripts/sign_local.py signs audited APKs without changing compiled entries. release/publish.json contains public APK blob SHAs/checksums/source-run ID, never keys. The trusted delivery workflow checks the source parent, previous passing run, fixed cert, hashes and a fresh byte-level rebuild before installed signed-APK gates/CD. Missing/inconsistent payload fails closed; it never silently generates a replacement release key. Earlier disposable keys cannot be reconstructed or rotated without their originals.
+
+## Earlier architecture
+
 # 0.11.1 presentation and economy decisions
 
 `TerrainBackdrop` is a static original Canvas view beneath the transparent game shell; it only invalidates on phase change. The existing board renderer and48dp geometry remain unchanged. No new animation loop or third-party dependency. Command sides have equal measured heights/widths and font-aware slots; horizontal action rows use uniform parent heights with baseline alignment disabled.

@@ -1,3 +1,20 @@
+# 0.12 acceptance — Century survival
+
+Baseline0.11.1/608a451:75 JVM tests and1312 native checks/API26/35, published APK SHA2565814f5dde0a9a071e25d34c7143dacd21c12c1fa308e7ac0a614784cc105e1b4. User scope: sleepy morning/active night zombies, fifth-day boss, Day100 progression, single/area magic, replaceable slots, bard/horror scores, symmetric survived-day HUD, retained-progress updates.
+
+| Criterion | Required evidence |
+| --- | --- |
+| C1 Movement |Six-second dormancy cadence; daylight speed0.008+type×0.0015 perimeter units/s; night per-enemy cadence0.6–1.0× class speed. Deterministic saves, no daytime damage, night threat regressions |
+| C2 Boss |One Warden on every fifth night, midway through bounded quota. Boss HP and distinct art, no duplicate after reload, no dawn until defeated, same-day retry.100-day schedule test counts20 bosses |
+| C3 Century |Enemy types unlock16/31/46; count<=80, spawn period>=0.6s. Stats cap atDay100; tier caps expand through20 rank defense/crew and10 production/irrigation. Exact costs/actual effects/save bounds |
+| C4 Magic/slots |Bolt30c single threat; Starfall65c area0.32 radius; boss40% resistance. No targets/no stock/no day casting consumes0. Three saved assignable slots; native Shop purchase, long-press assignment, cast and separate hero/crew combat |
+| C5 UI/audio |Full-width survived-day/resource/status rows, three equal HUD buttons, mirrored item/upgrade controls. Original32s Bard at Dawn and The Hunt;4 unchanged effects. Screenshots normal/large font/landscape/boss |
+| C6 Updates |Private key retained outside repo; public cert pin. Only signature-matched compiled payloads with successful source gates can publish. Same-key old-v7 install-r retains real checkpoint and writes schema8 on API26/35. Prior disposable certificate is NOT recoverable; one-time user export/import needed |
+
+Initial caps stay compatible with early-game purchases. Each five-day chapter opens one additional uniform/fortify/wall/drill/hero rank (hard20); every10 days opens mill/irrigation ranks (hard10). All100 days have scheduler/mechanical checks, not a claim of broad human balance validation.
+
+## Earlier specifications
+
 # 0.11.1 acceptance — First light and clear controls
 
 Baseline0.10.0-rc.1/2cdb19a3301a8f976a3f1ce8c530b569d4dfb48a:72 JVM cases,1182 native checks per API26/35. Scope follows the latest phone screenshot: terrain under transparent bottom padding, symmetric controls, minimal zombie income, consistent building tab transitions and new morning music.

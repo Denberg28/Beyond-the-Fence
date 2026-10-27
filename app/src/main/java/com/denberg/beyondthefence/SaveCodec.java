@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 7;
+  private static final int MAGIC = 0x42544653, VERSION = 8;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -78,6 +78,9 @@ public final class SaveCodec {
     if (g.hero != null) {
       for (float v : new float[] {g.hero.progress, g.hero.shotClock, g.hero.targetX, g.hero.targetY, g.hero.health}) d.writeFloat(v);
     }
+    d.writeInt(g.bolts); d.writeInt(g.blasts);
+    for (int item : g.equipped) d.writeInt(item);
+    d.writeBoolean(g.bossSpawned);
     d.flush();
     CRC32 crc = new CRC32();
     crc.update(body.toByteArray());
@@ -125,9 +128,9 @@ public final class SaveCodec {
     integer(g.coins, 0, 10_000_000);
     integer(g.xp, 0, 10_000_000);
     integer(g.weather, 0, 3);
-    integer(g.weapon, 0, 5);
-    integer(g.fence, 0, 4);
-    integer(g.irrigation, 0, 3);
+    integer(g.weapon, 0, version >= 8 ? 20 : 5);
+    integer(g.fence, 0, version >= 8 ? 20 : 4);
+    integer(g.irrigation, 0, version >= 8 ? 10 : 3);
     integer(g.land, 0, 1);
     integer(g.kills, 0, Integer.MAX_VALUE);
     integer(g.harvested, 0, Integer.MAX_VALUE);
@@ -146,14 +149,14 @@ public final class SaveCodec {
       if (i >= g.plots()) range(g.crop[i] == -1);
     }
     int count = in.readInt();
-    integer(count, 0, 45);
+    integer(count, 0, version >= 8 ? Campaign.MAX_ENEMIES : 45);
     for (int i = 0; i < count; i++) {
       int t = in.readInt(), lane = in.readInt();
       float x = in.readFloat(), hp = in.readFloat(), max = in.readFloat();
-      integer(t, 0, 3);
+      integer(t, 0, version >= 8 ? Campaign.BOSS : 3);
       integer(lane, 0, version == 1 ? 2 : 3);
       number(x, 0, 1);
-      number(max, 1, version >= 6 ? 400 : 200);
+      number(max, 1, version >= 8 ? 2200 : version >= 6 ? 400 : 200);
       number(hp, .001f, max);
       float offset = version == 1 ? .5f : in.readFloat();
       number(offset, 0, 1);
@@ -183,7 +186,7 @@ public final class SaveCodec {
       for (int i = 0; i < roamers; i++) {
         int type = in.readInt();
         float progress = in.readFloat(), distance = in.readFloat();
-        integer(type, 0, 3); number(progress, 0, 3.9999998f); number(distance, .55f, .95f);
+        integer(type, 0, version >= 8 ? 6 : 3); number(progress, 0, 3.9999998f); number(distance, .55f, .95f);
         g.roamers.add(new Game.Roamer(type, progress, distance));
       }
     } else {
@@ -191,7 +194,7 @@ public final class SaveCodec {
       g.populateRoamers();
     }
     if (version >= 4) {
-      for (int i = 0; i < 4; i++) { g.wallHealth[i] = in.readFloat(); number(g.wallHealth[i], 0, g.maxWallHealth(i) + (version >= 7 && g.walls[i] > 0 ? 120 : 0)); }
+      for (int i = 0; i < 4; i++) { g.wallHealth[i] = in.readFloat(); number(g.wallHealth[i], 0, g.maxWallHealth(i) + (version >= 7 && g.walls[i] > 0 ? version >= 8 ? 600 : 120 : 0)); }
       for (int i = 0; i < 9; i++) {
         g.cropHealth[i] = in.readFloat(); g.scorched[i] = in.readBoolean();
         number(g.cropHealth[i], 0, Game.CROP_HEALTH);
@@ -219,12 +222,12 @@ public final class SaveCodec {
     }
     for (Game.Mercenary merc : g.mercenaries) {
       merc.health = version >= 6 ? in.readFloat() : g.guardMaxHealth();
-      number(merc.health, Float.MIN_VALUE, g.guardMaxHealth() + (version >= 7 ? 30 : 0));
+      number(merc.health, Float.MIN_VALUE, g.guardMaxHealth() + (version >= 8 ? 200 : version >= 7 ? 30 : 0));
     }
     if (version >= 7) {
-      for (int side = 0; side < 4; side++) { g.wallRanks[side] = in.readInt(); integer(g.wallRanks[side], 0, Game.MAX_WALL_RANK); range(g.wallRanks[side] == 0 || g.walls[side] == 3); }
+      for (int side = 0; side < 4; side++) { g.wallRanks[side] = in.readInt(); integer(g.wallRanks[side], 0, version >= 8 ? Campaign.MAX_RANK : Game.MAX_WALL_RANK); range(g.wallRanks[side] == 0 || g.walls[side] == 3); }
       g.millLevel = in.readInt(); g.drill = in.readInt(); g.heroLevel = in.readInt();
-      integer(g.millLevel, 0, 3); integer(g.drill, 0, 3); integer(g.heroLevel, 0, 3);
+      integer(g.millLevel, 0, version >= 8 ? 10 : 3); integer(g.drill, 0, version >= 8 ? 20 : 3); integer(g.heroLevel, 0, version >= 8 ? 20 : 3);
       g.elixirs = in.readInt(); g.enhancers = in.readInt(); integer(g.elixirs, 0, Game.MAX_ITEMS); integer(g.enhancers, 0, Game.MAX_ITEMS);
       g.enhancerTime = in.readFloat(); number(g.enhancerTime, 0, 20);
       if (in.readBoolean()) {
@@ -233,6 +236,14 @@ public final class SaveCodec {
         number(g.hero.targetX, 0, 1); number(g.hero.targetY, 0, 1); number(g.hero.health, Float.MIN_VALUE, g.heroMaxHealth());
       }
     }
+    if (version >= 8) {
+      g.bolts = in.readInt(); g.blasts = in.readInt(); integer(g.bolts, 0, Game.MAX_ITEMS); integer(g.blasts, 0, Game.MAX_ITEMS);
+      for (int i = 0; i < g.equipped.length; i++) { g.equipped[i] = in.readInt(); integer(g.equipped[i], 0, Game.ITEMS.length - 1); }
+      g.bossSpawned = in.readBoolean();
+      long bosses = g.enemies.stream().filter(e -> e.type == Campaign.BOSS).count();
+      range(bosses <= 1 && (bosses == 0 || g.bossSpawned && g.bossDay()));
+      range(!g.bossSpawned || g.night && g.bossDay());
+    } else g.bossSpawned = g.night && g.bossDay(); // Existing raids finish under their original quota.
     for (int side = 0; side < 4; side++) number(g.wallHealth[side], 0, g.maxWallHealth(side));
     for (Game.Mercenary merc : g.mercenaries) number(merc.health, Float.MIN_VALUE, g.guardMaxHealth());
     range(g.night || count == 0);

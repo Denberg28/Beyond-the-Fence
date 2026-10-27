@@ -1,3 +1,13 @@
+# 0.12 current limitations
+
+- Century progression has deterministic mechanical/scheduler checks;100 days are not human playtested for balance. Max80 enemies,3 mercenaries and1 hero bound simulation cost.
+- Daytime scouts pause and shuffle outside; the player does not fight them until night. Magic auto-targets the nearest breach/threat; area radius0.32, bosses resist40%.
+- Three quick slots may share a potion inventory. Hold or tap an empty slot to assign; selection pauses and stays paused afterward. Merc recruitment moved to Barracks; Merc↑ remains.
+- Same-key updates start with the privately signed0.12 identity. Old disposable signing keys were not retained and cannot be recovered; moving from0.11 or earlier requires one-time save transfer. Never delete the old app until its backup is exported. Production-store distribution is not configured.
+- Physical-phone audio/endurance/accessibility/performance remain unvalidated. Original32s lute/horror loops need listening on real hardware. Schema8 cannot downgrade to0.11.
+
+## Earlier limitations
+
 # 0.11.1 current limitations
 
 - Android preview; physical phone listening/endurance/TalkBack/performance and production signing continuity remain unvalidated. Stable promotion is blocked.

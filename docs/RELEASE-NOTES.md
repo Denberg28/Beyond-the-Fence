@@ -1,19 +1,19 @@
-# Beyond the Fence 0.11.1-rc.1 — First light and clear controls
+# Beyond the Fence 0.12.0-rc.1 — Century survival
 
-Android8.0+ test preview; package com.denberg.beyondthefence, versionCode14. Baseline0.10/2cdb19a:72 JVM tests,1182 native checks/API26 and35. Prerelease only.
+Android8.0+ test preview; com.denberg.beyondthefence, versionCode15. Baseline0.11.1/608a451:75 JVM/1312 native checks per emulator. Prerelease.
 
-Compact dock and tab captions scale within their available space so whole words fit at200% font; larger body/purchase text retains the system scale.
+Daytime zombies shuffle slowly and some lie dormant in six-second phases; at night they approach with individual uneven gaits. Ghoul, Ironhide and Wraith unlock on days16/31/46. One Grave Warden arrives midway through every fifth night, including Day100, with larger art/crown and a real top health bar. Boss state survives saves without duplicates. The raid ends only after every enemy is defeated.
 
-Bottom command/action padding is transparent over original day/night terrain. Mercenary buttons and bottle slots have mirrored sizes and baselines; bottom actions share equal heights with consistent spacing, including large fonts. No extra frame animation or runtime dependency.
+Progression extends through Day100, then remains bounded for endless play: up to80 enemies,0.6s reinforcement floor,20 uniform/fortify/Steel/drill/hero ranks and10 mill/irrigation tiers. Chapters open additional ranks over time; they change real combat/health/output. Three mercenaries plus one hero remain the cap. Regular kills pay1coin, boss salvage10+day/5 (max30).
 
-One stable Fence / Mill / Shop / Barracks tab strip replaces the previous mixed general/building navigation. Each map building opens its matching page. Switching resets scroll to the top, replaces old actions/price hints, and synchronizes title and selected tab. Rotation preserves the page; panels pause gameplay and closing stays paused. Mill owns timber/production/fortify; Shop owns crops/irrigation/land/items; Barracks owns crew/uniform/drills/hero.
+Shop adds Arc bolt30c (single nearest threat) and Starfall65c (area0.32 radius). Damage scales with day and hero training; bosses resist40%. No live targets means no charge. Three quick slots share saved inventory,9 per potion; hold a slot or tap an empty slot to assign any of four potions. Upper-left slot replaces Merc+; hire through Barracks. Merc↑ remains. Actual spell rings identify the cast area.
 
-Every defeated zombie pays1 coin once, reduced from the existing2-coin reward. No variant multipliers; harvest and dawn income/prices remain. New actual guard-kill/reload/cap cases protect against duplicate income.
+A larger Survived-days heading counts completed nights, with full-width resource/status rows and three equal HUD buttons. Transparent dock/slot symmetry stays. New original32s Bard at Dawn lute/recorder/frame-drum and The Hunt haunting strings/bells replace phase scores; gun/zombie/owl/cricket effects and independent mutes/pause/focus cleanup remain.
 
-New original32-second “First Light” morning music uses felt keys, mallet arpeggios, warm bass and a breathy lead. The night score and four effects remain. Independent mutes, focus loss, background and pause cleanup remain intact. No copied themes/samples.
+Schema8 reads1–7, preserving existing resources, crops, damage, hero and consumables, adding empty attack inventory/default equipped slots. New exports cannot downgrade to0.11. Keep the old APK and export before updating.
 
-Save schema7 unchanged;0.10 imports remain compatible. Export your .btfs before upgrading or uninstalling. Preview certificates may differ; a conflict can require export/uninstall/install/import. Uninstall erases local saves. Keep the previous APK/export for rollback. Production signing continuity is not configured.
+Published0.12 APKs start one privately retained signing identity, with certificate pinned in source. Future higher-version builds signed with this identity can install as updates and retain progress. The earlier disposable preview keys were not saved; this new key cannot update those installations directly. Moving from0.11 or earlier still requires ONE export/install/import transfer. Do not uninstall before exporting. Emulator install-r tests re-sign an old baseline to test same-key migration; this does not bypass Android's real certificate requirement.
 
-Candidate gates:75 JVM tests, Android builds/lint, package/version/signature/zero-permission/size/six-WAV audits, exact-APK API26/35 native regressions, plus screenshot self-review. Native checks cover repeated tab switches after scrolling, title/selected-tab/content consistency, transparent bottom terrain, mirrored slots/commands and equal action heights in portrait/landscape/200% font.
+Candidate gates:81 JVM, Android build/lint/package/signature/version/API/zero-permission/size/six-WAV audit, full exact signed-APK API26/35 tests plus actual install-r/schema7→8 checkpoint retention and screenshot self-review. Signing payloads must match a fresh source build and fixed certificate. Private key/password never appear in Git, CI cache, logs or public releases.
 
-Physical-phone listening/mixing/routing,30-minute endurance with20 interruptions, TalkBack, measured performance and production certificate/upgrade continuity remain BLOCKED for stable. Emulator checks do not establish audible quality. HIL N/A.
+Physical-phone listening/mixing/routing,30-minute endurance/20 interruptions, TalkBack/200% font and measured performance remain BLOCKED for stable. No claim of100-day human balance playtesting; HIL N/A.

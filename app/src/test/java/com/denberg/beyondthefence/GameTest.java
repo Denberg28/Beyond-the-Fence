@@ -133,7 +133,7 @@ public class GameTest {
     assertEquals(2, g.mercenaries.size());
     for (int t = 0; t < 2000 && g.day == 1 && !g.defeated; t++) g.tick(.1f);
     assertFalse(g.defeated); assertEquals(2, g.day); assertEquals(10, g.kills);
-    assertTrue(g.coins >= 4); assertTrue(g.lostCrops > 0);
+    assertTrue(g.coins >= 4); assertTrue(g.lostCrops <= 6); // Slower daytime scouts can now be intercepted before destroying crops.
   }
 
   @Test

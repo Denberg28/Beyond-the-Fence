@@ -9,10 +9,10 @@ public final class Game {
   public static final int[] SEED = {4, 10, 18}, SALE = {12, 26, 44};
   public static final float[] GROW = {16, 29, 43};
   public static final String[] WEATHER = {"Clear", "Rain", "Fog", "Heat"};
-  public static final String[] FOES = {"Walker", "Runner", "Brute", "Spitter"};
+  public static final String[] FOES = {"Walker", "Runner", "Brute", "Spitter", "Ghoul", "Ironhide", "Wraith", "Grave Warden"};
   public static final String[] UNIFORMS = {"Workwear", "Scout green", "Desert kit", "Urban armor", "Ranger kit", "Black ops"};
   public static final String[] FENCE_MATERIALS = {"Gap", "Wood", "Stone", "Steel"};
-  private static final float[] FOE_HP = {42, 30, 125, 65}, FOE_SPEED = {.105f, .21f, .065f, .085f}, FOE_DAMAGE = {10, 7, 25, 13};
+  private static final float[] FOE_HP = {42, 30, 125, 65, 90, 190, 80, 400}, FOE_SPEED = {.105f, .21f, .065f, .085f, .15f, .055f, .185f, .048f}, FOE_DAMAGE = {10, 7, 25, 13, 18, 32, 16, 38};
   public static final float GUARD_RANGE = .28f;
   public static final float DAY_SECONDS = 75;
   public static final String[] SIDES = {"North", "East", "South", "West"};
@@ -28,6 +28,12 @@ public final class Game {
   public final int[] wallRanks = new int[4];
   public int drill, millLevel, heroLevel, elixirs, enhancers;
   public float enhancerTime;
+  public boolean bossSpawned;
+  public int bolts, blasts;
+  public final int[] equipped = {0, 1, 2};
+  public static final String[] ITEMS = {"Elixir", "Enhancer", "Arc bolt", "Starfall"};
+  public float spellTime, spellX, spellY;
+  public boolean spellArea; // Transient cosmetic cue; never changes combat or saved randomness.
   public Mercenary hero;
   public static final int MAX_WALL_RANK = 4, MAX_ITEMS = 9;
   public int settlementStyle() { return Settlement.style(day); }
@@ -63,7 +69,7 @@ public final class Game {
   }
 
   public float preparationSeconds() { return Math.max(35, DAY_SECONDS - 4 * Math.min(10, day - 1)); }
-  public float reinforcementSeconds() { return Math.max(.85f, 3.2f - .18f * Math.min(14, day - 1)); }
+  public float reinforcementSeconds() { return Math.max(.6f, 3.2f - .18f * Math.min(14, day - 1) - Math.max(0, Campaign.day(day) - 30) * .004f); }
   public int raidInSeconds() { return (int) Math.ceil(Math.max(0, preparationSeconds() - elapsed)); }
 
   /** Bounded, deterministic scouts; these are promoted into real enemies when a raid begins. */
@@ -72,7 +78,7 @@ public final class Game {
     int desired = Math.min(MAX_ROAMERS, 3 + day);
     while (roamers.size() < desired) {
       int i = roamers.size();
-      roamers.add(new Roamer(i % Math.min(4, day), (i * 2.472f + .23f) % 4, .65f + i % 3 * .1f));
+      roamers.add(new Roamer(i % Campaign.enemyKinds(day), (i * 2.472f + .23f) % 4, .65f + i % 3 * .1f));
     }
   }
 
@@ -89,7 +95,7 @@ public final class Game {
   }
 
   public int quota() {
-    return Math.min(45, 7 + day * 3);
+    return Math.min(Campaign.MAX_ENEMIES, 7 + Campaign.day(day) * 3);
   }
 
   public int cost(int kind) {
@@ -106,10 +112,14 @@ public final class Game {
   }
 
   public boolean maxed(int kind) {
-    return kind == 0
-        ? weapon >= 5
-        : kind == 1 ? fence >= 4 : kind == 2 ? irrigation >= 3 : land >= 1;
+    return (kind == 0 ? weapon : kind == 1 ? fence : kind == 2 ? irrigation : land) >= upgradeCap(kind);
   }
+
+  public int upgradeCap(int kind) { return Campaign.upgradeCap(kind, day); }
+  public int wallRankCap() { return Campaign.wallCap(day); }
+  public int advancedCap(int kind) { return Campaign.advancedCap(kind, day); }
+  public boolean bossDay() { return Campaign.bossDay(day); }
+  public Enemy boss() { for (Enemy e : enemies) if (e.type == Campaign.BOSS) return e; return null; }
 
   private void money(int amount) {
     coins = Math.min(10_000_000, Math.max(0, coins + amount));
@@ -242,7 +252,7 @@ public final class Game {
     if (night || defeated) return;
     night = true;
     elapsed = 0;
-    spawned = 0;
+    spawned = 0; bossSpawned = false;
     for (Roamer roamer : roamers) {
       if (spawned >= quota()) break;
       float hp = enemyHealth(roamer.type);
@@ -284,17 +294,18 @@ public final class Game {
   private void removeDead() {
     Iterator<Enemy> it = enemies.iterator();
     while (it.hasNext())
-      if (it.next().hp <= 0) {
+      { Enemy dead = it.next(); if (dead.hp <= 0) {
         it.remove();
         kills++;
-        money(1); // Small salvage reward; harvest remains the primary income.
-      }
+        money(dead.type == Campaign.BOSS ? 10 + Math.min(20, day / 5) : 1); // Small salvage reward; harvest remains the primary income.
+      } }
   }
 
   public void tick(float dt) {
     if (!Float.isFinite(dt) || dt <= 0 || defeated) return;
     dt = Math.min(dt, 0.1f); // No catch-up damage after frame stalls or backgrounding.
     enhancerTime = Math.max(0, enhancerTime - dt);
+    spellTime = Math.max(0, spellTime - dt);
     float rate = growthRate();
     for (int i = 0; i < plots(); i++)
       if (crop[i] >= 0) growth[i] = Math.min(1, growth[i] + dt * rate / GROW[crop[i]]);
@@ -306,14 +317,15 @@ public final class Game {
     elapsed = Math.min(86400, elapsed + dt);
     if (!night) {
       populateRoamers();
-      for (Roamer roamer : roamers)
-        roamer.progress = (roamer.progress + dt * (.045f + roamer.type * .008f)) % 4;
+      for (Roamer roamer : roamers) if (roamerActive(roamer))
+        roamer.progress = (roamer.progress + dt * (.008f + roamer.type * .0015f)) % 4;
       if (elapsed >= preparationSeconds()) startNight();
       return;
     }
     spawnClock = Math.max(-.1f, spawnClock - dt);
     if (spawned < quota() && spawnClock <= 0) {
-      int kind = random(Math.min(4, day));
+      int kind = bossDay() && !bossSpawned && spawned >= quota() / 2 ? Campaign.BOSS : random(Campaign.enemyKinds(day));
+      if (kind == Campaign.BOSS) { bossSpawned = true; notice = "Grave Warden arrives! Defeat the five-day boss."; }
       float hp = enemyHealth(kind);
       enemies.add(new Enemy(kind, random(4), 1, hp, hp, .12f + random(760) / 1000f));
       spawned++;
@@ -321,7 +333,7 @@ public final class Game {
     }
     for (Enemy e : enemies) {
       if (!e.breached) {
-        float speed = enemySpeed(e.type);
+        float speed = enemySpeed(e.type) * movementFactor(e);
         float stop = e.type == 3 && wallHealth[e.lane] > 0 ? .26f : 0;
         e.x = Math.max(stop, e.x - speed * dt * (weather == 1 ? .85f : 1));
         if (e.x <= stop && wallHealth[e.lane] > 0) {
@@ -372,7 +384,7 @@ public final class Game {
     int reward = 20 + Math.min(day, 30) * 3;
     money(reward);
     timber(6);
-    day = Math.min(9999, day + 1);
+    day = Math.min(9999, day + 1); bossSpawned = false;
     night = false;
     elapsed = 0;
     enemies.clear();
@@ -392,7 +404,7 @@ public final class Game {
     int lost = Math.min(30, coins / 5);
     money(-lost);
     defeated = false;
-    enhancerTime = 0;
+    enhancerTime = 0; spellTime = 0; bossSpawned = false;
     night = false;
     elapsed = 0;
     health = maxHealth();
@@ -524,7 +536,7 @@ public final class Game {
 
   public int borderCoinCost(int side) { return walls[side] < 3 ? wallCoinCost(side) : 120 + wallRanks[side] * 60; }
   public int borderWoodCost(int side) { return walls[side] < 3 ? wallWoodCost(side) : 18 + wallRanks[side] * 8; }
-  public boolean borderMaxed(int side) { return walls[side] >= 3 && wallRanks[side] >= MAX_WALL_RANK; }
+  public boolean borderMaxed(int side) { return walls[side] >= 3 && wallRanks[side] >= wallRankCap(); }
   public boolean upgradeBorder(int side) {
     if (defeated || side < 0 || side > 3 || borderMaxed(side)) return false;
     if (walls[side] < 3) return buildWall(side);
@@ -534,7 +546,7 @@ public final class Game {
   }
   public int advancedCost(int kind) { return kind == 0 ? 90 + millLevel * 80 : kind == 1 ? 140 + drill * 100 : 220 + heroLevel * 150; }
   public int advancedWood(int kind) { return kind == 0 ? 12 + millLevel * 6 : kind == 1 ? 8 : 12; }
-  public boolean advancedMaxed(int kind) { return (kind == 0 ? millLevel : kind == 1 ? drill : heroLevel) >= 3; }
+  public boolean advancedMaxed(int kind) { return (kind == 0 ? millLevel : kind == 1 ? drill : heroLevel) >= advancedCap(kind); }
   public boolean upgradeAdvanced(int kind) {
     if (defeated || kind < 0 || kind > 2 || advancedMaxed(kind) || !(kind == 0 ? buildings[0] : buildings[2])
         || kind == 2 && hero == null || coins < advancedCost(kind) || wood < advancedWood(kind)) return false;
@@ -544,7 +556,7 @@ public final class Game {
     else { heroLevel++; hero.health = Math.min(heroMaxHealth(), hero.health + 40); }
     notice = "Upgrade purchased."; return true;
   }
-  public float millPeriod() { return 12 - millLevel; }
+  public float millPeriod() { return Math.max(3, 12 - millLevel); }
   public int millYield() { return 4 + millLevel * 2; }
   public float heroMaxHealth() { return 220 + heroLevel * 40; }
   public boolean buyHero() {
@@ -552,14 +564,19 @@ public final class Game {
     money(-360); timber(-20); hero = new Mercenary(2.5f, 0, .5f, .5f); hero.health = heroMaxHealth();
     notice = "Hero recruited. One hero fights alongside your three mercenaries."; return true;
   }
-  public int itemPrice(int type) { return type == 0 ? 35 : 45; }
+  public int itemPrice(int type) { return new int[] {35, 45, 30, 65}[type]; }
+  public int itemStock(int type) { return type == 0 ? elixirs : type == 1 ? enhancers : type == 2 ? bolts : blasts; }
+  public boolean equipItem(int slot, int type) {
+    if (slot < 0 || slot >= equipped.length || type < 0 || type >= ITEMS.length || defeated) return false;
+    equipped[slot] = type; notice = ITEMS[type] + " assigned to slot " + (slot + 1) + "."; return true;
+  }
   public boolean buyItem(int type) {
-    if (defeated || type < 0 || type > 1 || !buildings[1] || (type == 0 ? elixirs : enhancers) >= MAX_ITEMS || coins < itemPrice(type)) return false;
-    money(-itemPrice(type)); if (type == 0) elixirs++; else enhancers++;
-    notice = type == 0 ? "Elixir stored in the left slot." : "Enhancer stored in the right slot."; return true;
+    if (defeated || type < 0 || type >= ITEMS.length || !buildings[1] || itemStock(type) >= MAX_ITEMS || coins < itemPrice(type)) return false;
+    money(-itemPrice(type)); if (type == 0) elixirs++; else if (type == 1) enhancers++; else if (type == 2) bolts++; else blasts++;
+    notice = ITEMS[type] + " purchased. Hold a quick slot to change its potion."; return true;
   }
   public boolean useItem(int type) {
-    if (defeated || type < 0 || type > 1) return false;
+    if (defeated || type < 0 || type >= ITEMS.length) return false;
     if (type == 0) {
       boolean injured = health < maxHealth() || hero != null && hero.health < heroMaxHealth();
       for (Mercenary m : mercenaries) injured |= m.health < guardMaxHealth();
@@ -568,9 +585,27 @@ public final class Game {
       for (Mercenary m : mercenaries) m.health = Math.min(guardMaxHealth(), m.health + 60);
       if (hero != null) hero.health = Math.min(heroMaxHealth(), hero.health + 90);
       notice = "Elixir: farm and surviving crew healed.";
-    } else {
+    } else if (type == 1) {
       if (enhancers == 0 || enhancerTime > 0) return false;
       enhancers--; enhancerTime = 20; notice = "Enhancer:20 active seconds of stronger, faster fire.";
+    } else {
+      if (!night || itemStock(type) == 0 || enemies.isEmpty()) return false;
+      Enemy target = null; float closest = Float.MAX_VALUE;
+      for (Enemy e : enemies) if (e.hp > 0) {
+        float score = e.breached ? -1 - e.advance : e.x;
+        if (score < closest) { closest = score; target = e; }
+      }
+      if (target == null) return false;
+      float x = foeX(target), y = foeY(target);
+      int damage = type == 2 ? 95 + Campaign.day(day) * 3 + heroLevel * 4 : 60 + Campaign.day(day) * 2 + heroLevel * 3;
+      for (Enemy e : enemies) {
+        float dx = foeX(e) - x, dy = foeY(e) - y;
+        if (e == target || type == 3 && dx * dx + dy * dy <= .32f * .32f)
+          e.hp -= damage * (e.type == Campaign.BOSS ? .6f : 1);
+      }
+      if (type == 2) bolts--; else blasts--;
+      spellX = x; spellY = y; spellTime = .7f; spellArea = type == 3;
+      removeDead(); notice = ITEMS[type] + " cast on the nearest threat.";
     }
     return true;
   }
@@ -615,11 +650,20 @@ public final class Game {
   }
 
   private float enemyHealth(int type) {
-    return FOE_HP[type] + Math.min(day - 1, 30) * 6;
+    return (FOE_HP[type] + (Campaign.day(day) - 1) * 6) * (type == Campaign.BOSS ? 2 : 1);
   }
 
-  public float enemySpeed(int type) { return FOE_SPEED[type] * (1 + Math.min(day - 1, 20) * .015f); }
-  public float enemyDamage(int type) { return FOE_DAMAGE[type] * (1 + Math.min(day - 1, 30) * .06f); }
+  public float enemySpeed(int type) { return FOE_SPEED[type] * (1 + Math.min(Campaign.day(day) - 1, 40) * .015f); }
+  public float enemyDamage(int type) { return FOE_DAMAGE[type] * (1 + Math.min(day - 1, 30) * .06f + Math.max(0, Campaign.day(day) - 31) * .025f); }
+
+  public boolean roamerActive(Roamer roamer) {
+    return ((int)(elapsed / 6) + (int)(roamer.progress * 7) + roamer.type) % 4 != 0;
+  }
+  public float movementFactor(Enemy e) {
+    // Each enemy shuffles on its own cadence; fast types surge while heavy types lumber.
+    float wave = (float)Math.sin(elapsed * (e.type == 1 || e.type == 6 ? 5 : 2.2f) + e.offset * 9 + e.lane);
+    return .8f + .2f * wave;
+  }
 
   public static final class Roamer {
     public int type;

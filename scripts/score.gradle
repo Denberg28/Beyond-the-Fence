@@ -20,42 +20,41 @@ tasks.register('generateScore') {
             out.write('WAVEfmt '.getBytes('US-ASCII')); le(16, 4); le(1, 2); le(1, 2)
             le(rate, 4); le(rate * 2, 4); le(2, 2); le(16, 2)
             out.write('data'.getBytes('US-ASCII')); le(frames * 2, 4)
-            def dayRoots = [146.832d,195.998d,123.471d,220d,146.832d,195.998d,164.814d,220d]
-            def dayThirds = [1.25d,1.25d,1.2d,1.25d,1.25d,1.25d,1.2d,1.25d]
-            def morningNotes = [74,78,81,78,76,74, 79,78,76,74,71,74,
-                                78,81,83,81,78,76, 76,73,69,73,76,81,
-                                74,78,81,86,81,78, 79,83,81,79,78,74,
-                                76,79,83,81,79,76, 73,76,81,79,76,73]
-            def nightRoots = [55d,51.913d,58.270d,49d,55d,65.406d,58.270d,51.913d]
+            def dayRoots = [146.832d,130.813d,195.998d,146.832d,174.614d,130.813d,164.814d,146.832d]
+            def dayThirds = [1.2d,1.25d,1.25d,1.2d,1.25d,1.25d,1.2d,1.2d]
+            def morningNotes = [62,65,69,67,65,62, 64,67,72,71,67,64,
+                                67,71,74,72,71,67, 69,67,65,64,62,57,
+                                65,69,72,74,72,69, 67,64,60,64,67,72,
+                                64,67,71,69,67,64, 62,65,69,67,65,62]
+            def nightRoots = [73.416d,69.296d,65.406d,77.782d,73.416d,82.407d,69.296d,73.416d]
             for (int i = 0; i < frames; i++) {
                 double t = i / (double) rate, noise = rng.nextDouble() * 2 - 1, sample = 0
                 if (name == 'sunny') {
-                    // Original "First Light": a gentle 90bpm morning melody, felt keys,
-                    // mallet arpeggios, warm bass and a breathy lead. Eight four-second bars.
+                    // Original "Bard at Dawn": gentle Dorian lute, recorder and frame drum.
                     int bar = (int)(t / 4) % 8
                     double root = dayRoots[bar], third = dayThirds[bar], a = t % (2d/3)
                     double note = 440 * Math.pow(2, (morningNotes[(int)(t * 1.5) % 48] - 69) / 12d)
-                    double melodyEnv = (1 - Math.exp(-a*55)) * Math.exp(-a*3) * Math.min(1, ((2d/3)-a)*18)
-                    double chordEnv = Math.sin(Math.PI*(t%4)/4)
-                    sample = (0.065*Math.sin(2*Math.PI*root*t) + 0.040*Math.sin(2*Math.PI*root*third*t)
-                        + 0.035*Math.sin(2*Math.PI*root*1.5*t)) * chordEnv
-                    sample += (0.16*Math.sin(2*Math.PI*note*a) + 0.025*Math.sin(4*Math.PI*note*a)) * melodyEnv
-                    sample += 0.035*Math.sin(2*Math.PI*note*a + 0.025*Math.sin(2*Math.PI*5*t))*Math.sin(Math.PI*a/(2d/3))
-                    double arpTime = t % (1d/3), arp = root * [1d,third,1.5d,2d,1.5d,third][(int)(t*3)%6]
-                    sample += 0.065*Math.sin(2*Math.PI*arp*arpTime)*(1-Math.exp(-arpTime*70))*Math.exp(-arpTime*11)
-                    sample += 0.050*Math.sin(2*Math.PI*root*0.5*t)*chordEnv
-                    sample += noise*0.006*Math.exp(-(t%(2d/3))*65)
+                    double env = (1-Math.exp(-a*70))*Math.exp(-a*4)*Math.min(1,((2d/3)-a)*20)
+                    double chord = Math.sin(Math.PI*(t%4)/4)
+                    sample = (0.045*Math.sin(2*Math.PI*root*t) + 0.025*Math.sin(2*Math.PI*root*third*t))*chord
+                    for (int harmonic=1;harmonic<=5;harmonic++)
+                        sample += 0.115/harmonic*Math.sin(2*Math.PI*note*harmonic*a)*env*Math.exp(-a*harmonic)
+                    sample += 0.055*Math.sin(2*Math.PI*note*t + 0.02*Math.sin(t*29))*Math.sin(Math.PI*a/(2d/3))
+                    double arpTime=t%(1d/3), arp=root*[1d,third,1.5d,2d,1.5d,third][(int)(t*3)%6]
+                    sample += 0.06*Math.sin(2*Math.PI*arp*arpTime)*(1-Math.exp(-arpTime*90))*Math.exp(-arpTime*10)
+                    sample += 0.025*Math.sin(2*Math.PI*68*(t%(4d/3)))*Math.exp(-(t%(4d/3))*22)
                 } else if (name == 'creepy') {
-                    // Original suspense score: cello ostinato, low strings, sparse piano and heartbeat percussion.
-                    double root = nightRoots[(int)(t/4)%8], pulse = t%0.5, bar = t%4
-                    double swell = 0.45 + 0.55*Math.sin(Math.PI*bar/4)
-                    sample = (0.13*Math.sin(2*Math.PI*root*t) + 0.065*Math.sin(2*Math.PI*root*1.05946*t)
-                        + 0.055*Math.sin(2*Math.PI*root*1.5*t)) * swell
-                    sample += 0.13*Math.sin(2*Math.PI*root*2*t) * Math.exp(-pulse*7)
-                    sample += 0.07*Math.sin(2*Math.PI*root*4*t) * Math.exp(-(t%2)*3.5)
-                    sample += 0.10*Math.sin(2*Math.PI*43*pulse)*Math.exp(-pulse*25)
-                    if ((int)(t*2)%8==7) sample += noise*0.065*Math.exp(-pulse*20)
-                    sample += noise*0.012*(0.5+0.5*Math.sin(t*3))
+                    // Original "The Hunt": pursuing low strings, bowed tension and distant bells.
+                    double root=nightRoots[(int)(t/4)%8], pulse=t%0.4, bar=t%4
+                    double swell=0.4+0.6*Math.sin(Math.PI*bar/4)
+                    sample=(0.10*Math.sin(2*Math.PI*root*t)+0.045*Math.sin(2*Math.PI*root*1.05946*t)
+                        +0.035*Math.sin(2*Math.PI*root*1.414214*t))*swell
+                    sample += 0.09*Math.sin(2*Math.PI*root*2*t)*Math.exp(-pulse*9)
+                    sample += 0.07*Math.sin(2*Math.PI*root*0.5*t)*swell
+                    sample += 0.06*Math.sin(2*Math.PI*root*4*t)*Math.exp(-(t%2)*3)
+                    sample += 0.065*Math.sin(2*Math.PI*44*pulse)*Math.exp(-pulse*30)
+                    sample += noise*0.009*swell
+                    if ((int)(t/0.4)%8==6) sample += noise*0.03*Math.exp(-pulse*20)
                 } else if (name == 'shot') {
                     sample = (0.65 * noise + 0.20 * Math.sin(2 * Math.PI * 100 * t)) * Math.exp(-t * 38)
                 } else if (name == 'zombie') {

@@ -7,3 +7,7 @@ local.properties
 *.aab
 *.log
 artifacts/
+*.p12
+*.pem
+*-password.txt
+**/__pycache__/

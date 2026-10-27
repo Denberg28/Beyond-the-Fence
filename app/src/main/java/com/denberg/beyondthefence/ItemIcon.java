@@ -13,8 +13,9 @@ final class ItemIcon extends Drawable {
   @Override public void draw(Canvas canvas) {
     Rect b = getBounds(); canvas.save(); canvas.translate(b.left, b.top); canvas.scale(b.width() / 32f, b.height() / 32f);
     paint.setColor(0xff2d3435); canvas.drawCircle(16, 17, 14, paint);
-    paint.setColor(type == 0 ? 0xffd26868 : 0xffbb8bd6); canvas.drawCircle(16, 19, 9, paint);
-    paint.setColor(type == 0 ? 0xfff1a899 : 0xffe2bcf0); canvas.drawCircle(13, 16, 3, paint);
+    paint.setColor(new int[] {0xffd26868, 0xffbb8bd6, 0xff68c1de, 0xffe0a45d}[type]); canvas.drawCircle(16, 19, 9, paint);
+    paint.setColor(new int[] {0xfff1a899, 0xffe2bcf0, 0xffb7edf3, 0xfff4db96}[type]); canvas.drawCircle(13, 16, 3, paint);
+    if (type >= 2) { paint.setColor(0xfff2eee1); paint.setStrokeWidth(2); canvas.drawLine(17,12,13,20,paint); canvas.drawLine(13,20,19,18,paint); if(type==3) canvas.drawCircle(16,19,6,paint); }
     paint.setColor(0xffa8b3a4); canvas.drawRect(12, 4, 20, 13, paint);
     paint.setColor(0xffdabf77); canvas.drawRect(11, 3, 21, 7, paint); canvas.restore();
   }

@@ -24,10 +24,12 @@ import java.util.function.BooleanSupplier;
 /** Runs against the installed APK using framework instrumentation; no test runtime dependency. */
 public final class SmokeInstrumentation extends Instrumentation {
   private int checks;
+  private boolean upgradeOnly;
 
   @Override
   public void onCreate(Bundle args) {
     super.onCreate(args);
+    upgradeOnly = args != null && "true".equals(args.getString("upgradeOnly"));
     start();
   }
 
@@ -223,7 +225,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(Math.abs(at[0] + cross.getWidth() / 2 - (dockAt[0] + commands.getWidth() / 2)) <= 2,
           "Repair cross is horizontally centered in its rendered bar: cross=" + at[0] + "/" + cross.getWidth()
               + ", bar=" + dockAt[0] + "/" + commands.getWidth());
-      for (String tag : new String[] {"quickHire", "quickUniform", "itemSlot0", "itemSlot1"}) {
+      for (String tag : new String[] {"itemSlot2", "quickUniform", "itemSlot0", "itemSlot1"}) {
         View shortcut = control(a, tag);
         check(shortcut.getWidth() >= min && shortcut.getHeight() >= min && shortcut.getContentDescription() != null,
             "Direct mercenary command is accessible and at least48dp");
@@ -265,6 +267,16 @@ public final class SmokeInstrumentation extends Instrumentation {
       automation.setServiceInfo(info);
       MainActivity a = launch();
       awaitIdle();
+      if (upgradeOnly) {
+        check(onUi(() -> a.game.day == 45 && a.game.coins == 4321 && a.game.wood == 876 && a.game.health == 137),
+            "Install-r retains the previous app's actual checkpoint and resources");
+        check(onUi(() -> a.game.wallRanks[1] == 4 && a.game.wallHealth[1] == 111 && a.game.growth[0] == .75f
+            && a.game.elixirs == 3 && a.game.hero != null && a.game.hero.health == 200), "Upgrade preserves investments, crops, damage, stock and hero");
+        runOnMainSync(() -> { a.game.equipItem(2, 3); a.finish(); });
+        awaitUi(() -> ((FarmApp)getTargetContext().getApplicationContext()).store.load().game.equipped[2] == 3,
+            "Migrated schema8 checkpoint saves and reloads after an in-place update");
+        result.putString("stream", "\nOK (" + checks + " upgrade checks)\n"); finish(Activity.RESULT_OK, result); return;
+      }
       boolean welcomed = false;
       long deadline = SystemClock.uptimeMillis() + 10000;
       while (!welcomed && SystemClock.uptimeMillis() < deadline) {
@@ -348,9 +360,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(a, "construct2"); touch(a, "closeBuild");
       check(onUi(() -> a.game.buildings[2] && a.game.coins == 36), "Construct barracks using harvest income");
       farmCycle(a);
-      touch(a, "quickHire");
-      check(onUi(() -> !control(a, "closeBuild").isShown()), "Quick hire does not open a panel");
-      touch(a, "squad");
+      touch(a, "squad"); touch(a, "hire");
       check(onUi(() -> a.game.mercenaries.size() == 2 && a.game.coins == 4 && a.paused), "Hire a real patrol through Squad");
       touch(a, "rally3");
       check(onUi(() -> a.game.lane == 3), "Rally sends mercenaries to the west border");
@@ -493,7 +503,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(reopened, "constructWall0");
       check(onUi(() -> threatened.wallHealth[0] == 50 && threatened.coins == 80 && threatened.wood == 12
           && threatened.enemies.get(0).breached && reopened.paused), "Repair closes a breach without deleting an existing intruder");
-      touch(reopened, "closeBuild"); touch(reopened, "quickHire");
+      touch(reopened, "closeBuild"); touch(reopened, "squad"); touch(reopened, "hire"); touch(reopened, "closeBuild");
       check(onUi(() -> threatened.mercenaries.size() == 1 && threatened.coins == 25 && threatened.wood == 6),
           "Harvest economy funds an actual mercenary after repair");
       check(!control(reopened, "closeBuild").isShown(), "Direct recruitment stays on the field");
@@ -523,9 +533,10 @@ public final class SmokeInstrumentation extends Instrumentation {
       for (boolean visible : variants) check(visible, "Redesigned zombie variant is present in the materials scene");
       screenshot("smoke-materials.png");
       runOnMainSync(() -> { threatened.coins = 2000; threatened.wood = 200; reopened.refresh(); });
-      touch(reopened, "quickHire"); touch(reopened, "quickHire");
-      check(onUi(() -> threatened.mercenaries.size() == 3 && !control(reopened, "quickHire").isEnabled()),
+      touch(reopened, "squad"); touch(reopened, "hire"); touch(reopened, "hire");
+      check(onUi(() -> threatened.mercenaries.size() == 3 && !control(reopened, "hire").isEnabled()),
           "Three-mercenary cap is visible and enforced");
+      touch(reopened, "closeBuild");
       touch(reopened, "quickUniform"); touch(reopened, "quickUniform");
       check(onUi(() -> threatened.weapon == 2 && threatened.mercenaries.get(0).health == threatened.guardMaxHealth()),
           "Uniform purchase improves existing crew armor and health");
@@ -618,7 +629,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       screenshot("smoke-items.png"); touch(reopened, "closeBuild"); touch(reopened, "itemSlot0");
       check(onUi(() -> compact.elixirs == 0 && compact.health == 75 && compact.mercenaries.get(0).health == 90), "Left elixir slot heals surviving actors exactly once");
       touch(reopened, "itemSlot1");
-      check(onUi(() -> compact.enhancers == 0 && compact.enhancerTime == 20 && !control(reopened, "itemSlot1").isEnabled()), "Right enhancer slot starts a bounded boost without consuming twice");
+      check(onUi(() -> compact.enhancers == 0 && compact.enhancerTime == 20 && control(reopened, "itemSlot1").isEnabled()), "Right enhancer slot starts a bounded boost without consuming twice");
       for (int day : new int[] {6, 11}) {
         runOnMainSync(() -> { compact.day = day; compact.elapsed = 0; reopened.refresh(); });
         settle(reopened); checkBoard(reopened);
@@ -648,6 +659,30 @@ public final class SmokeInstrumentation extends Instrumentation {
                 && (page != 3 || control(reopened, "buyTimber") == null)), "New tab contains only its building actions");
       }
       screenshot("smoke-tabs.png"); touch(reopened, "closeBuild"); checkDock(reopened);
+      Game century = new Game(); century.day = 100; century.coins=10000; century.wood=1000;
+      century.weapon=20; century.fence=20; century.drill=20; century.heroLevel=20; century.millLevel=10; century.irrigation=10;
+      for(int kind=0;kind<3;kind++) century.construct(kind);
+      for(int side=0;side<4;side++){century.walls[side]=3;century.wallRanks[side]=20;century.wallHealth[side]=century.maxWallHealth(side);}
+      century.health=century.maxHealth(); century.mercenaries.get(0).health=century.guardMaxHealth();century.buyHero();
+      century.roamers.clear();century.populateRoamers();century.startNight();century.spawned=century.quota()/2;century.spawnClock=0;century.tick(.1f);
+      check(century.boss()!=null && century.bossSpawned, "Day100 scheduled spawn creates the Grave Warden");
+      century.boss().x=.01f; for(Game.Enemy enemy:century.enemies) if(enemy!=century.boss())enemy.x=.95f;
+      runOnMainSync(() -> {reopened.game=century;reopened.paused=true;reopened.refresh();});
+      touch(reopened,"building1");touch(reopened,"buyItem2");touch(reopened,"buyItem3");
+      check(onUi(() -> century.bolts==1 && century.blasts==1),"Shop sells both single-target and area magic potions");
+      screenshot("smoke-potions.png");touch(reopened,"closeBuild");
+      float bossBefore=century.boss().hp;touch(reopened,"itemSlot2");
+      check(onUi(() -> century.bolts==0 && century.boss().hp < bossBefore),"New upper-left item slot casts one bolt on the nearest threat");
+      runOnMainSync(() -> control(reopened,"itemSlot0").performLongClick());awaitIdle();
+      dialogAction("Starfall · 1 owned");
+      check(onUi(() -> century.equipped[0]==3 && control(reopened,"itemSlot0").getContentDescription().toString().contains("Starfall")),
+          "Holding a slot replaces its potion and accessible label");
+      touch(reopened,"itemSlot0");check(onUi(() -> century.blasts==0 && century.spellArea),"Assigned slot casts the area potion exactly once");
+      check(onUi(() -> control(reopened,"quickHire")==null && ((android.widget.TextView)control(reopened,"survived")).getText().toString().equals("Survived 99 days")),
+          "Merc+ is replaced and survived-day header is visible");
+      checkDock(reopened);screenshot("smoke-boss.png");
+      runOnMainSync(() -> {century.enemies.clear();century.night=false;century.bossSpawned=false;century.roamers.clear();century.populateRoamers();reopened.refresh();});
+      screenshot("smoke-century.png");
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
@@ -667,7 +702,7 @@ public final class SmokeInstrumentation extends Instrumentation {
 
   private void checkDock(MainActivity a) {
     runOnMainSync(() -> {
-      View hire = control(a, "quickHire"), uniform = control(a, "quickUniform");
+      View hire = control(a, "itemSlot2"), uniform = control(a, "quickUniform");
       View left = control(a, "itemSlot0"), right = control(a, "itemSlot1");
       check(hire.getWidth() == uniform.getWidth() && hire.getHeight() == uniform.getHeight(), "Mercenary command sizes match");
       check(left.getWidth() == right.getWidth() && left.getHeight() == right.getHeight(), "Item slot sizes remain symmetric during boost");

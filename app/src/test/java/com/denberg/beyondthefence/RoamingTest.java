@@ -49,7 +49,7 @@ public class RoamingTest {
     assertEquals(1, copy.unlockedCrops());
     Game crowded = new Game(); crowded.day = 9999; crowded.tick(.1f);
     assertEquals(Game.MAX_ROAMERS, crowded.roamers.size());
-    assertTrue(crowded.reinforcementSeconds() >= .84f);
+    assertTrue(crowded.reinforcementSeconds() >= .6f);
   }
 
   @Test public void roamingCornersAreContinuousAndInWorldBounds() {
