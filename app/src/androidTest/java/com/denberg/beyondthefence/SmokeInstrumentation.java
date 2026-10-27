@@ -51,6 +51,26 @@ public final class SmokeInstrumentation extends Instrumentation {
     }
   }
 
+  /** Animated worlds need a completed draw, while paused screens must actually become idle. */
+  private void settle(MainActivity a) {
+    if (!onUi(() -> !a.paused)) { awaitIdle(); return; }
+    long[] before = new long[1];
+    runOnMainSync(() -> before[0] = ((GameBoard) control(a, "field")).artwork.renderedFrames);
+    awaitUi(() -> ((GameBoard) control(a, "field")).artwork.renderedFrames > before[0],
+        "Running game renders another frame within10 seconds");
+  }
+
+  private void awaitAndroidFrame() {
+    CountDownLatch frame = new CountDownLatch(1);
+    new Handler(Looper.getMainLooper()).post(() ->
+        android.view.Choreographer.getInstance().postFrameCallback(time -> frame.countDown()));
+    try {
+      check(frame.await(10, TimeUnit.SECONDS), "Android delivers a frame within10 seconds");
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt(); throw new AssertionError("Frame wait interrupted", e);
+    }
+  }
+
   private void click(MainActivity a, String tag) {
     runOnMainSync(
         () -> {
@@ -78,6 +98,7 @@ public final class SmokeInstrumentation extends Instrumentation {
   private void awaitUi(BooleanSupplier condition, String message) {
     long deadline = SystemClock.uptimeMillis() + 10000;
     while (SystemClock.uptimeMillis() < deadline) {
+      dismissSystemHint();
       if (onUi(condition)) {
         check(true, message);
         return;
@@ -121,12 +142,13 @@ public final class SmokeInstrumentation extends Instrumentation {
   /** Real pointer injection checks the rendered tile hit areas, not just a listener call. */
   private void touch(MainActivity a, String tag) {
     dismissSystemHint();
+    awaitUi(a::hasWindowFocus, "Touched game control has window focus");
     runOnMainSync(() -> {
       View v = control(a, tag);
       if (v == null || !v.isEnabled() || !v.isShown()) throw new AssertionError("Unavailable " + tag);
       v.requestRectangleOnScreen(new Rect(0, 0, v.getWidth(), v.getHeight()), true);
     });
-    awaitIdle();
+    settle(a);
     SystemClock.sleep(100);
     int[] xy = new int[2];
     runOnMainSync(() -> {
@@ -145,7 +167,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     check(getUiAutomation().injectInputEvent(down, true), "Pointer down delivered");
     check(getUiAutomation().injectInputEvent(up, true), "Pointer up delivered");
     down.recycle(); up.recycle();
-    awaitIdle();
+    settle(a);
   }
 
   private void checkBoard(MainActivity a) {
@@ -172,7 +194,7 @@ public final class SmokeInstrumentation extends Instrumentation {
   }
 
   private void screenshot(String filename) throws IOException {
-    awaitIdle();
+    awaitAndroidFrame();
     SystemClock.sleep(250); // Include a completed draw after the native layout traversal.
     Bitmap bitmap = getUiAutomation().takeScreenshot();
     check(bitmap != null, "Screenshot available");
@@ -215,7 +237,7 @@ public final class SmokeInstrumentation extends Instrumentation {
         if (!welcomed) SystemClock.sleep(100);
       }
       check(welcomed, "Welcome visible and actionable within 10 seconds");
-      awaitIdle();
+      settle(a);
       runOnMainSync(() -> a.paused = true);
       awaitUi(a::hasWindowFocus, "Game window ready");
       checkBoard(a);
