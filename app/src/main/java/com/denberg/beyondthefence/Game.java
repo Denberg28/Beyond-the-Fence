@@ -287,7 +287,7 @@ public final class Game {
       if (it.next().hp <= 0) {
         it.remove();
         kills++;
-        money(2);
+        money(1); // Small salvage reward; harvest remains the primary income.
       }
   }
 

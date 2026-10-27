@@ -1,3 +1,13 @@
+# 0.11 verification — First light and clear controls
+
+Baseline:0.10.0-rc.1/2cdb19a3301a8f976a3f1ce8c530b569d4dfb48a passed72 JVM cases and1182 native checks on each API26/35. Local JDK17/JUnit4.13.2:75 tests PASS, including3 new RewardTest cases. Initial test fixtures used an invalid night roamer/spawn-clock combination; fixtures were corrected to valid gameplay state, retaining strict save validation.
+
+Required before candidate publication: all Android builds/lint/unit reports, package/version/signature/zero-permission/size/six-WAV audits, exact-APK native suites on API26/35 and screenshot self-review. Native additions compare mirrored button/slot sizes, aligned actions, backdrop pixels, transparent containers and repeated building-tab switches from scrolled content; retain pointer transactions, font/rotation/pause/save/sound checks.17 game scenes/API, including new tabs screenshot. New First Light32s sunny track must differ; creepy/four effects must stay byte-identical to baseline. Package remains<=5MiB.
+
+PASS/FAIL evidence must come from final CI source/artifacts; publication is gated on all automated candidate checks. Stable remains BLOCKED pending physical phone listening/mixing/routing,30-minute endurance/20 interruptions, TalkBack200% font, measured performance and production signing continuity. HIL N/A: this game controls no physical hardware. Schema7 is unchanged and0.10-compatible; export/retain the previous APK before installing a separately test-signed preview.
+
+## Historical evidence
+
 # 0.10 verification plan
 
 Baseline0.9/29eeea5 passed63 JVM cases and923 native checks per API26/35. Local JDK17/JUnit suite now72 cases PASS before Android packaging. Final-source builds/lint/package and both exact-APK native suites remain blocking. Self-review is not independent review.

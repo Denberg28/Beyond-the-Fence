@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0-rc.1 — First light and clear controls
+
+- Transparent bottom command/action padding reveals original terrain, changing with day/night. Mirror-sized mercenary commands and item slots, aligned bottom actions and consistent gaps replace uneven button heights.
+- One Fence / Mill / Shop / Barracks tab strip maps directly to building pages. Switches clear stale action/price content, reset scroll to top and keep title/selection synchronized. Map shortcuts and rotation use the same page state.
+- Zombie salvage is1 coin per kill (previously2), once per removed enemy, without variant multipliers. Existing harvest/dawn income and prices remain.
+- New original32s “First Light” morning arrangement: felt keys, mallet arpeggios, warm bass and breathy lead. Night track/effects and audio lifecycle unchanged.
+- Schema7 unchanged;0.10 saves/imports remain compatible. Added actual kill/reload/cap tests and native tab/scroll/symmetry/backdrop checks.
+
 ## 0.10.0-rc.1 — Settlements, heroes and supplies
 
 - Unaffordable upgrade taps briefly show required coins/timber inside the same button; no panel, pause or charge.

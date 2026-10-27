@@ -1,3 +1,13 @@
+# 0.11 current limitations
+
+- Android preview; physical phone listening/endurance/TalkBack/performance and production signing continuity remain unvalidated. Stable promotion is blocked.
+- Terrain under controls is static decorative ground; the interactive farm remains independently scrollable for large fonts/short windows.
+- First Light is an original32s repeating morning theme. Automated audio checks establish packaging/dispatch, not listening quality.
+-1 coin per kill is a deliberately small salvage reward. Seeded regression checks preserve mechanical survival, not broad player playtesting.
+- Schema7 unchanged;0.10 saves remain compatible. Preview certificates may differ, requiring save export/uninstall/install/import. Keep the prior APK and export.
+
+## Historical limitations
+
 # 0.10 current limitations
 
 - Test preview: real-device endurance, TalkBack, audio listening/mixing/routing, measured performance and production signing remain unvalidated; stable promotion blocked.

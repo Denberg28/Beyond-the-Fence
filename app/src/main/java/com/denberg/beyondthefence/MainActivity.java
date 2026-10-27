@@ -35,7 +35,7 @@ public final class MainActivity extends Activity {
   private GameButton costButton;
   private String costText;
   private long costToken;
-  private GameButton play, phase, harvest, plantAll, repair, build, seedsToggle, hireButton, repairOverlay, materialsButton, patrolButton;
+  private GameButton play, phase, harvest, repair, build, seedsToggle, hireButton, repairOverlay, materialsButton, patrolButton;
   private final GameButton[] cropButtons = new GameButton[3],
       plotButtons = new GameButton[9], upgradeButtons = new GameButton[4],
       wallButtons = new GameButton[4], buildingButtons = new GameButton[3],
@@ -46,6 +46,9 @@ public final class MainActivity extends Activity {
   private LinearLayout boardContent, gameShell;
   private GameBoard board;
   private FarmView scene;
+  private TerrainBackdrop terrain;
+  private ScrollView buildScroll;
+  private int panelRevision;
   private SaveStore store;
   private FarmApp session;
   private final Handler handler = new Handler(Looper.getMainLooper());
@@ -214,13 +217,15 @@ public final class MainActivity extends Activity {
       window.setPadding(l, t, r, b);
       return insets;
     });
+    terrain = new TerrainBackdrop(this);
+    window.addView(terrain, new FrameLayout.LayoutParams(-1, -1));
     gameShell = column();
     window.addView(gameShell, new FrameLayout.LayoutParams(-1, -1));
     ScrollView viewport = new ScrollView(this);
     viewport.setFillViewport(true);
     viewport.setVerticalScrollBarEnabled(false);
     boardContent = column();
-    boardContent.setPadding(dp(6), dp(4), dp(6), dp(4));
+    boardContent.setPadding(dp(8), dp(8), dp(8), 0);
     viewport.addView(boardContent);
     gameShell.addView(viewport, new LinearLayout.LayoutParams(-1, 0, 1));
 
@@ -232,10 +237,10 @@ public final class MainActivity extends Activity {
     resources.addView(stats);
     resources.addView(status);
     hud.addView(resources, new LinearLayout.LayoutParams(0, -2, 1));
-    repair = button("Squad", () -> showBuild(2));
+    repair = button("Squad", () -> showBuild(3));
     repair.setTag("squad");
     repair.setTextSize(11);
-    hud.addView(repair, new LinearLayout.LayoutParams(dp(64), -2));
+    hud.addView(repair, new LinearLayout.LayoutParams(dp(64), -1));
     play = button("Play", () -> {
       if (storageBlocked || ioBusy || buildOpen) return;
       if (game.defeated) { game.recover(); changed(); }
@@ -244,11 +249,12 @@ public final class MainActivity extends Activity {
       refresh();
     });
     play.setTag("play");
-    hud.addView(play, new LinearLayout.LayoutParams(dp(58), -2));
+    LinearLayout.LayoutParams playSize = new LinearLayout.LayoutParams(dp(58), -1);
+    playSize.setMargins(dp(4), 0, dp(4), 0); hud.addView(play, playSize);
     GameButton menu = button("☰", this::options);
     menu.setContentDescription("Pause and open options, help and save backups");
     menu.setTag("options");
-    hud.addView(menu, new LinearLayout.LayoutParams(dp(48), -2));
+    hud.addView(menu, new LinearLayout.LayoutParams(dp(48), -1));
     boardContent.addView(hud);
 
     seedTray = row();
@@ -278,7 +284,7 @@ public final class MainActivity extends Activity {
       final int plot = i;
       plotButtons[i] = button("", () -> {
         if (!canAct() || buildOpen) return;
-        if (plot >= game.plots()) { showBuild(3); return; }
+        if (plot >= game.plots()) { showBuild(2); return; }
         if (game.crop[plot] < 0) game.plant(plot, selectedCrop);
         else if (!game.harvest(plot)) game.notice = "Still growing · " + game.harvestSeconds(plot) + "s to harvest.";
         changed();
@@ -309,7 +315,7 @@ public final class MainActivity extends Activity {
 
     gameShell.addView(seedTray);
     createCommandDock();
-    LinearLayout dock = row();
+    LinearLayout dock = row(); dock.setTag("actions"); dock.setPadding(dp(4), 0, dp(4), 0);
     seedsToggle = button("Seeds", () -> {
       if (storageBlocked || ioBusy) return;
       seedTray.setVisibility(seedTray.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
@@ -317,8 +323,6 @@ public final class MainActivity extends Activity {
     seedsToggle.setTag("seeds");
     build = button("Build", () -> { selectedBuilding = -1; showBuild(); });
     build.setTag("build");
-    plantAll = button("Plant all", () -> { if (canAct()) { game.plantAll(selectedCrop); changed(); } });
-    plantAll.setTag("plantAll");
     harvest = button("Harvest", () -> { if (canAct() && !buildOpen) { game.harvestAll(); changed(); } });
     harvest.setTag("harvest");
     phase = button("Night", () -> {
@@ -329,27 +333,28 @@ public final class MainActivity extends Activity {
     });
     phase.setTag("night");
     for (GameButton action : new GameButton[] {seedsToggle, build, harvest, phase}) {
-      LinearLayout.LayoutParams item = new LinearLayout.LayoutParams(0, -2, 1);
-      item.setMargins(dp(2), 0, dp(2), 0);
+      LinearLayout.LayoutParams item = new LinearLayout.LayoutParams(0, -1, 1);
+      item.setMargins(dp(4), 0, dp(4), 0);
       dock.addView(action, item);
     }
     gameShell.addView(dock);
     saving = text(saveMessage, 10, 0xffc2d2be);
-    saving.setPadding(dp(6), dp(2), 0, 0);
+    saving.setPadding(dp(8), dp(4), dp(8), dp(4));
+    for (TextView label : new TextView[] {stats, status, saving}) label.setShadowLayer(dp(2), 0, dp(1), INK);
     gameShell.addView(saving);
     createBuildOverlay();
   }
 
   private void createCommandDock() {
-    LinearLayout controls = row(); controls.setPadding(dp(6), dp(12), dp(6), dp(16));
+    LinearLayout controls = row(); controls.setPadding(dp(8), dp(12), dp(8), dp(12));
     controls.setTag("commands");
     quickHire = button("", () -> { if (canAct() && !buildOpen) {
       if (!game.hire()) showPrice(quickHire, game.hireCost(), 6); else clearHint(); changed();
     } });
     quickHire.setTag("quickHire"); quickHire.setTextSize(11);
     LinearLayout leftSlots = column(); leftSlots.setGravity(Gravity.CENTER);
-    leftSlots.addView(quickHire, new LinearLayout.LayoutParams(-1, -2));
-    addItemSlot(leftSlots, 0); controls.addView(leftSlots, new LinearLayout.LayoutParams(0, -2, 1));
+    leftSlots.addView(quickHire, new LinearLayout.LayoutParams(-1, commandButtonHeight()));
+    addItemSlot(leftSlots, 0); controls.addView(leftSlots, new LinearLayout.LayoutParams(0, -1, 1));
     FrameLayout cross = new FrameLayout(this); cross.setTag("fenceCross");
     LinearLayout.LayoutParams crossParams = new LinearLayout.LayoutParams(dp(144), dp(144));
     crossParams.setMargins(dp(8), 0, dp(8), 0); controls.addView(cross, crossParams);
@@ -378,9 +383,13 @@ public final class MainActivity extends Activity {
     } });
     quickUniform.setTag("quickUniform"); quickUniform.setTextSize(11);
     LinearLayout rightSlots = column(); rightSlots.setGravity(Gravity.CENTER);
-    rightSlots.addView(quickUniform, new LinearLayout.LayoutParams(-1, -2));
-    addItemSlot(rightSlots, 1); controls.addView(rightSlots, new LinearLayout.LayoutParams(0, -2, 1));
+    rightSlots.addView(quickUniform, new LinearLayout.LayoutParams(-1, commandButtonHeight()));
+    addItemSlot(rightSlots, 1); controls.addView(rightSlots, new LinearLayout.LayoutParams(0, -1, 1));
     gameShell.addView(controls);
+  }
+
+  private int commandButtonHeight() {
+    return dp(Math.max(48, (int)Math.ceil(28 * getResources().getConfiguration().fontScale + 8)));
   }
 
   private void addItemSlot(LinearLayout side, int type) {
@@ -390,7 +399,7 @@ public final class MainActivity extends Activity {
     itemSlots[type] = slot; slot.setTag("itemSlot" + type); slot.setTextSize(11);
     slot.setCompoundDrawablesRelativeWithIntrinsicBounds(new ItemIcon(type, dp(30)), null, null, null);
     slot.setCompoundDrawablePadding(dp(4));
-    LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(-1, -2); size.topMargin = dp(6); side.addView(slot, size);
+    LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(-1, commandButtonHeight()); size.topMargin = dp(8); side.addView(slot, size);
   }
 
   private void clearHint() { costButton = null; costToken++; }
@@ -433,18 +442,21 @@ public final class MainActivity extends Activity {
     buildResources.setPadding(dp(4), 0, 0, dp(6));
     card.addView(buildResources);
     LinearLayout navigation = row();
-    String[] labels = {"Fence", "Farm", "Squad", "Gear"};
+    String[] labels = {"Fence", "Mill", "Shop", "Barracks"};
     for (int i = 0; i < 4; i++) {
       final int page = i;
-      buildTabs[i] = button(labels[i], () -> { selectedBuilding = -1; buildTab = page; rebuildBuildItems(); refresh(); });
+      buildTabs[i] = button(labels[i], () -> selectBuildPage(page));
       buildTabs[i].setTag("buildTab" + i);
-      navigation.addView(buildTabs[i], new LinearLayout.LayoutParams(0, -2, 1));
+      buildTabs[i].setTextSize(11); buildTabs[i].setPadding(dp(2), dp(4), dp(2), dp(4));
+      LinearLayout.LayoutParams tab = new LinearLayout.LayoutParams(0, -1, 1);
+      tab.setMargins(dp(2), 0, dp(2), 0); navigation.addView(buildTabs[i], tab);
     }
     card.addView(navigation);
-    ScrollView scroll = new ScrollView(this);
-    buildItems = column();
-    scroll.addView(buildItems);
-    card.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+    buildScroll = new ScrollView(this); buildScroll.setTag("panelScroll");
+    buildScroll.setSmoothScrollingEnabled(false);
+    buildItems = column(); buildItems.setTag("panelItems");
+    buildScroll.addView(buildItems);
+    card.addView(buildScroll, new LinearLayout.LayoutParams(-1, 0, 1));
     rebuildBuildItems();
     int cardWidth = Math.min(dp(480), getResources().getDisplayMetrics().widthPixels - dp(40));
     FrameLayout.LayoutParams centered = new FrameLayout.LayoutParams(cardWidth, -1, Gravity.CENTER);
@@ -459,7 +471,9 @@ public final class MainActivity extends Activity {
   }
 
   private void rebuildBuildItems() {
+    final int revision = ++panelRevision;
     buildItems.removeAllViews();
+    selectedBuilding = buildTab - 1;
     java.util.Arrays.fill(upgradeButtons, null);
     java.util.Arrays.fill(wallPurchase, null);
     java.util.Arrays.fill(construction, null);
@@ -467,7 +481,7 @@ public final class MainActivity extends Activity {
     java.util.Arrays.fill(rallyButtons, null);
     shopHarvest = null; shopPlant = null; heroBuy = null; costButton = null;
     java.util.Arrays.fill(itemBuy, null); java.util.Arrays.fill(advanced, null);
-    label(buildTitle, selectedBuilding < 0 ? "FORTRESS" : new String[] {"MILL", "SHOP", "BARRACKS"}[selectedBuilding]);
+    label(buildTitle, selectedBuilding < 0 ? "FENCE" : new String[] {"MILL", "SHOP", "BARRACKS"}[selectedBuilding]);
     if (selectedBuilding >= 0) {
       addConstruction(selectedBuilding);
       if (selectedBuilding == 0) { addTimber(); addAdvanced(0); addUpgrade(1); }
@@ -499,13 +513,20 @@ public final class MainActivity extends Activity {
           else if (!game.upgradeBorder(side)) showPrice(wallPurchase[side], game.borderCoinCost(side), game.borderWoodCost(side)); changed(); } });
         wallPurchase[i].setTag("constructWall" + i); addBuildAction(wallPurchase[i]);
       }
-    } else if (buildTab == 1) {
-      for (int i = 0; i < 3; i++) addConstruction(i);
-    } else if (buildTab == 2) addSquad();
-    else {
-      for (int i = 0; i < 4; i++) addUpgrade(i);
-      plantAll.setTag("plantAll"); addBuildAction(plantAll);
     }
+    // Cancel stale scroll/focus from the detached page, then settle the new page at its start.
+    buildScroll.scrollTo(0, 0);
+    buildScroll.post(() -> {
+      if (revision == panelRevision) { buildScroll.scrollTo(0, 0); buildScroll.clearFocus(); }
+    });
+  }
+
+  private void selectBuildPage(int page) {
+    if (buildTab == page) return;
+    buildTab = page;
+    clearHint();
+    rebuildBuildItems();
+    refresh();
   }
 
   private void addConstruction(int kind) {
@@ -548,10 +569,10 @@ public final class MainActivity extends Activity {
   }
 
   private void showBuilding(int kind) {
-    selectedBuilding = kind; buildTab = kind == 2 ? 2 : 1; showBuild();
+    buildTab = kind + 1; showBuild();
   }
 
-  private void showBuild(int page) { selectedBuilding = -1; buildTab = page; showBuild(); }
+  private void showBuild(int page) { buildTab = page; showBuild(); }
 
   private void showBuild() {
     if (ioBusy) return;
@@ -623,9 +644,6 @@ public final class MainActivity extends Activity {
     label(seedsToggle, "Seeds\n" + Game.CROPS[selectedCrop]);
     label(notice, game.notice);
     label(saving, saveMessage + (paused ? " · Paused" : ""));
-    int count = game.plantablePlots(selectedCrop);
-    label(plantAll, "Plant all · " + count + " plots · " + count * Game.SEED[selectedCrop] + " coins");
-    plantAll.setEnabled(available && count > 0);
     label(harvest, "Harvest\n" + game.readyPlots() + " ready");
     harvest.setEnabled(available && game.readyPlots() > 0);
     harvest.colors(game.readyPlots() > 0 ? GOLD : 0xffe9e5d3, 0xffd2cba9, INK);
@@ -678,7 +696,8 @@ public final class MainActivity extends Activity {
         wallPurchase[i].setEnabled(available && (damaged || !game.borderMaxed(i)));
         wallPurchase[i].colors(selectedWall == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
       }
-      buildTabs[i].colors(selectedBuilding < 0 && buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
+      buildTabs[i].setSelected(buildTab == i);
+      buildTabs[i].colors(buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
     }
     for (int i = 0; i < 9; i++) {
       boolean unlocked = i < game.plots(); int crop = game.crop[i]; boolean ripe = crop >= 0 && game.growth[i] >= 1;
@@ -740,7 +759,7 @@ public final class MainActivity extends Activity {
       repairOverlay.setEnabled(available && game.health < game.maxHealth() && game.coins >= 8);
     }
     if (hireButton != null) {
-      label(hireButton, !game.buildings[2] ? "Build Barracks first in Farm" : game.mercenaries.size() >= Game.MAX_MERCS ? "Squad full · 3 survivors" : "Hire mercenary · " + game.hireCost() + " coins · 6 timber");
+      label(hireButton, !game.buildings[2] ? "Build Barracks first" : game.mercenaries.size() >= Game.MAX_MERCS ? "Squad full · 3 survivors" : "Hire mercenary · " + game.hireCost() + " coins · 6 timber");
       hireButton.setEnabled(available && game.buildings[2] && game.mercenaries.size() < Game.MAX_MERCS);
       label(roster, "Mercenaries " + game.mercenaries.size() + "/3 · " + Game.UNIFORMS[game.weapon]
           + "\n" + game.guardDamage() + " damage per shot · " + (game.lane < 0 ? "Patrolling" : "Rally: " + Game.SIDES[game.lane])
@@ -759,6 +778,7 @@ public final class MainActivity extends Activity {
       label(costButton, costText);
       if (costButton == fenceUpgrade) costButton.setTextSize(getResources().getConfiguration().fontScale >= 1.5f ? 7 : 10);
     }
+    terrain.phase(game.night);
     board.refreshSettlement();
     updateAudio(0);
     scene.invalidate();
@@ -971,6 +991,7 @@ public final class MainActivity extends Activity {
     LinearLayout l = new LinearLayout(this);
     l.setOrientation(LinearLayout.HORIZONTAL);
     l.setGravity(Gravity.CENTER_VERTICAL);
+    l.setBaselineAligned(false);
     return l;
   }
 

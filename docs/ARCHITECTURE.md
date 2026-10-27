@@ -1,3 +1,13 @@
+# 0.11 presentation and economy decisions
+
+`TerrainBackdrop` is a static original Canvas view beneath the transparent game shell; it only invalidates on phase change. The existing board renderer and48dp geometry remain unchanged. No new animation loop or third-party dependency. Command sides have equal measured heights/widths and font-aware slots; horizontal action rows use uniform parent heights with baseline alignment disabled.
+
+`buildTab`0..3 is the single presentation source for Fence/Mill/Shop/Barracks; building index is derived as tab−1 during content reconstruction. Buttons/map shortcuts use this same route. Rebuild removes detached action references, clears price feedback, updates title/selection and resets the ScrollView after layout with a revision guard so a queued older transition cannot move the new page. Purchases refresh current content without rebuilding/resetting user scroll. Rotation retains tab state; panels stay paused.
+
+The sole enemy-removal transaction credits1 coin and increments kills once, using the existing capped money method. No new save fields or reward timers. Existing deterministic kill/save cases guard replay/caps. New original morning score is generated offline at build time; no runtime synthesis/downloads.
+
+## Historical design
+
 # 0.10 state and settlement architecture
 
 Settlement maps day to one of3 deterministic five-day chapters. It owns ring coordinates: rectangle Farm, trapezoidal Village and8-edge chamfered Castle. Game instance guard/foe/ring coordinate methods use it for combat, while FarmView uses the exact same points to draw fences, actors and courtyard. Static old square helpers remain compatibility/test utilities only. GameBoard requests layout when chapter changes; BoardGeometry permutes tile positions without shrinking48dp hit areas. Unit checks cover shape continuity, containment, geometry and resource preservation. No transition consumes the simulation RNG.

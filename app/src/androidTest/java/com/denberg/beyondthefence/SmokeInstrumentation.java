@@ -321,7 +321,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> a.game.crop[0] == 0 && a.game.coins == 76), "Pointer plants inside fortress");
       touch(a, "plot0");
       check(onUi(() -> a.game.coins == 76 && a.game.crop[0] == 0), "Growing tile cannot be harvested early");
-      touch(a, "build"); touch(a, "buildTab3"); touch(a, "plantAll"); touch(a, "closeBuild");
+      touch(a, "build"); touch(a, "buildTab2"); touch(a, "shopPlant"); touch(a, "closeBuild");
       check(onUi(() -> a.game.coins == 56 && a.game.crop[5] == 0 && a.game.crop[6] == -1), "Bulk planting keeps locked plots intact");
       runOnMainSync(() -> { for (int p = 0; p < 6; p++) a.game.growth[p] = 1; a.refresh(); });
       touch(a, "plot0");
@@ -404,7 +404,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(landscape, "closeBuild");
       check(control(landscape, "seed1").isSelected(), "Selected seed survives rotation");
       check(onUi(() -> landscape.game.buildings[0] && landscape.game.buildings[2] && landscape.game.mercenaries.size() == 2), "Buildings and squad survive rotation");
-      checkBoard(landscape);
+      checkBoard(landscape); checkDock(landscape);
       runOnMainSync(() -> {
         GameBoard field = (GameBoard) control(landscape, "field");
         Bitmap target = Bitmap.createBitmap(field.getWidth(), field.getHeight(), Bitmap.Config.ARGB_8888);
@@ -423,7 +423,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       });
       screenshot("smoke-landscape.png");
       MainActivity portrait = rotate(landscape, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-      checkBoard(portrait);
+      checkBoard(portrait); checkDock(portrait);
       ActivityMonitor fontMonitor = addMonitor(MainActivity.class.getName(), null, false);
       shell("settings put system font_scale 2.0");
       MainActivity large = (MainActivity) fontMonitor.waitForActivityWithTimeout(10000);
@@ -431,7 +431,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(large != null, "Font change recreates board");
       awaitIdle();
       check(large.getResources().getConfiguration().fontScale >= 1.9f, "200 percent system font active");
-      checkBoard(large);
+      checkBoard(large); checkDock(large);
       runOnMainSync(() -> {
         for (int i = 0; i < 4; i++) {
           android.widget.TextView marker = (android.widget.TextView) control(large, "wall" + i);
@@ -626,6 +626,23 @@ public final class SmokeInstrumentation extends Instrumentation {
             "Five-day layout transition preserves crops and purchases");
         screenshot(day == 6 ? "smoke-village.png" : "smoke-castle.png");
       }
+      // Reproduce the old stale-scroll/mismatched-building tab transition on the real panel.
+      touch(reopened, "building2");
+      for (int page : new int[] {1, 2, 3, 0, 3, 2, 1}) {
+        runOnMainSync(() -> ((android.widget.ScrollView) control(reopened, "panelScroll")).fullScroll(View.FOCUS_DOWN));
+        awaitIdle(); touch(reopened, "buildTab" + page);
+        check(onUi(() -> ((android.widget.ScrollView) control(reopened, "panelScroll")).getScrollY() == 0),
+            "Changed tab starts at top instead of inheriting old scroll");
+        String title = new String[] {"FENCE", "MILL", "SHOP", "BARRACKS"}[page];
+        check(onUi(() -> ((android.widget.TextView)control(reopened, "panelTitle")).getText().toString().equals(title)
+            && control(reopened, "buildTab" + page).isSelected()), "Title and selected tab match actual page");
+        check(onUi(() -> page == 0 ? control(reopened, "constructWall0") != null && control(reopened, "buyHero") == null
+            : control(reopened, "construct" + (page - 1)) != null
+                && (page != 1 || control(reopened, "buyItem0") == null)
+                && (page != 2 || control(reopened, "hire") == null)
+                && (page != 3 || control(reopened, "buyTimber") == null)), "New tab contains only its building actions");
+      }
+      screenshot("smoke-tabs.png"); touch(reopened, "closeBuild"); checkDock(reopened);
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
@@ -641,6 +658,29 @@ public final class SmokeInstrumentation extends Instrumentation {
       result.putString("stream", "\nFAILURES!!!\n" + android.util.Log.getStackTraceString(e));
       finish(Activity.RESULT_CANCELED, result);
     }
+  }
+
+  private void checkDock(MainActivity a) {
+    runOnMainSync(() -> {
+      View hire = control(a, "quickHire"), uniform = control(a, "quickUniform");
+      View left = control(a, "itemSlot0"), right = control(a, "itemSlot1");
+      check(hire.getWidth() == uniform.getWidth() && hire.getHeight() == uniform.getHeight(), "Mercenary command sizes match");
+      check(left.getWidth() == right.getWidth() && left.getHeight() == right.getHeight(), "Item slot sizes remain symmetric during boost");
+      int[] l = new int[2], r = new int[2]; left.getLocationOnScreen(l); right.getLocationOnScreen(r);
+      check(l[1] == r[1], "Item slots share one baseline");
+      int height = control(a, "seeds").getHeight();
+      for (String tag : new String[] {"build", "harvest", "night"})
+        check(control(a, tag).getHeight() == height, "Bottom action heights match at every font/orientation");
+      View terrain = control(a, "terrain");
+      Bitmap image = Bitmap.createBitmap(terrain.getWidth(), terrain.getHeight(), Bitmap.Config.ARGB_8888);
+      try {
+        terrain.draw(new Canvas(image));
+        check(image.getPixel(0, terrain.getHeight()-1) == (a.game.night ? 0xff213e32 : 0xff4b793a),
+            "Scenery extends beneath transparent bottom padding");
+      } finally { image.recycle(); }
+      check(control(a, "commands").getBackground() == null && control(a, "actions").getBackground() == null,
+          "Command/action containers have no opaque padding background");
+    });
   }
 
   private void checkFenceHealthPixels(MainActivity a) {
@@ -679,7 +719,7 @@ public final class SmokeInstrumentation extends Instrumentation {
   }
 
   private void farmCycle(MainActivity a) {
-    touch(a, "build"); touch(a, "buildTab3"); touch(a, "plantAll"); touch(a, "closeBuild");
+    touch(a, "build"); touch(a, "buildTab2"); touch(a, "shopPlant"); touch(a, "closeBuild");
     runOnMainSync(() -> { for (int i = 0; i < a.game.plots(); i++) if (a.game.crop[i] >= 0) a.game.growth[i] = 1; a.refresh(); });
     touch(a, "harvest");
   }

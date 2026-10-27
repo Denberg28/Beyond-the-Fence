@@ -1,3 +1,17 @@
+# 0.11 acceptance — First light and clear controls
+
+Baseline0.10.0-rc.1/2cdb19a3301a8f976a3f1ce8c530b569d4dfb48a:72 JVM cases,1182 native checks per API26/35. Scope follows the latest phone screenshot: terrain under transparent bottom padding, symmetric controls, minimal zombie income, consistent building tab transitions and new morning music.
+
+| Criterion | Evidence / expected result |
+| --- | --- |
+| U1 Terrain/dock |Bottom containers have transparent backgrounds; original terrain extends under padding and changes at night. Mirrored command/slot dimensions and equal action heights at normal/200% fonts and landscape; native bounds/pixels/screenshots |
+| U2 Page transitions |Stable Fence/Mill/Shop/Barracks tabs match map shortcuts/title/selection. Reset new page scroll to0 and remove old actions/price hint. Repeated switching from scrolled bottom; native pointer/rotation tests |
+| U3 Small reward |All four zombie variants credit1 coin once; live enemies credit0, replay/reload cannot duplicate;10-million coin cap retained; actual guard kill tests. Max10c Day1/45c later per successful quota, versus12c base turnip sale and existing dawn reward |
+| U4 Morning |Original32s First Light replaces sunny asset; night/four effects unchanged. Exact format/duration, deterministic generation, non-silent/unclipped and quiet boundaries; package audit/audio native regression |
+| U5 Regression |Schema7 unchanged, all75 JVM plus full Android build/lint/package/API26/35 installed-app suite. Handset listening/endurance/accessibility/performance/signing remain blocked for stable |
+
+## Historical acceptance records
+
 # 0.10 acceptance — Settlements, heroes and supplies
 
 Baseline0.9/29eeea5:63 JVM cases,923 installed-app checks on API26/35. User scope: inline coin requirements, five-day changing maps/fences, expanded upgrades, cinematic scores, spaced transparent controls, consumables with side slots and hero recruitment in building popups.
