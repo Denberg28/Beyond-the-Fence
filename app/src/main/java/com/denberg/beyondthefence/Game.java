@@ -10,9 +10,9 @@ public final class Game {
   public static final float[] GROW = {16, 29, 43};
   public static final String[] WEATHER = {"Clear", "Rain", "Fog", "Heat"};
   public static final String[] FOES = {"Walker", "Runner", "Brute", "Spitter"};
-  public static final String[] WEAPONS = {
-    "Ranch rifle", "Tuned rifle", "Repeater", "Marksman", "Longshot", "Sentinel"
-  };
+  public static final String[] TRAINING = {"Recruit", "Drilled", "Veteran", "Elite", "Ranger", "Sentinel"};
+  public static final String[] FENCE_MATERIALS = {"Gap", "Wood", "Stone", "Steel"};
+  public static final float GUARD_RANGE = .85f;
   public static final float DAY_SECONDS = 75;
   public static final String[] SIDES = {"North", "East", "South", "West"};
   public static final String[] BUILDINGS = {"Timber mill", "Market", "Barracks"};
@@ -33,7 +33,8 @@ public final class Game {
   public final float[] growth = new float[9];
   public final ArrayList<Enemy> enemies = new ArrayList<>();
   public int day = 1, coins = 80, xp, weather, weapon, fence, irrigation, land;
-  public int kills, harvested, spawned, lane = 1;
+  public int kills, harvested, spawned, lane = -1;
+  // weapon is the retained save-field name for mercenary training; the two legacy clocks never fire.
   public float health = 100, elapsed, shotClock, spawnClock, focusClock;
   public boolean night, defeated, relaxed, reducedMotion, tutorialDone;
   public int randomState = 72419;
@@ -43,6 +44,7 @@ public final class Game {
   public Game() {
     java.util.Arrays.fill(crop, -1);
     populateRoamers();
+    ensureVolunteer();
   }
 
   public float preparationSeconds() { return Math.max(30, DAY_SECONDS - 5 * Math.min(9, level() - 1)); }
@@ -204,7 +206,7 @@ public final class Game {
     else land = 1;
     notice =
         new String[] {
-              "Weapon upgraded. More damage, faster shots.",
+              "Mercenary training upgraded. All guards deal more damage and fire faster.",
               "Fence reinforced. +50 strength.",
               "Irrigation upgraded. Crops grow 20% faster.",
               "Three more farm plots unlocked."
@@ -247,25 +249,24 @@ public final class Game {
     notice = "Raid " + day + " · Level " + level() + " · roaming zombies are attacking the fence!";
   }
 
-  public boolean focus(int targetLane) {
-    if (targetLane < 0 || targetLane > 3 || defeated) return false;
-    lane = targetLane;
-    if (!night || focusClock > 0) return false;
-    Enemy e = target(true);
-    if (e == null) return false;
-    e.hp -= 18 + weapon * 5;
-    focusClock = 3;
-    notice = "Focus shot · " + SIDES[lane] + " border";
-    removeDead();
+  public boolean rally(int side) {
+    if (side < 0 || side > 3 || defeated) return false;
+    lane = side;
+    notice = "Mercenaries rallying to the " + SIDES[side] + " fence.";
     return true;
   }
 
-  private Enemy target(boolean onlyLane) {
-    Enemy chosen = null;
-    for (Enemy e : enemies)
-      if ((!onlyLane || e.lane == lane) && (chosen == null || e.x < chosen.x)) chosen = e;
-    return chosen;
+  public void resumePatrol() {
+    lane = -1; notice = "Mercenaries resume their perimeter patrol.";
   }
+
+  void ensureVolunteer() {
+    if (mercenaries.isEmpty()) mercenaries.add(new Mercenary(.5f, 0, .5f, .5f));
+  }
+
+  public int guardDamage() { return 16 + weapon * 4; }
+  public float guardInterval() { return Math.max(.5f, .85f - weapon * .06f); }
+  public float fenceHeartRatio(int side) { return walls[side] == 0 ? 0 : Math.max(0, Math.min(1, wallHealth[side] / maxWallHealth(side))); }
 
   private void removeDead() {
     Iterator<Enemy> it = enemies.iterator();
@@ -297,7 +298,6 @@ public final class Game {
       if (elapsed >= preparationSeconds()) startNight();
       return;
     }
-    focusClock = Math.max(0, focusClock - dt);
     spawnClock = Math.max(-.1f, spawnClock - dt);
     if (spawned < quota() && spawnClock <= 0) {
       int kind = random(Math.min(4, day));
@@ -305,14 +305,6 @@ public final class Game {
       enemies.add(new Enemy(kind, random(4), 1, hp, hp, .12f + random(760) / 1000f));
       spawned++;
       spawnClock = reinforcementSeconds();
-    }
-    shotClock = Math.max(-.1f, shotClock - dt);
-    if (shotClock <= 0 && !enemies.isEmpty()) {
-      Enemy e = target(true);
-      if (e == null) e = target(false);
-      e.hp -= 12 + weapon * 7;
-      shotClock = Math.max(.22f, .7f - weapon * .075f);
-      removeDead();
     }
     for (Enemy e : enemies) {
       if (!e.breached) {
@@ -388,6 +380,7 @@ public final class Game {
     populateRoamers();
     for (int side = 0; side < 4; side++) wallHealth[side] = maxWallHealth(side);
     int aid = Math.max(0, 12 - coins); money(aid);
+    ensureVolunteer();
     notice = "Homestead recovered. Replant ruined crops and rebuild lost buildings. "
         + (aid > 0 ? "+" + aid + " seed coins." : "Lost " + lost + " coins.");
   }
@@ -470,7 +463,7 @@ public final class Game {
     money(-coinsNeeded); timber(-woodNeeded); walls[side]++;
     wallHealth[side] = maxWallHealth(side);
     health = Math.min(maxHealth(), health + 20);
-    notice = SIDES[side] + " fence tier " + walls[side] + " · " + Math.round(wallHealth[side]) + " health. Protect your crops.";
+    notice = SIDES[side] + " " + FENCE_MATERIALS[walls[side]] + " fence tier " + walls[side] + " · " + Math.round(wallHealth[side]) + " health. Protect your crops.";
     return true;
   }
 
@@ -550,20 +543,30 @@ public final class Game {
   }
 
   private void patrol(float dt) {
-    for (Mercenary merc : mercenaries) {
-      merc.progress = (merc.progress + dt * .14f) % 4;
+    for (int index = 0; index < mercenaries.size(); index++) {
+      Mercenary merc = mercenaries.get(index);
+      if (lane < 0) merc.progress = (merc.progress + dt * .14f) % 4;
+      else {
+        float destination = lane + (mercenaries.size() == 1 ? .5f : .15f + .7f * index / (mercenaries.size() - 1));
+        float delta = destination - merc.progress;
+        if (delta > 2) delta -= 4;
+        if (delta < -2) delta += 4;
+        merc.progress = (merc.progress + Math.max(-dt * .35f, Math.min(dt * .35f, delta)) + 4) % 4;
+      }
       merc.shotClock = Math.max(0, merc.shotClock - dt);
       if (!night || merc.shotClock > 0) continue;
-      float mx = patrolX(merc.progress), my = patrolY(merc.progress), nearest = .28f * .28f;
+      float mx = patrolX(merc.progress), my = patrolY(merc.progress), best = Float.MAX_VALUE;
       Enemy chosen = null;
       for (Enemy e : enemies) {
         if (e.hp <= 0) continue;
         float dx = enemyX(e) - mx, dy = enemyY(e) - my, distance = dx * dx + dy * dy;
-        if (distance < nearest) { chosen = e; nearest = distance; }
+        if (distance > GUARD_RANGE * GUARD_RANGE) continue;
+        float score = distance + e.x * .05f - (e.breached ? 2 : 0) - (lane >= 0 && e.lane == lane ? .5f : 0);
+        if (score < best) { chosen = e; best = score; }
       }
       if (chosen != null) {
         merc.targetX = enemyX(chosen); merc.targetY = enemyY(chosen);
-        chosen.hp -= 9 + weapon * 2; merc.shotClock = .9f;
+        chosen.hp -= guardDamage(); merc.shotClock = guardInterval();
       }
     }
     removeDead();

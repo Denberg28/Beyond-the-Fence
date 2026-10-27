@@ -34,16 +34,16 @@ public class FortressTest {
   @Test public void recruitingRequiresBarracksBudgetAndHasBoundedSquad() {
     Game g = new Game(); assertFalse(g.hire());
     g.coins = 10000; g.wood = 1000; assertTrue(g.construct(2));
-    int coins = g.coins; assertTrue(g.hire()); assertEquals(coins - 55, g.coins);
-    for (int i = 1; i < Game.MAX_MERCS; i++) assertTrue(g.hire());
+    int coins = g.coins, price = g.hireCost(); assertTrue(g.hire()); assertEquals(coins - price, g.coins);
+    for (int i = g.mercenaries.size(); i < Game.MAX_MERCS; i++) assertTrue(g.hire());
     coins = g.coins; int wood = g.wood;
     assertFalse(g.hire()); assertEquals(6, g.mercenaries.size());
     assertEquals(coins, g.coins); assertEquals(wood, g.wood);
   }
   @Test public void guardsPatrolAndOnlyShootTargetsInSpatialRange() {
-    Game g = new Game(); g.buildings[2] = true; g.night = true; g.spawned = g.quota(); g.shotClock = 1;
+    Game g = new Game(); g.mercenaries.clear(); g.buildings[2] = true; g.night = true; g.spawned = g.quota(); g.shotClock = 1;
     Game.Mercenary merc = new Game.Mercenary(.5f, 0, .5f, .5f); g.mercenaries.add(merc);
-    Game.Enemy distant = new Game.Enemy(0, 2, 1, 100, 100);
+    Game.Enemy distant = new Game.Enemy(0, 2, 1, 100, 100, 0);
     Game.Enemy near = new Game.Enemy(0, 0, .05f, 9, 25);
     g.enemies.add(distant); g.enemies.add(near);
     g.tick(.1f);
@@ -55,7 +55,7 @@ public class FortressTest {
   @Test public void strongerWallsReduceDamageAndDefeatKeepsInvestments() {
     Game open = new Game(), stone = new Game();
     for (Game g : new Game[] {open, stone}) {
-      g.night = true; g.spawned = g.quota(); g.shotClock = 1;
+      g.mercenaries.clear(); g.night = true; g.spawned = g.quota(); g.shotClock = 1;
       g.enemies.add(new Game.Enemy(0, 1, 0, 100, 100));
     }
     open.walls[1] = 1; open.wallHealth[1] = open.maxWallHealth(1);
@@ -78,7 +78,7 @@ public class FortressTest {
     assertEquals(1, g.enemies.size()); assertEquals(2, g.enemies.get(0).lane);
     assertEquals(.5f, g.enemies.get(0).offset, 0);
     for (int wall : g.walls) assertEquals(2, wall);
-    assertEquals(24, g.wood); assertEquals(0, g.mercenaries.size());
+    assertEquals(24, g.wood); assertEquals(1, g.mercenaries.size());
     assertArrayEquals(SaveCodec.encode(g), SaveCodec.encode(SaveCodec.decode(SaveCodec.encode(g))));
   }
   @Test public void schema2PatrolProductionAndBattleResumeDeterministically() throws Exception {

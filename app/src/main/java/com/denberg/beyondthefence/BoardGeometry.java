@@ -54,13 +54,13 @@ final class BoardGeometry {
     for (int i = 0; i < 9; i++) plots[i].set(left + (i % 3) * (cw + gap), cropTop + (i / 3) * (ch + gap), cw, ch);
   }
   float worldX(float x) {
-    float inset = 12 * density;
+    float inset = 24 * density;
     if (x < .18f) return inset + (fortLeft - inset) * x / .18f;
     if (x > .82f) return fortRight + (width - inset - fortRight) * (x - .82f) / .18f;
     return fortLeft + (fortRight - fortLeft) * (x - .18f) / .64f;
   }
   float worldY(float y) {
-    float inset = 12 * density;
+    float inset = 24 * density;
     if (y < .18f) return inset + (fortTop - inset) * y / .18f;
     if (y > .82f) return fortBottom + (height - inset - fortBottom) * (y - .82f) / .18f;
     return fortTop + (fortBottom - fortTop) * (y - .18f) / .64f;

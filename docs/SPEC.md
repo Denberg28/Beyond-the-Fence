@@ -1,6 +1,6 @@
-# Breach and Rebuild scope · 0.5.0-rc.1
+# Fences and Mercenaries scope · 0.6.0-rc.1
 
-Baseline: published0.4.0-rc.1 (`02efd34`),33 JVM tests and531 installed-app checks per API26/35 emulator passed. Confirmed public destination Denberg28/Beyond-the-Fence; commit/push/release authorized. Package unchanged, versionCode7. Native Java/Canvas, local single player, original vector sprites; no paid assets/service.
+Baseline: published0.5.0-rc.1 (`b4d5cfb`),43 JVM tests and660 installed-app checks per API26/35 emulator passed. Confirmed public destination Denberg28/Beyond-the-Fence; commit/push/release authorized. Package unchanged, versionCode8. Native Java/Canvas, local single player, original vector sprites; no paid assets/service.
 
 ## Loop and bounded systems
 
@@ -8,7 +8,7 @@ Plant inside fortress → harvest coins/timber → build walls/mill/market/barra
 
 Wall costs20+12×tier coins and8+6×tier timber. Mill50c/10w, market80c/18w, barracks70c/12w. Mill generates4w per12 active seconds. Market adds floor(base sale/4). Harvest adds2/4/6 timber for turnip/corn/pumpkin. Barracks allows6 guards, recruitment55+25×current guards coins and6 timber. No wages or guard deaths in this iteration.
 
-A mercenary travels clockwise at0.14 sides/s, shoots within0.28 normalized world units every0.9s, damage9+2×weapon tier. Patrol motion, range-based target selection and shot timing are simulation state, not animation-only. Watchtower retains the starter rifle's rules. Max45 enemies; four approach sides and bounded offsets. Preparation max(30,75−5×min(9,player level−1)) active seconds; reinforcement interval max(1.2,4.8−0.4×min(9,player level−1)) seconds. Level is1+floor(XP/50); changing level immediately updates the visible countdown. Wave resolves by75 active seconds. Free recovery retains surviving assets, guards, gear and wall investments, but ruined assets stay lost. Invested fence health is restored; seed aid brings coins to12 if lower. No time catch-up after interruptions.
+A mercenary travels clockwise at0.14 sides/s, or uses shortest perimeter travel at0.35 sides/s when rallied. Range0.85 normalized units, damage16+4×training, interval max(0.5,0.85−0.06×training) seconds. New farms start with one volunteer. Patrol motion, range-based target selection and shot timing are simulation state, not animation-only. Mercenaries alone reduce enemy HP; structures and rally commands cause no damage. Max45 enemies; four approach sides and bounded offsets. Preparation max(30,75−5×min(9,player level−1)) active seconds; reinforcement interval max(1.2,4.8−0.4×min(9,player level−1)) seconds. Level is1+floor(XP/50); changing level immediately updates the visible countdown. Wave resolves by75 active seconds. Free recovery retains surviving assets, guards, gear and wall investments, but ruined assets stay lost. Invested fence health is restored; seed aid brings coins to12 if lower. No time catch-up after interruptions.
 
 ## Required acceptance
 
@@ -46,3 +46,13 @@ D4: Timber bundle10w/12c; fence repair+50HP/8c/4w; building repair+60HP/10c/5w. 
 D5: Core defeat stops ticks. Recovery restores core/invested wall health, retains ruins and lost crops, keeps remaining upgrades/guards, applies the existing coin penalty and brings coins to12 if lower. Replanting charges normal seed cost and resets soil damage.
 D6: Schema4 appends fence/crop/building health, scorched/ruin flags, loss counters and per-enemy breached/advance/cooldown/target. Counts/ranges/finite values/asset relationships are checked. Schema1–3 receive intact independent health without changes to old resources/progression; schema4 supports surviving mercenaries with a ruined barracks.
 D7: JVM tests cover real damage/breach/loss and no duplicate credit, repair/entry isolation, material/recruitment economy, destroyed building benefits, recovery, released schema3 migration, deterministic breach continuation and invalid fields. Exact APK tests drive an actual raid frame loop to breach/destroy, then pointer-replant/harvest/buy timber/repair/hire with precise resource debits and breach/rebuilt screenshots. All prior release gates remain.
+
+## Required0.6 acceptance
+
+M1: Remove all tower rendering, structure-origin firing, instant focus damage and watchtower UI. No mercenaries means no enemy damage even with every upgrade/structure; guards fire only in raids and within their range.
+M2: Wood/Stone/Steel retain80/120/160 base HP and1/0.72/0.5 damage multipliers, plus15HP per fortify tier. Coin price buys the material kit; timber is framing. Each border has three vector hearts from clamp(HP/maxHP,0,1), including partial hearts; full/half/zero life must produce decreasing filled pixel area.
+M3: Rally sets side0..3 and moves guards along the shortest perimeter path, spreading multiple guards across the side. Patrol sets−1 and resumes clockwise travel. Orders do not inflict damage or reset cooldowns. Training0..5 costs80+100×tier coins and benefits all guards.
+M4: One volunteer starts a new farm and one is supplied on recovery only if no guards remain. First raid and zero-coin gameplay must remain viable. The20-day strategy now builds barracks and hires guards as well as training/fortifying/farming.
+M5: Schema5 retains the v4 record layout with a changed patrol/rally field domain and training interpretation. Schemas1–4 preserve assets/damage/resources, reset obsolete focus orders, and grant one volunteer only to an empty squad. Reloading schema5 never duplicates volunteers. Legacy firing-clock bytes remain unused compatibility placeholders.
+M6: Walkers/runners/brutes/spitters have visibly different original silhouettes and details; animated gait derives from simulation, freezes while paused, and is disabled by reduced motion. A24dp world inset prevents larger sprites/health bars clipping.
+M7: Native exact-APK checks retain breach/replant/harvest/material/repair/hire flows, add Wood→Stone→Steel purchases and non-damaging rally/patrol assertions, pixel-check hearts, and capture the material/variant scene. All build/lint/codec/lifecycle/API26/API35 gates remain blocking.

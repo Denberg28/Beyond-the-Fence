@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 4;
+  private static final int MAGIC = 0x42544653, VERSION = 5;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -88,6 +88,7 @@ public final class SaveCodec {
     int version = in.readInt();
     if (version < 1 || version > VERSION) throw new IOException("Unsupported save format");
     Game g = new Game();
+    g.mercenaries.clear();
     g.revision = in.readLong();
     g.day = in.readInt();
     g.coins = in.readInt();
@@ -124,7 +125,7 @@ public final class SaveCodec {
     integer(g.kills, 0, Integer.MAX_VALUE);
     integer(g.harvested, 0, Integer.MAX_VALUE);
     integer(g.spawned, 0, g.quota());
-    integer(g.lane, 0, version == 1 ? 2 : 3);
+    integer(g.lane, version >= 5 ? -1 : 0, version == 1 ? 2 : 3);
     number(g.health, 0, g.maxHealth());
     number(g.elapsed, 0, 75.2f);
     number(g.shotClock, -.2f, 1);
@@ -213,6 +214,10 @@ public final class SaveCodec {
     range(!g.defeated || g.health == 0);
     range(in.readLong() == crc.getValue());
     range(in.available() == 0);
+    if (version < 5) {
+      g.lane = -1; g.shotClock = 0; g.focusClock = 0;
+      g.ensureVolunteer();
+    }
     g.notice = version == 1 ? "Farm upgraded to fortress format. Existing crops and upgrades kept."
         : "Fortress restored. Resume when ready.";
     return g;

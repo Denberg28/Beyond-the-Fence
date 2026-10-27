@@ -13,6 +13,7 @@ final class FarmView extends View {
   long renderedFrames;
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final RectF rect = new RectF();
+  private final Path heartShape = new Path();
   private final Supplier<Game> model;
   private final Supplier<Boolean> paused;
   private final BoardGeometry geometry;
@@ -104,7 +105,16 @@ final class FarmView extends View {
         float length = (float) Math.hypot(xx - x, yy - y);
         for (float at = 0; at <= length; at += 14 * d) {
           float px = x + (xx - x) * at / length, py = y + (yy - y) * at / length;
-          box(c, px - 3 * d, py - 3 * d, 6 * d, 6 * d, 0, tier == 1 ? 0xffd1a265 : 0xffd8dfce);
+          if (tier == 1) box(c, px - 3 * d, py - 3 * d, 6 * d, 6 * d, 0, 0xffd1a265);
+          else if (tier == 2) {
+            boolean horizontal = side == 0 || side == 2;
+            box(c, px - (horizontal ? 6 : 4) * d, py - (horizontal ? 4 : 6) * d,
+                (horizontal ? 12 : 8) * d, (horizontal ? 8 : 12) * d, d, 0xffacb1a7);
+            line(c, px - 2 * d, py - 2 * d, px + 2 * d, py + 2 * d, 0xff727c75, d);
+          } else {
+            box(c, px - 2 * d, py - 5 * d, 4 * d, 10 * d, 0, 0xffd3e0e0);
+            line(c, px - 4 * d, py - 4 * d, px + 4 * d, py + 4 * d, 0xff526b78, d);
+          }
         }
       }
       if (g.walls[side] > 0) {
@@ -118,15 +128,22 @@ final class FarmView extends View {
         }
       }
     }
-    tower(c, l, t, d); tower(c, r, t, d); tower(c, l, b, d); tower(c, r, b, d);
+    post(c, l, t, d); post(c, r, t, d); post(c, l, b, d); post(c, r, b, d);
+    for (int side = 0; side < 4; side++) {
+      float hx = side == 1 ? r : side == 3 ? l : (l + r) / 2;
+      float hy = side == 0 ? t - 34 * d : side == 2 ? b + 34 * d : (t + b) / 2 - 34 * d;
+      float hearts = 3 * g.fenceHeartRatio(side);
+      for (int unit = 0; unit < 3; unit++)
+        heart(c, hx + (unit - 1) * 11 * d, hy, 4.5f * d, Math.max(0, Math.min(1, hearts - unit)));
+    }
     for (Game.Roamer roamer : g.roamers) {
       float x = geometry.worldX(Game.ringX(roamer.progress, roamer.distance));
       float y = geometry.worldY(Game.ringY(roamer.progress, roamer.distance));
-      fighter(c, x, y, d, false, roamer.type, 0);
+      zombie(c, x, y, d, roamer.type, g.reducedMotion ? 0 : roamer.progress * 12, false);
     }
     for (Game.Enemy enemy : g.enemies) {
       float x = geometry.worldX(Game.enemyX(enemy)), y = geometry.worldY(Game.enemyY(enemy));
-      float size = d * (enemy.type == 2 ? 1.25f : 1);
+      float size = d;
       if (enemy.breached && enemy.advance >= 1 && enemy.attackClock > 1 && !paused.get() && !g.reducedMotion) {
         float tx = (l + r) / 2, ty = (t + b) / 2;
         if (enemy.target >= 0) {
@@ -135,23 +152,18 @@ final class FarmView extends View {
         }
         line(c, x, y, tx, ty, 0xcced8257, 2 * d);
       }
-      fighter(c, x, y, size, false, enemy.type, 0);
-      box(c, x - 8 * d, y - 13 * d, 16 * d, 2 * d, 0, 0xff172e26);
-      box(c, x - 8 * d, y - 13 * d, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
+      boolean attacking = !paused.get() && !g.reducedMotion && (enemy.breached ? enemy.advance >= 1 && enemy.attackClock > 1
+          : enemy.x <= (enemy.type == 3 ? .26f : 0));
+      zombie(c, x, y, size, enemy.type, g.reducedMotion ? 0 : g.elapsed * (enemy.type == 1 ? 10 : 6) + enemy.offset * 7, attacking);
+      box(c, x - 8 * d, y - 22 * d, 16 * d, 2 * d, 0, 0xff172e26);
+      box(c, x - 8 * d, y - 22 * d, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
     }
     for (Game.Mercenary merc : g.mercenaries) {
       float x = geometry.worldX(Game.patrolX(merc.progress)), y = geometry.worldY(Game.patrolY(merc.progress));
       float angle = (float) Math.atan2(geometry.worldY(merc.targetY) - y, geometry.worldX(merc.targetX) - x);
-      if (merc.shotClock > .72f && !paused.get() && !g.reducedMotion)
+      if (merc.shotClock > g.guardInterval() - .16f && !paused.get() && !g.reducedMotion)
         line(c, x, y, geometry.worldX(merc.targetX), geometry.worldY(merc.targetY), 0xb3ffe48c, d);
       fighter(c, x, y, d, true, 0, angle);
-    }
-    if (g.night && g.shotClock > .55f && !g.enemies.isEmpty() && !paused.get() && !g.reducedMotion) {
-      Game.Enemy target = null;
-      for (Game.Enemy enemy : g.enemies)
-        if (target == null || (enemy.lane == g.lane && target.lane != g.lane)
-            || (enemy.lane == target.lane && enemy.x < target.x)) target = enemy;
-      line(c, r, t, geometry.worldX(Game.enemyX(target)), geometry.worldY(Game.enemyY(target)), 0x88ffe48c, d);
     }
     if (g.weather == 1)
       for (int i = 0; i < 30; i++) {
@@ -161,12 +173,61 @@ final class FarmView extends View {
       }
     if (g.weather == 2) box(c, 0, 0, getWidth(), getHeight() * .3f, 0, 0x22e5eadb);
   }
-  private void tower(Canvas c, float x, float y, float d) {
-    box(c, x - 9 * d, y - 9 * d, 18 * d, 18 * d, 2 * d, 0xff39443b);
-    box(c, x - 7 * d, y - 8 * d, 14 * d, 14 * d, d, 0xffa3ac9d);
-    box(c, x - 5 * d, y - 6 * d, 10 * d, 10 * d, 0, 0xff526b80);
-    box(c, x - 2 * d, y - 3 * d, 4 * d, 5 * d, 0, 0xffd7c894);
+  private void post(Canvas c, float x, float y, float d) {
+    box(c, x - 3 * d, y - 3 * d, 6 * d, 6 * d, d, 0xffb7a073);
+    box(c, x - d, y - d, 2 * d, 2 * d, 0, 0xff6f593c);
   }
+
+  /** Filled, partial and empty hearts show the actual fraction, independently of text/font size. */
+  private void heart(Canvas c, float x, float y, float size, float fill) {
+    heartShape.reset();
+    heartShape.moveTo(x, y + size);
+    heartShape.cubicTo(x - 2 * size, y - .2f * size, x - size, y - 1.7f * size, x, y - .7f * size);
+    heartShape.cubicTo(x + size, y - 1.7f * size, x + 2 * size, y - .2f * size, x, y + size);
+    heartShape.close();
+    color(0xff413b34); c.drawPath(heartShape, p);
+    c.save(); c.clipRect(x - 1.3f * size, y - 1.4f * size, x - 1.3f * size + 2.6f * size * fill, y + 1.2f * size);
+    color(0xffed7867); c.drawPath(heartShape, p); c.restore();
+    color(0xfff0d8ac); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(size * .2f); c.drawPath(heartShape, p);
+    p.setStyle(Paint.Style.FILL);
+  }
+
+  private void zombie(Canvas c, float x, float y, float d, int type, float phase, boolean attacking) {
+    c.save(); c.translate(x, y); c.scale(d, d);
+    float gait = (float) Math.sin(phase), bulk = type == 2 ? 10 : type == 1 ? 5 : type == 3 ? 8 : 7;
+    int skin = type == 2 ? 0xff91a286 : type == 3 ? 0xffbdc768 : 0xffa8bd82;
+    color(0x55302b23); rect.set(-11, 5, 11, 13); c.drawOval(rect, p);
+    // Uneven trouser legs and a shuffling gait keep the silhouette recognizably undead.
+    line(c, -3, 5, -5 - gait * 2, 12, 0xff44483a, 4);
+    line(c, 3, 5, 5 + gait * 2, 12, 0xff353b33, 4);
+    box(c, -bulk, -6, bulk * 2, type == 2 ? 18 : 15, 3, COATS[type]);
+    box(c, -bulk + 2, -5, 3, 13, 1, 0x447b862f);
+    float armY = attacking ? -10 : -1;
+    line(c, -bulk + 1, -3, -bulk - 5, armY + gait * 2, COATS[type], type == 2 ? 5 : 3);
+    line(c, bulk - 1, -3, bulk + 5, armY - gait * 2, COATS[type], type == 2 ? 5 : 3);
+    circle(c, -bulk - 5, armY + gait * 2, 2.4f, skin);
+    circle(c, bulk + 5, armY - gait * 2, 2.4f, skin);
+    if (type == 1) line(c, -3, -4, 4, 7, 0xffe1b88b, 2); // Torn runner jersey.
+    if (type == 2) {
+      box(c, -10, -7, 5, 7, 1, 0xff67717a); box(c, 5, -7, 5, 7, 1, 0xff67717a);
+      box(c, -8, 4, 16, 3, 0, 0xff4d4540); box(c, -2, 4, 4, 3, 0, 0xffbda578);
+    }
+    if (type == 3) {
+      circle(c, 0, 2, 7, 0xff9fac4e);
+      circle(c, -3, 1, 2, 0xffccd879); circle(c, 3, 4, 2, 0xff7e933c);
+    }
+    circle(c, type == 1 ? 2 : 0, -10, type == 2 ? 7 : 6, skin);
+    line(c, -4, -14, -1, -16, 0xff414c35, 2);
+    line(c, 0, -14, 4, -15, 0xff414c35, 2);
+    circle(c, -2, -10, 1.4f, 0xffefe6c5); circle(c, 3, -10, 1.4f, 0xffefe6c5);
+    circle(c, -2, -10, .6f, 0xff302e27); circle(c, 3, -10, .6f, 0xff302e27);
+    box(c, -2, -6, 5, 2.5f, .4f, 0xff4b4735);
+    box(c, -1, -6, 1, 1, 0, 0xffeee0b2); box(c, 1, -6, 1, 1, 0, 0xffeee0b2);
+    line(c, 4, -14, 5, -12, 0xff6a7751, 1);
+    if (type == 3) { line(c, 2, -4, 5, 1, 0xffbfe875, 1.5f); circle(c, 6, 2, 1.5f, 0xffd3ed8d); }
+    c.restore();
+  }
+
   private void building(Canvas c, BoardGeometry.Box tile, int kind, boolean built, boolean ruined, float d) {
     box(c, tile.left, tile.top, tile.width(), tile.height(), 3 * d, built ? 0xffc0a66a : 0xff739a53);
     float x = tile.left + tile.width() * .5f, y = tile.top + tile.height() * .32f;

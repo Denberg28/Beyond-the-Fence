@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0-rc.1 · 27 October 2026
+
+- Remove towers, structure auto-fire and instant focus shots. Mercenaries are the only attackers; rally physically moves them to a border, and Patrol releases the order.
+- Start with one volunteer guard; keep first-raid/zero-coin recovery viable. Repurpose rifle upgrades into training for every mercenary and rebalance guard damage/range/cadence. Existing squads survive migration; guardless old farms receive one volunteer once.
+- Name Wood/Stone/Steel material upgrades and draw different fence textures. Show three filled/partial/empty heart icons beside each fence, driven by actual remaining HP.
+- Redesign all four zombie types with larger distinct silhouettes, eyes/teeth, torn clothes, runner limbs, brute armor and spitter belly/drool. Animate from simulation time, with pause/reduced-motion behavior.
+- Save schema5 preserves rally orders, training, damage, crops and economy; schemas1–4 migrate without duplicating volunteers or erasing asset losses.
+- Add no-hidden-shooter, volunteer survival, actual training shots, material/hearts, rally continuity and released-schema4 migration tests. Native checks verify heart pixels follow full/half/zero life, material purchases, non-damaging rally and the zombie/material scene.
+
 ## 0.5.0-rc.1 · 27 October 2026
 
 - Give each fence independent health, damage bars/cracks and visible breaches. Zombies enter broken or unbuilt borders; repaired fences stop new entrants while existing intruders keep fighting.

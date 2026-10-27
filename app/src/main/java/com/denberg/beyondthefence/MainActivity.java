@@ -28,11 +28,11 @@ public final class MainActivity extends Activity {
   private boolean buildOpen;
   private long lastFrame, lastUi, lastSave;
   private TextView stats, status, notice, saving;
-  private GameButton play, phase, harvest, plantAll, repair, build, seedsToggle, hireButton, repairOverlay, materialsButton;
+  private GameButton play, phase, harvest, plantAll, repair, build, seedsToggle, hireButton, repairOverlay, materialsButton, patrolButton;
   private final GameButton[] cropButtons = new GameButton[3],
       plotButtons = new GameButton[9], upgradeButtons = new GameButton[4],
       wallButtons = new GameButton[4], buildingButtons = new GameButton[3],
-      wallPurchase = new GameButton[4], construction = new GameButton[3], buildTabs = new GameButton[4];
+      wallPurchase = new GameButton[4], construction = new GameButton[3], buildTabs = new GameButton[4], rallyButtons = new GameButton[4];
   private LinearLayout seedTray, buildItems;
   private TextView buildResources, roster;
   private FrameLayout window, buildOverlay;
@@ -381,7 +381,8 @@ public final class MainActivity extends Activity {
     java.util.Arrays.fill(upgradeButtons, null);
     java.util.Arrays.fill(wallPurchase, null);
     java.util.Arrays.fill(construction, null);
-    hireButton = null; repairOverlay = null; materialsButton = null; roster = null;
+    hireButton = null; repairOverlay = null; materialsButton = null; patrolButton = null; roster = null;
+    java.util.Arrays.fill(rallyButtons, null);
     if (buildTab == 0) {
       materialsButton = button("Buy 10 timber · 12 coins", () -> { if (canAct()) { game.buyTimber(); changed(); } });
       materialsButton.setTag("buyTimber"); addBuildAction(materialsButton);
@@ -407,14 +408,17 @@ public final class MainActivity extends Activity {
       for (int i = 0; i < 4; i++) {
         final int side = i;
         GameButton action = button(Game.SIDES[i].substring(0, 1), () -> {
-          if (canAct()) { game.focus(side); changed(); }
+          if (canAct()) { game.rally(side); changed(); }
         });
-        action.setContentDescription("Rally watchtower focus to the " + Game.SIDES[i] + " border, 3 second recharge");
+        action.setContentDescription("Move mercenaries to defend the " + Game.SIDES[i] + " fence");
+        rallyButtons[i] = action;
         action.setTag("rally" + i);
         rally.addView(action, new LinearLayout.LayoutParams(0, -2, 1));
       }
-      buildItems.addView(text("Rally the watchtower · patrols keep moving", 12, MUTED));
+      buildItems.addView(text("Rally guards to a border", 12, MUTED));
       buildItems.addView(rally);
+      patrolButton = button("Resume perimeter patrol", () -> { if (canAct()) { game.resumePatrol(); changed(); } });
+      patrolButton.setTag("patrol"); addBuildAction(patrolButton);
     } else {
       for (int i = 0; i < 4; i++) {
         final int kind = i;
@@ -491,7 +495,7 @@ public final class MainActivity extends Activity {
     play.setEnabled(!storageBlocked && !ioBusy && !buildOpen);
     play.colors(paused ? GOLD : 0xff314e40, GOLD, paused ? INK : CREAM);
     label(repair, "Crew\n" + game.mercenaries.size() + "/" + Game.MAX_MERCS);
-    repair.setContentDescription("Open mercenary recruitment and watchtower rally controls");
+    repair.setContentDescription("Open mercenary recruitment, training and rally controls");
     label(seedsToggle, "Seeds\n" + Game.CROPS[selectedCrop]);
     label(notice, game.notice);
     label(saving, saveMessage + (paused ? " · Paused" : ""));
@@ -532,21 +536,21 @@ public final class MainActivity extends Activity {
     for (int i = 0; i < 4; i++) {
       int tier = game.walls[i];
       boolean damaged = game.wallDamaged(i), breached = tier > 0 && game.wallHealth[i] <= 0;
-      String marker = tier == 0 ? "Gap" : breached ? "0!" : String.valueOf(Math.round(game.wallHealth[i]));
+      String marker = tier == 0 ? "Gap" : "♥" + Math.round(game.wallHealth[i]);
       label(wallButtons[i], Game.SIDES[i].substring(0, 1)
           + (getResources().getConfiguration().fontScale >= 1.5f ? "" : "\n" + marker));
-      wallButtons[i].setContentDescription(Game.SIDES[i] + " fence, " + (tier == 0 ? "open gap" : "tier " + tier
-          + ", health " + Math.round(game.wallHealth[i]) + " of " + Math.round(game.maxWallHealth(i))
+      wallButtons[i].setContentDescription(Game.SIDES[i] + " fence, " + (tier == 0 ? "open gap" : Game.FENCE_MATERIALS[tier] + " material, tier " + tier
+          + ", three-heart meter, health " + Math.round(game.wallHealth[i]) + " of " + Math.round(game.maxWallHealth(i))
           + (breached ? ", breached, zombies can enter" : "")) + ", tap to build or repair");
       wallButtons[i].colors(breached ? 0xdd853c32 : damaged ? 0xdd77532e : tier == 0 ? 0xcc5f4630 : 0xcc263e32,
           selectedWall == i ? GOLD : 0xffc0a274, CREAM);
       if (wallPurchase[i] != null) {
-        label(wallPurchase[i], Game.SIDES[i] + " · " + (damaged ? "REPAIR · " + Math.round(game.wallHealth[i]) + "/"
+        label(wallPurchase[i], Game.SIDES[i] + " · " + Game.FENCE_MATERIALS[tier] + " · ♥ " + Math.round(game.wallHealth[i]) + "/" + Math.round(game.maxWallHealth(i)) + "HP\n" + (damaged ? "REPAIR · " + Math.round(game.wallHealth[i]) + "/"
             + Math.round(game.maxWallHealth(i)) + "HP\n8 coins · 4 timber · +50 health"
-            : tier == 0 ? "BUILD FENCE\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber"
-            : tier >= 3 ? "Tier3 · MAX · " + Math.round(game.wallHealth[i]) + "HP"
-            : "UPGRADE " + tier + " → " + (tier + 1) + "\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber")
-            + "\n" + (damaged ? "Closes the breach for new zombies; fight intruders inside" : "A healthy fence keeps zombies away from crops"));
+            : tier == 0 ? "BUILD WOOD FENCE\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber"
+            : tier >= 3 ? "Steel · MAX · " + Math.round(game.wallHealth[i]) + "HP"
+            : "UPGRADE " + Game.FENCE_MATERIALS[tier] + " → " + Game.FENCE_MATERIALS[tier + 1] + "\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber")
+            + "\n" + (damaged ? "Closes the breach for new zombies; fight intruders inside" : "Material kits strengthen fences; coins buy supplies and timber frames them"));
         wallPurchase[i].setEnabled(available && (damaged ? game.coins >= 8 && game.wood >= 4
             : tier < 3 && game.coins >= game.wallCoinCost(i) && game.wood >= game.wallWoodCost(i)));
         wallPurchase[i].colors(selectedWall == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
@@ -570,9 +574,14 @@ public final class MainActivity extends Activity {
     if (hireButton != null) {
       label(hireButton, !game.buildings[2] ? "Build Barracks first in Farm" : game.mercenaries.size() >= Game.MAX_MERCS ? "Squad full · 6 patrols" : "Hire mercenary · " + game.hireCost() + " coins · 6 timber");
       hireButton.setEnabled(available && game.buildings[2] && game.mercenaries.size() < Game.MAX_MERCS && game.coins >= game.hireCost() && game.wood >= 6);
-      label(roster, "Patrols " + game.mercenaries.size() + "/6 · Blue uniforms\nGuards circle the fence and shoot within range. Permanent guards · no upkeep.");
+      label(roster, "Mercenaries " + game.mercenaries.size() + "/6 · " + Game.TRAINING[game.weapon]
+          + "\n" + game.guardDamage() + " damage per shot · " + (game.lane < 0 ? "Patrolling" : "Rally: " + Game.SIDES[game.lane])
+          + "\nYour guards are the only fighters. Permanent crew · no upkeep.");
+      for (int side = 0; side < 4; side++) if (rallyButtons[side] != null)
+        rallyButtons[side].colors(game.lane == side ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
+      if (patrolButton != null) patrolButton.setEnabled(available && game.lane >= 0);
     }
-    String[] upgrades = {"Watchtower · " + Game.WEAPONS[game.weapon] + "\n+7 damage · faster auto-fire", "Fortify · tier " + (game.fence + 1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
+    String[] upgrades = {"Mercenary training · " + Game.TRAINING[game.weapon] + "\n+4 damage for every guard · faster fire", "Fortify · tier " + (game.fence + 1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
     for (int i = 0; i < 4; i++) if (upgradeButtons[i] != null) {
       label(upgradeButtons[i], upgrades[i] + (game.maxed(i) ? " · MAX" : "\n" + game.cost(i) + " coins"));
       upgradeButtons[i].setEnabled(available && !game.maxed(i) && game.coins >= game.cost(i));
@@ -587,9 +596,9 @@ public final class MainActivity extends Activity {
         .setTitle("Your farm. Your last safe place.")
         .setMessage(
             "1  Open Seeds, then tap farm plots inside your fortress. Harvest ripe crops for coins and timber.\n\n"
-                + "2  Zombies damage individual fences. A breach lets them enter and destroy crops and buildings. Tap N/E/S/W to build or repair; Fence sells 10 timber for 12 harvest coins.\n\n"
-                + "3  Harvest crops for coins and timber. Build barracks and hire mercenaries in Squad. Blue guards patrol the perimeter and fire at nearby zombies. The watchtower also auto-fires.\n\n"
-                + "4  Zombies roam the terrain outside your compact farm. The raid countdown gets shorter as your level rises:75 seconds at level1, down to30 at level10. Tap Raid in to start a raid early. Guards and the watchtower fight automatically. Progress advances only while playing.")
+                + "2  Fence hearts show remaining life. Upgrade Wood to Stone to Steel. Zombies damage individual fences. A breach lets them enter and destroy crops and buildings. Tap N/E/S/W to build or repair; Fence sells 10 timber for 12 harvest coins.\n\n"
+                + "3  One volunteer guard starts with you. Your mercenaries are the only fighters. Harvest to build barracks and hire more through Crew. Gear trains all guards; Crew can rally them to a border or resume patrol.\n\n"
+                + "4  Zombies roam the terrain outside your compact farm. The raid countdown gets shorter as your level rises:75 seconds at level1, down to30 at level10. Tap Raid in to start a raid early. Mercenaries fight automatically within range. Progress advances only while playing.")
         .setPositiveButton(
             "Plant the first seed",
             (d, w) -> {

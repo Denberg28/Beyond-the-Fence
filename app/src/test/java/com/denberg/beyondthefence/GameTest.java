@@ -184,16 +184,14 @@ public class GameTest {
   }
 
   @Test
-  public void targetAndFocusCooldown() {
-    Game g = new Game();
-    g.night = true;
-    g.enemies.add(new Game.Enemy(0, 2, .5f, 25, 25));
-    assertFalse(g.focus(-1));
-    assertFalse(g.focus(1));
-    assertTrue(g.focus(2));
-    assertFalse(g.focus(2));
-    seconds(g, 4);
-    assertTrue(g.kills > 0);
+  public void rallyMovesGuardsWithoutAnInstantShot() {
+    Game g = new Game(); g.night = true;
+    Game.Enemy foe = new Game.Enemy(0, 2, .5f, 25, 25); g.enemies.add(foe);
+    assertFalse(g.rally(-1)); assertFalse(g.rally(4));
+    assertTrue(g.rally(2)); assertEquals(25, foe.hp, 0);
+    float before = g.mercenaries.get(0).progress;
+    seconds(g, 4); assertTrue(g.mercenaries.get(0).progress > before);
+    assertTrue(g.kills > 0); g.resumePatrol(); assertEquals(-1, g.lane);
   }
 
   @Test
@@ -293,6 +291,9 @@ public class GameTest {
           else g.harvest(p);
         }
         if (g.health < g.maxHealth() * .7f) g.repair();
+        if (!g.buildings[2] && g.coins >= 106 && g.wood >= 12) g.construct(2);
+        int desiredGuards = g.day >= 10 ? 3 : 2;
+        if (g.buildings[2] && g.mercenaries.size() < desiredGuards && g.coins >= g.hireCost() + 36 && g.wood >= 6) g.hire();
         for (int kind = 0; kind < 4; kind++)
           if (!g.maxed(kind) && g.coins >= g.cost(kind) + 36) g.upgrade(kind);
       }

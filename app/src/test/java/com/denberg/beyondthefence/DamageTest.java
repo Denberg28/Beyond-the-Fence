@@ -8,7 +8,7 @@ import org.junit.Test;
 public class DamageTest {
   private void seconds(Game g, float n) { for (int i = 0; i < Math.ceil(n * 30); i++) g.tick(1f / 30); }
   private Game fight() {
-    Game g = new Game(); g.night = true; g.roamers.clear(); g.spawned = g.quota(); g.shotClock = 1;
+    Game g = new Game(); g.mercenaries.clear(); g.night = true; g.roamers.clear(); g.spawned = g.quota(); g.shotClock = 1;
     return g;
   }
   private Game.Enemy intruder(int target) {
@@ -69,13 +69,13 @@ public class DamageTest {
 
   @Test public void harvestFundsMaterialsFencesAndActualRecruitment() {
     Game g = new Game();
-    for (int batch = 0; batch < 2; batch++) {
+    for (int batch = 0; batch < 3; batch++) {
       assertEquals(6, g.plantAll(0));
       for (int i = 0; i < 6; i++) g.growth[i] = 1;
       assertEquals(6, g.harvestAll());
     }
     assertTrue(g.buyTimber()); assertTrue(g.buildWall(1)); assertTrue(g.construct(2)); assertTrue(g.hire());
-    assertEquals(1, g.mercenaries.size()); assertEquals(19, g.coins); assertEquals(32, g.wood);
+    assertEquals(2, g.mercenaries.size()); assertEquals(42, g.coins); assertEquals(44, g.wood);
   }
 
   @Test public void destroyedBarracksStopRecruitmentButDoNotDeleteHiredGuards() throws Exception {
