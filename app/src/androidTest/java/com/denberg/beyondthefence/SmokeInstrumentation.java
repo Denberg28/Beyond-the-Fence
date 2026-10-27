@@ -214,6 +214,11 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(n.getLeft() == s.getLeft() && n.getTop() < e.getTop() && e.getTop() == w.getTop()
           && w.getLeft() < n.getLeft() && n.getLeft() < e.getLeft() && e.getTop() < s.getTop(), "N/W/E/S forms a compass cross");
       int[] at = new int[2]; cross.getLocationOnScreen(at);
+      View center = control(a, "fenceUpgrade");
+      check(center.getParent() == cross && center.getWidth() >= min && center.getHeight() >= min
+          && center.getLeft() == n.getLeft() && center.getTop() == e.getTop(), "Center upgrade fills the middle48dp target");
+      check(!control(a, "notice").isShown(), "Instruction banner is absent from the playing field");
+      check(((android.widget.TextView) control(a, "quickUniform")).getText().toString().equals("Merc ↑"), "Compact Merc upgrade label");
       View commands = control(a, "commands"); int[] dockAt = new int[2]; commands.getLocationOnScreen(dockAt);
       check(Math.abs(at[0] + cross.getWidth() / 2 - (dockAt[0] + commands.getWidth() / 2)) <= 2,
           "Repair cross is horizontally centered in its rendered bar: cross=" + at[0] + "/" + cross.getWidth()
@@ -277,6 +282,18 @@ public final class SmokeInstrumentation extends Instrumentation {
       runOnMainSync(() -> a.paused = true);
       awaitUi(a::hasWindowFocus, "Game window ready");
       checkBoard(a);
+      check(!control(a, "fenceUpgrade").isEnabled(), "Fence upgrade requires an explicitly selected direction");
+      check(onUi(() -> {
+        for (int side = 0; side < 4; side++) {
+          View button = control(a, "wall" + side);
+          Bitmap pixel = Bitmap.createBitmap(button.getWidth(), button.getHeight(), Bitmap.Config.ARGB_8888);
+          try {
+            button.draw(new Canvas(pixel)); int inset = (int)(8 * a.getResources().getDisplayMetrics().density);
+            if (Color.alpha(pixel.getPixel(inset, inset)) != 0) return false;
+          } finally { pixel.recycle(); }
+        }
+        return true;
+      }), "Compass backgrounds are truly transparent at rest");
       // A paused farm must stop continuous rendering, including while a panel is open.
       assertPausedStatic(a);
       float roamingProgress = a.game.roamers.get(0).progress;
@@ -317,10 +334,18 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(a, "constructWall1");
       check(onUi(() -> a.game.walls[1] == 1 && a.game.coins == 108 && a.game.wood == 28 && a.paused), "Build missing east fence with explicit coin/timber debit");
       touch(a, "closeBuild");
-      touch(a, "building0"); touch(a, "construct0"); touch(a, "closeBuild");
+      touch(a, "building0");
+      check(((android.widget.TextView) control(a, "panelTitle")).getText().toString().equals("MILL")
+          && control(a, "buyTimber").isShown() && control(a, "construct1") == null,
+          "Mill opens its timber features without unrelated building actions");
+      touch(a, "construct0"); touch(a, "closeBuild");
       check(onUi(() -> a.game.buildings[0] && a.game.coins == 58 && a.game.wood == 18), "Construct the interior timber mill");
       farmCycle(a);
-      touch(a, "building2"); touch(a, "construct2"); touch(a, "closeBuild");
+      touch(a, "building2");
+      check(((android.widget.TextView) control(a, "panelTitle")).getText().toString().equals("CAMP")
+          && control(a, "hire").isShown() && control(a, "upgrade0") != null,
+          "Camp opens construction, recruitment and mercenary upgrades");
+      touch(a, "construct2"); touch(a, "closeBuild");
       check(onUi(() -> a.game.buildings[2] && a.game.coins == 36), "Construct barracks using harvest income");
       farmCycle(a);
       touch(a, "quickHire");
@@ -373,6 +398,8 @@ public final class SmokeInstrumentation extends Instrumentation {
       MainActivity landscape = rotate(a, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
       check(onUi(() -> landscape.game == a.game && landscape.paused && !landscape.musicEnabled && !landscape.effectsEnabled), "Rotation retains farm and pause");
       check(control(landscape, "closeBuild").isShown(), "Upgrade overlay survives rotation");
+      check(((android.widget.TextView) control(landscape, "panelTitle")).getText().toString().equals("MILL")
+          && control(landscape, "buyTimber").isShown(), "Building-specific features survive rotation");
       screenshot("smoke-upgrades-landscape.png");
       touch(landscape, "closeBuild");
       check(control(landscape, "seed1").isSelected(), "Selected seed survives rotation");
@@ -536,6 +563,37 @@ public final class SmokeInstrumentation extends Instrumentation {
           "Real guard fire, nearby zombies and both nocturnal voices reach SoundPool");
       touch(reopened, "play");
       check(onUi(() -> !reopened.music.isPlaying() && reopened.music.effectStreams() == 0), "Pause stops every music/effect voice");
+      // Selected direction owns the center arrow; no settings or pause side effects.
+      Game compact = new Game(); compact.coins = 200; compact.wood = 100;
+      runOnMainSync(() -> { reopened.game = compact; reopened.paused = true; reopened.refresh(); });
+      touch(reopened, "wall1");
+      check(control(reopened, "wall1").isSelected() && !control(reopened, "wall0").isSelected(), "East selection is explicit");
+      touch(reopened, "fenceUpgrade");
+      check(onUi(() -> compact.walls[1] == 1 && compact.walls[0] == 1 && compact.coins == 180 && compact.wood == 92
+          && !control(reopened, "closeBuild").isShown()), "Center builds only the selected gap with exact coin/timber debit");
+      touch(reopened, "fenceUpgrade"); touch(reopened, "fenceUpgrade");
+      check(onUi(() -> compact.walls[1] == 3 && compact.coins == 104 && compact.wood == 58
+          && !control(reopened, "fenceUpgrade").isEnabled()), "Center upgrades selected Wood to Stone to Steel and disables at maximum");
+      touch(reopened, "wall2"); touch(reopened, "play"); touch(reopened, "fenceUpgrade");
+      check(onUi(() -> compact.walls[2] == 2 && compact.walls[1] == 3 && compact.walls[0] == 1
+          && compact.coins == 72 && compact.wood == 44 && !reopened.paused), "Changing direction upgrades that side while play continues");
+      touch(reopened, "play");
+      runOnMainSync(() -> { compact.coins = 0; reopened.refresh(); });
+      touch(reopened, "wall0");
+      check(!control(reopened, "fenceUpgrade").isEnabled() && compact.walls[0] == 1,
+          "Unaffordable center upgrade is disabled without charging another side");
+      runOnMainSync(() -> { compact.coins = 200; compact.wood = 100; compact.plant(0, 0); compact.growth[0] = 1; reopened.refresh(); });
+      touch(reopened, "building1");
+      check(((android.widget.TextView) control(reopened, "panelTitle")).getText().toString().equals("SHOP")
+          && control(reopened, "shopHarvest").isShown() && control(reopened, "upgrade2") != null,
+          "Shop opens crop sales and farm upgrades");
+      touch(reopened, "construct1"); touch(reopened, "shopHarvest");
+      check(onUi(() -> compact.buildings[1] && compact.coins == 131 && compact.wood == 84 && compact.harvested == 1),
+          "Shop market bonus and direct harvest sale apply exactly once");
+      touch(reopened, "shopPlant");
+      check(onUi(() -> compact.coins == 107 && compact.crop[5] == 0 && compact.crop[6] == -1), "Shop planting respects existing plot limits and seed prices");
+      screenshot("smoke-shop.png"); touch(reopened, "closeBuild");
+      screenshot("smoke-compact.png");
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);

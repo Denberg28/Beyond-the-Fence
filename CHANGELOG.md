@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0-rc.1 — Compact compass and building features
+
+- Transparent N/W/E/S buttons in a smaller144dp cross, retaining48dp targets and a selected-side outline.
+- Removed the persistent instruction banner and Fix8c label; replaced the center with ↑ to build/upgrade the selected fence without a panel or pause. No selection/insufficient funds/max tier disables the action. Direction taps retain coin repairs.
+- Mill opens timber features; Shop opens market/crop sales/planting/farm upgrades; Camp opens construction, recruitment/rally/patrol/mercenary upgrades. Building context survives rotation.
+- Renamed Uniform ↑ to Merc ↑ and shortened both crew shortcut labels. Accessibility descriptions retain prices and health.
+- Save schema6 and all existing soundscape/survival behavior retained. Added installed-APK pixel, context, selection/upgrade and Shop transaction checks.
+
 ## 0.8.0-rc.1 — Quick commands and living soundscape
 
 - Moved N/W/E/S into a pinned bottom-center compass cross. Tap to repair50HP for8 coins without a panel, pause or timber; intact sides never charge.

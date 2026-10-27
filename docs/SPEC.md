@@ -1,3 +1,19 @@
+# 0.9 acceptance — Compact compass and building features
+
+Baseline0.8.0-rc.1/3c8251f8124b043863a6091e3e2349b36938cbbb:63 JVM cases and824 native checks/API26 and35. Scope follows the supplied phone screenshot: transparent compass, no persistent instructions/Fix8c label, center selected-side upgrade, building-specific features, Merc ↑ name.
+
+| Criterion | Expected/check |
+| --- | --- |
+| C1 Compact compass |144dp cross, transparent rest backgrounds,48dp targets, N/W/E/S geometry; selected-side outline and accessibility selected state; actual bitmap alpha/native layout |
+| C2 Center ↑ |Initially disabled. Direction tap selects and retains coin repair. Center builds/upgrades only selected side with exact coin/timber debit, no panel/pause. Caps/affordability disable; native pointer transactions |
+| C3 Building features |Mill has timber/construction; Shop has market/crop sale/plant/irrigation/land; Camp has construction/crew/rally/patrol/training. Context survives rotation; native pointer/features |
+| C4 Minimal text |No visible instruction banner or Fix8c text; Merc +/Merc ↑ labels; prices/health remain accessible, action feedback announced; native visibility/label checks and screenshots |
+| C5 Regression |Same schema6,63 JVM cases, full builds/lint/package/audio and API26/35 lifecycle/damage/sound/mute/font/checkpoint gates;12 reviewed scenes per API |
+
+Construction and upgrades keep their existing prices. Direction repairs keep8 coins/up to50HP/0 timber and spend nothing on intact fences. A damaged-side selection can therefore incur the existing8-coin repair before a separate center upgrade; there is no second hidden repair charge in the center action. No selection survives new-farm/import reset. Stable handset/audio/accessibility/performance/identity gates remain blocked.
+
+## Prior design and verification records
+
 # 0.8 acceptance — Quick commands and soundscape
 
 Baseline0.7.0-rc.1/edb4941bc30eca38b5db93e6d3db10b1eefcd332:58 JVM cases,787 native checks/API26 and35. New scope: bottom-center cross, direct coin repairs, direct hire/uniform, daytime/nighttime music and environmental/combat effects.

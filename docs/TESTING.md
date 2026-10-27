@@ -1,3 +1,13 @@
+# 0.9 verification plan
+
+Baseline0.8.0-rc.1/3c8251f passed63 JVM tests and824 installed-app checks on each API26/35 emulator. No Game/SaveCodec/audio changes are needed; local JDK17/JUnit regression remains63 PASS. Final-source full Android builds/lint/package and both installed-APK suites remain blocking. Self-review is not independent review.
+
+New native checks: four button interior pixels have zero alpha at rest; no instruction banner; Merc ↑ label;48dp center fits compass middle; no-selection/affordability/max disabling; actual direction selection and center Gap→Wood→Stone→Steel purchases with exact debits, independent sides and continued play; Mill/Camp feature routing and retained Mill context after rotation; Shop market purchase/bonus harvest/plant exact transactions.12 scenes per API include Shop and compact gameplay. Existing checkpoint/import corruption, fonts/orientation, no paused drawing, focus/Home, day/night/sound dispatch/mute and survival damage/economy tests remain.
+
+Compare final source ZIP to workspace and published APK digest to audited candidate. Six generated audio files must remain reproducible. Record observed results in release verification artifacts, not assumptions. No existing check may be waived to publish. Physical phone30min/endurance20 interruptions/TalkBack200% font/audio routing+listening/measured performance/production certificate upgrade remain BLOCKED; HIL N/A. Schema6 unchanged; keep backup/previous APK before upgrading.
+
+## Prior design and verification records
+
 # 0.8 verification plan and evidence
 
 Baseline0.7.0-rc.1/edb4941 passed58 JVM cases and787 checks on each API26/35 emulator. Local pure JDK17/JUnit run now63 cases PASS; Android build/lint and installed-artifact suites remain required on final source. Acceptance Q1–Q6 is in SPEC.md; self-review is not independent review.

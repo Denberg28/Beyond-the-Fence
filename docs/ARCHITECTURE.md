@@ -1,3 +1,13 @@
+# 0.9 compass and contextual feature pages
+
+MainActivity keeps selectedWall in[-1,3], initially−1; a direction selects and calls the existing repair action. The center button calls Game.buildWall only for a valid selected side. Enabled state uses actual next-tier coin/timber requirements and max material. No simulation rules/save fields change. Activity bundle retains side and selectedBuilding in[-1,2]; fresh game/import clears both. Building context restores on rotation and ordinary Build navigation clears it.
+
+All five compass cells remain48dp, with no inter-cell gap, producing144dp rather than156dp footprint. GameButton uses transparent fill and unselected stroke; selected-side stroke is gold, text communicates damage with existing labels/HP descriptions. Persistent notice View is GONE and takes no layout space; explicit action notices use accessibility announcements. Crew labels are single-line Merc +/Merc ↑; full prices/caps remain content descriptions.
+
+Existing construction/timber/upgrade/squad action creators are reused in dedicated Mill/Shop/Camp pages. Shop owns separate harvest/plant buttons so the pinned global controls are never reparented. Market sale bonus still comes only from the built market; selling/planting do not gain a new prerequisite. Standard Fence/Farm/Squad/Gear tabs remain available and exit contextual mode. Panels retain pause/modal accessibility behavior; direct commands do not open them or change pause state.
+
+## Prior design and verification records
+
 # 0.8 UI and sound architecture
 
 MainActivity gameShell contains a weighted ScrollView for HUD/art/notice, followed by the collapsible seed tray and pinned command/global-action docks. Command cross is156dp (48dp targets separated6dp), flanked by weighted Merc + and Uniform ↑. The shell, including pinned commands, is hidden from accessibility traversal when a build overlay is open. GameBoard/BoardGeometry now own12 interior actions, no fence buttons on the artwork. Repair calls Game.repairWall directly, preserving pause state and spending8 coins/0 timber for up to50HP. Construction remains a separate explicit Build flow.
