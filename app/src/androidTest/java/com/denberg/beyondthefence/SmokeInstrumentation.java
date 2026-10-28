@@ -375,7 +375,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> a.game.buildings[0] && a.game.coins == 58 && a.game.wood == 18), "Construct the interior timber mill");
       farmCycle(a);
       touch(a, "building2");
-      check(((android.widget.TextView) control(a, "panelTitle")).getText().toString().equals("BARRACKS")
+      check(((android.widget.TextView) control(a, "panelTitle")).getText().toString().equals("CREW")
           && control(a, "hire").isShown() && control(a, "upgrade0") != null,
           "Camp opens construction, recruitment and mercenary upgrades");
       touch(a, "construct2"); touch(a, "closeBuild");
@@ -519,7 +519,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(reopened, "harvest");
       check(onUi(() -> threatened.coins == 100 && threatened.wood == 2 && threatened.harvested == 1),
           "Surviving ripe crop funds repairs through normal harvest");
-      touch(reopened, "build"); touch(reopened, "buildTab0"); touch(reopened, "buyTimber");
+      touch(reopened, "build"); touch(reopened, "buildTab1"); touch(reopened, "buyTimber"); touch(reopened, "buildTab0");
       check(onUi(() -> threatened.coins == 88 && threatened.wood == 12), "Harvest coins buy a timber bundle atomically");
       touch(reopened, "constructWall0");
       check(onUi(() -> threatened.wallHealth[0] == 50 && threatened.coins == 80 && threatened.wood == 12
@@ -626,7 +626,7 @@ public final class SmokeInstrumentation extends Instrumentation {
           "Unaffordable mercenary upgrade shows its price inside the button");
       runOnMainSync(() -> { compact.coins = 200; compact.wood = 100; compact.plant(0, 0); compact.growth[0] = 1; reopened.refresh(); });
       touch(reopened, "building1");
-      check(((android.widget.TextView) control(reopened, "panelTitle")).getText().toString().equals("SHOP")
+      check(((android.widget.TextView) control(reopened, "panelTitle")).getText().toString().equals("FARM")
           && control(reopened, "shopHarvest").isShown() && control(reopened, "upgrade2") != null,
           "Shop opens crop sales and farm upgrades");
       touch(reopened, "construct1"); touch(reopened, "shopHarvest");
@@ -645,7 +645,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       screenshot("smoke-barracks.png"); touch(reopened, "closeBuild");
       touch(reopened, "building0"); touch(reopened, "construct0"); touch(reopened, "advanced0");
       check(onUi(() -> compact.millLevel == 1 && compact.millYield() == 6 && compact.millPeriod() == 11), "Mill popup buys a working production upgrade");
-      touch(reopened, "closeBuild"); touch(reopened, "building1"); touch(reopened, "buyItem0"); touch(reopened, "buyItem1");
+      touch(reopened, "closeBuild"); touch(reopened, "building1"); touch(reopened, "buildTab5"); touch(reopened, "buyItem0"); touch(reopened, "buyItem1");
       check(onUi(() -> compact.elixirs == 1 && compact.enhancers == 1), "Shop stocks both side-slot consumables");
       screenshot("smoke-items.png"); touch(reopened, "closeBuild"); touch(reopened, "itemSlot0");
       check(onUi(() -> compact.elixirs == 0 && compact.health == 75 && compact.mercenaries.get(0).health == 90), "Left elixir slot heals surviving actors exactly once");
@@ -660,12 +660,12 @@ public final class SmokeInstrumentation extends Instrumentation {
       }
       // Reproduce the old stale-scroll/mismatched-building tab transition on the real panel.
       touch(reopened, "building2");
-      for (int page : new int[] {1, 2, 3, 0, 3, 2, 1}) {
+      for (int page : new int[] {1, 2, 3, 0, 5, 4, 3, 2, 1}) {
         runOnMainSync(() -> ((android.widget.ScrollView) control(reopened, "panelScroll")).fullScroll(View.FOCUS_DOWN));
         awaitIdle(); touch(reopened, "buildTab" + page);
         check(onUi(() -> ((android.widget.ScrollView) control(reopened, "panelScroll")).getScrollY() == 0),
             "Changed tab starts at top instead of inheriting old scroll");
-        String title = new String[] {"FENCE", "MILL", "SHOP", "BARRACKS"}[page];
+        String title = new String[] {"FENCE", "MILL", "FARM", "CREW", "EQUIPMENT", "SUPPLIES"}[page];
         check(onUi(() -> ((android.widget.TextView)control(reopened, "panelTitle")).getText().toString().equals(title)
             && control(reopened, "buildTab" + page).isSelected()), "Title and selected tab match actual page");
         check(onUi(() -> {
@@ -673,12 +673,23 @@ public final class SmokeInstrumentation extends Instrumentation {
           return tab.getLineCount() == 1 && tab.getPaint().measureText(tab.getText().toString())
               <= tab.getWidth() - tab.getPaddingLeft() - tab.getPaddingRight();
         }), "Building tab label fits as a complete word at200 percent font");
-        check(onUi(() -> page == 0 ? control(reopened, "constructWall0") != null && control(reopened, "buyHero") == null
+        check(onUi(() -> page == 0 ? control(reopened, "constructWall0") != null && control(reopened, "upgrade1") != null
+                && control(reopened, "buyTimber") == null && control(reopened, "buyHero") == null
+            : page == 4 ? control(reopened, "gear8") != null && control(reopened, "buyItem0") == null
+            : page == 5 ? control(reopened, "buyItem0") != null && control(reopened, "assignButtons") != null && control(reopened, "shopPlant") == null
             : control(reopened, "construct" + (page - 1)) != null
-                && (page != 1 || control(reopened, "buyItem0") == null)
-                && (page != 2 || control(reopened, "hire") == null)
-                && (page != 3 || control(reopened, "buyTimber") == null)), "New tab contains only its building actions");
+                && (page != 1 || control(reopened, "buyItem0") == null && control(reopened, "upgrade1") == null)
+                && (page != 2 || control(reopened, "hire") == null && control(reopened, "buyItem0") == null)
+                && (page != 3 || control(reopened, "buyTimber") == null)), "New tab contains only its task's actions");
       }
+      runOnMainSync(() -> {
+        int[] order = {0, 2, 1, 3, 5, 4};
+        for (int i = 0; i < order.length; i++) {
+          View tab = control(reopened, "buildTab" + order[i]);
+          check(tab.getHeight() >= Math.round(48 * reopened.getResources().getDisplayMetrics().density), "Focus tabs keep48dp targets");
+          if (i % 3 > 0) check(tab.getLeft() > control(reopened, "buildTab" + order[i - 1]).getLeft(), "Task tabs read left to right in sequence");
+        }
+      });
       screenshot("smoke-tabs.png"); touch(reopened, "closeBuild"); checkDock(reopened);
       Game century = new Game(); century.day = 100; century.coins=10000; century.wood=1000;
       century.weapon=20; century.fence=20; century.drill=20; century.heroLevel=20; century.millLevel=10; century.irrigation=10;
@@ -689,7 +700,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(century.boss()!=null && century.bossSpawned, "Day100 scheduled spawn creates the Grave Warden");
       century.boss().x=.01f; for(Game.Enemy enemy:century.enemies) if(enemy!=century.boss())enemy.x=.95f;
       runOnMainSync(() -> {reopened.game=century;reopened.paused=true;reopened.refresh();});
-      touch(reopened,"building1");touch(reopened,"buyItem2");touch(reopened,"buyItem3");
+      touch(reopened,"building1");touch(reopened,"buildTab5");touch(reopened,"buyItem2");touch(reopened,"buyItem3");
       check(onUi(() -> century.bolts==1 && century.blasts==1),"Shop sells both single-target and area magic potions");
       screenshot("smoke-potions.png");touch(reopened,"closeBuild");
       float bossBefore=century.boss().hp;touch(reopened,"itemSlot2");
@@ -732,7 +743,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     touch(a, "gear0"); dialogAction("Unequip");
     check(onUi(() -> fantasy.gear[0] == -1), "Equipment selector can unequip a relic");
     touch(a, "equipBest"); screenshot("smoke-equipment.png");
-    touch(a, "assignButtons"); dialogAction("Button 1 · Elixir"); dialogAction("Starfall · 0 owned");
+    touch(a, "buildTab5"); touch(a, "assignButtons"); dialogAction("Button 1 · Elixir"); dialogAction("Starfall · 0 owned");
     check(onUi(() -> fantasy.equipped[0] == 3), "Visible assignment flow interchanges potion and magic without spending stock");
     touch(a, "closeBuild");
     runOnMainSync(() -> { fantasy.arenaOfferDay = 10; a.refresh(); }); awaitIdle();
@@ -755,6 +766,20 @@ public final class SmokeInstrumentation extends Instrumentation {
     checkDialogActions("Cross the rift", "Stay here");
     screenshot("smoke-rift.png"); dialogAction("Cross the rift");
     check(onUi(() -> a.game.world == 2 && a.game.day == 1 && a.game.gear[0] == 4 && a.game.coins == 80), "Day100 portal retains relics in a new-world farm");
+    checkDialogActions("Build a haven"); screenshot("smoke-ashen-arrival.png"); dialogAction("Build a haven");
+    check(onUi(() -> a.paused && a.game.ashenWorld() && a.game.settlementStyle() == 1), "Ashen arrival stays paused and uses its own settlement");
+    checkBoard(a); checkDock(a); screenshot("smoke-ashen-world.png");
+    touch(a, "build"); touch(a, "buildTab5");
+    check(onUi(() -> control(a, "suppliesMarket") != null && !control(a, "buyItem0").isEnabled()), "Supplies explains the missing market and disables purchases");
+    touch(a, "suppliesMarket");
+    check(onUi(() -> control(a, "buildTab2").isSelected() && control(a, "construct1") != null), "Missing-market link routes to farm construction");
+    touch(a, "buildTab5"); screenshot("smoke-supplies.png"); touch(a, "closeBuild");
+    runOnMainSync(() -> {
+      a.game.day = 5; a.game.weather = 2; a.game.coins = 2000; a.game.wood = 500;
+      a.game.startNight(); a.game.spawned = a.game.quota() / 2; a.game.spawnClock = 0; a.game.tick(.1f); a.refresh();
+    });
+    check(onUi(() -> a.game.boss() != null && a.game.bossName().equals("Cinder Regent") && a.game.ashfall()), "Ashfall raid spawns the Cinder Regent through real simulation");
+    screenshot("smoke-ashen-boss.png");
   }
 
   private void checkDock(MainActivity a) {
@@ -777,7 +802,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       Bitmap image = Bitmap.createBitmap(terrain.getWidth(), terrain.getHeight(), Bitmap.Config.ARGB_8888);
       try {
         terrain.draw(new Canvas(image));
-        check(image.getPixel(0, terrain.getHeight()-1) == (a.game.night ? 0xff213e32 : 0xff4b793a),
+        check(image.getPixel(0, terrain.getHeight()-1) == (World.ground(a.game.world, a.game.night)),
             "Scenery extends beneath transparent bottom padding");
       } finally { image.recycle(); }
       check(control(a, "commands").getBackground() == null && control(a, "actions").getBackground() == null,

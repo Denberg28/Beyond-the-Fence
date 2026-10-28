@@ -1,3 +1,11 @@
+# 0.14.0-rc.1 — Focused building and Ashen March (development)
+
+- Reorder build tabs Fence→Farm→Mill→Crew→Supplies→Equipment; group actions by purpose and move fortification to Fence, materials to Mill and consumables/assignments to Supplies.
+- Shared timber frame, parchment surface, gold trim and serif section headings align popups with the fantasy setting.
+- First authored World2 slice: Ashen March scenery, four chapter names, ashfall tactics and Cinder Regent boss variant; portal retains relics/settings and shows a paused arrival.
+- Save schema9/package identity/signing pin unchanged. VersionCode18. No new dependency/permission. Worlds3+ currently reuse Ashen March.
+- Candidate work; do not infer release or device-validation status from this entry.
+
 # 0.13.0-rc.2 — TAG fantasy survival release
 
 Publish the renamed game with interchangeable potion/magic buttons, nine equipment slots/five rarities/Equip best, optional tenth-day champion arenas, bounded offline director and reincarnation/Day100 portal lore. Fixed action areas keep adventure choices above system bars, including at200% font. Deferred welcome does not block invitations. VersionCode17, schema9, retained signing identity.93 unit tests per variant,1485 native checks and both actual update stages per API26/35 passed; physical-phone validation remains pending.

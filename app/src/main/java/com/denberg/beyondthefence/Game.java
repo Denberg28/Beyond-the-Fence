@@ -46,7 +46,14 @@ public final class Game {
   public boolean spellArea; // Transient cosmetic cue; never changes combat or saved randomness.
   public Mercenary hero;
   public static final int MAX_WALL_RANK = 4, MAX_ITEMS = 9;
-  public int settlementStyle() { return Settlement.style(day); }
+  public boolean ashenWorld() { return World.ashen(world); }
+  public String worldName() { return World.name(world); }
+  public String worldChapter() { return World.chapter(world, day); }
+  public String weatherName() { return World.weatherName(world, weather); }
+  public String settlementName() { return World.settlementName(world, settlementStyle()); }
+  public boolean ashfall() { return ashenWorld() && weather == 2; }
+  public String bossName() { return ashenWorld() ? "Cinder Regent" : "Grave Warden"; }
+  public int settlementStyle() { return World.settlementStyle(world, day); }
   public float ringXAt(float progress, float distance) { return Settlement.x(settlementStyle(), progress, distance); }
   public float ringYAt(float progress, float distance) { return Settlement.y(settlementStyle(), progress, distance); }
   public float guardX(float progress) { return ringXAt(progress, 0); }
@@ -340,7 +347,7 @@ public final class Game {
     spawnClock = Math.max(-.1f, spawnClock - dt);
     if (spawned < quota() && spawnClock <= 0) {
       int kind = bossDay() && !bossSpawned && spawned >= quota() / 2 ? Campaign.BOSS : random(Campaign.enemyKinds(day));
-      if (kind == Campaign.BOSS) { bossSpawned = true; notice = "Grave Warden arrives! Defeat the five-day boss."; }
+      if (kind == Campaign.BOSS) { bossSpawned = true; notice = bossName() + " arrives! Defeat the five-day boss."; }
       float hp = enemyHealth(kind);
       enemies.add(new Enemy(kind, random(4), 1, hp, hp, .12f + random(760) / 1000f));
       spawned++;
@@ -350,7 +357,7 @@ public final class Game {
       if (!e.breached) {
         float speed = enemySpeed(e.type) * movementFactor(e);
         float stop = e.type == 3 && wallHealth[e.lane] > 0 ? .26f : 0;
-        e.x = Math.max(stop, e.x - speed * dt * (weather == 1 ? .85f : 1));
+        e.x = Math.max(stop, e.x - speed * dt * (weather == 1 || ashfall() ? .85f : 1));
         if (e.x <= stop && wallHealth[e.lane] > 0) {
           float damage = enemyDamage(e.type) * dt * (relaxed ? .5f : 1) * (1 - equipmentBonus(1))
               * (walls[e.lane] == 2 ? .72f : walls[e.lane] >= 3 ? Math.max(.3f, .5f - wallRanks[e.lane] * .05f) : 1);
@@ -414,10 +421,10 @@ public final class Game {
     shotClock = 0;
     focusClock = 0;
     health = Math.min(maxHealth(), health + 15);
-    weather = random(4);
+    weather = World.weather(world, day, random(4));
     populateRoamers();
     notice =
-        "Dawn · +" + reward + " coins. " + WEATHER[weather] + " ahead. Plant, repair, prepare.";
+        "Dawn · +" + reward + " coins. " + weatherName() + " ahead. " + (ashenWorld() ? worldChapter() : "Plant, repair, prepare.");
   }
 
   public void recover() {
@@ -436,7 +443,7 @@ public final class Game {
     spawnClock = 0;
     shotClock = 0;
     focusClock = 0;
-    weather = random(4);
+    weather = World.weather(world, day, random(4));
     roamers.clear();
     populateRoamers();
     for (int side = 0; side < 4; side++) wallHealth[side] = maxWallHealth(side);
@@ -771,10 +778,11 @@ public final class Game {
     System.arraycopy(collected, 0, next.collected, 0, collected.length);
     System.arraycopy(gear, 0, next.gear, 0, gear.length);
     System.arraycopy(equipped, 0, next.equipped, 0, equipped.length);
-    next.lootState = lootState; next.randomState = randomState; next.weather = next.random(4);
+    next.lootState = lootState; next.randomState = randomState; next.weather = World.weather(next.world, 1, next.random(4));
+    next.roamers.clear(); next.populateRoamers();
     next.tutorialDone = true; next.directorEnabled = directorEnabled;
     next.relaxed = relaxed; next.reducedMotion = reducedMotion;
-    next.notice = "World " + next.world + " · A new sky. A new fence. Your relics remember.";
+    next.notice = "World " + next.world + " · " + next.worldName() + " · " + next.worldChapter();
     return next;
   }
 
@@ -818,11 +826,14 @@ public final class Game {
   }
 
   private float enemyHealth(int type) {
-    return (FOE_HP[type] + (Campaign.day(day) - 1) * 6) * (type == Campaign.BOSS ? 2 : 1);
+    return (FOE_HP[type] + (Campaign.day(day) - 1) * 6) * (type == Campaign.BOSS ? ashenWorld() ? 2.2f : 2 : 1);
   }
 
   public float enemySpeed(int type) { return FOE_SPEED[type] * (1 + Math.min(Campaign.day(day) - 1, 40) * .015f); }
-  public float enemyDamage(int type) { return FOE_DAMAGE[type] * (1 + Math.min(day - 1, 30) * .06f + Math.max(0, Campaign.day(day) - 31) * .025f); }
+  public float enemyDamage(int type) {
+    float biome = ashfall() && (type == 2 || type == 5) ? 1.2f : ashenWorld() && type == Campaign.BOSS ? 1.1f : 1;
+    return FOE_DAMAGE[type] * (1 + Math.min(day - 1, 30) * .06f + Math.max(0, Campaign.day(day) - 31) * .025f) * biome;
+  }
 
   public boolean roamerActive(Roamer roamer) {
     return ((int)(elapsed / 6) + (int)(roamer.progress * 7) + roamer.type) % 4 != 0;

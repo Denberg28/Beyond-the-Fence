@@ -4,7 +4,6 @@ import android.app.*;
 import android.content.*;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
 import android.graphics.Insets;
 import android.text.TextUtils;
 import android.net.Uri;
@@ -40,7 +39,7 @@ public final class MainActivity extends Activity {
   private final GameButton[] cropButtons = new GameButton[3],
       plotButtons = new GameButton[9], upgradeButtons = new GameButton[4],
       wallButtons = new GameButton[4], buildingButtons = new GameButton[3],
-      wallPurchase = new GameButton[4], construction = new GameButton[3], buildTabs = new GameButton[5], rallyButtons = new GameButton[4];
+      wallPurchase = new GameButton[4], construction = new GameButton[3], buildTabs = new GameButton[6], rallyButtons = new GameButton[4];
   private LinearLayout seedTray, buildItems;
   private TextView buildResources, roster;
   private FrameLayout window, buildOverlay;
@@ -102,7 +101,7 @@ public final class MainActivity extends Activity {
     saveMessage = session.saveMessage;
     if (state != null) {
       buildOpen = state.getBoolean("buildOpen");
-      buildTab = Math.max(0, Math.min(4, state.getInt("buildTab")));
+      buildTab = Math.max(0, Math.min(5, state.getInt("buildTab")));
       selectedWall = Math.max(-1, Math.min(3, state.getInt("wall", -1)));
       selectedBuilding = Math.max(-1, Math.min(2, state.getInt("building", -1)));
       selectedCrop = Math.max(0, Math.min(game.unlockedCrops() - 1, state.getInt("seed")));
@@ -503,12 +502,13 @@ public final class MainActivity extends Activity {
     } else if (game.worldComplete) {
       portalShown = true;
       adventurePrompt("The rift is open",
-          "One hundred dawns. Another sky.\n\nEnter World " + Math.min(999, game.world + 1) + " with your relics, equipment and button assignments.\n\nA fresh farm begins at Day1. Buildings, coins, crew and supplies reset.",
+          "Beyond the rift: " + World.name(Math.min(999, game.world + 1)) + "\n\n" + World.introduction(Math.min(999, game.world + 1)) + "\n\nYour relics, equipment and button assignments travel with you. A fresh farm begins at Day 1; buildings, coins, crew and supplies reset.",
           new String[] {"Cross the rift", "Stay here"}, new Runnable[] {
             () -> {
               Game next = game.crossRift(); if (next != null) {
-                game = next; selectedCrop = 0; selectedWall = selectedBuilding = -1; portalShown = false;
+                game = next; selectedCrop = 0; buildTab = 0; selectedWall = selectedBuilding = -1; portalShown = false;
                 paused = true; changed();
+                handler.post(() -> { adventureDialog = true; adventurePrompt(next.worldName(), World.introduction(next.world), new String[] {"Build a haven"}, new Runnable[] {() -> { }}); });
               }
             }, () -> { }
           });
@@ -519,8 +519,8 @@ public final class MainActivity extends Activity {
   private void adventurePrompt(String title, String message, String[] labels, Runnable[] actions) {
     Dialog dialog = new Dialog(this); dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
     LinearLayout card = column(); card.setPadding(dp(16), dp(16), dp(16), dp(16));
-    GradientDrawable skin = new GradientDrawable(); skin.setColor(CREAM); skin.setCornerRadius(dp(12)); card.setBackground(skin);
-    TextView heading = text(title, 20, INK); heading.setTextSize(compactTextSize(20, 28)); heading.setTypeface(null, Typeface.BOLD); card.addView(heading);
+    card.setBackgroundResource(R.drawable.panel_parchment);
+    TextView heading = text(title, 20, INK); heading.setTextSize(compactTextSize(20, 28)); heading.setTypeface(Typeface.create("serif", Typeface.BOLD)); card.addView(heading);
     ScrollView scroll = new ScrollView(this);
     TextView copy = text(message, 16, INK); copy.setPadding(0, dp(12), 0, dp(12)); scroll.addView(copy);
     card.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -619,14 +619,11 @@ public final class MainActivity extends Activity {
     buildOverlay.setVisibility(View.GONE);
     buildOverlay.setPadding(dp(20), dp(16), dp(20), dp(16));
     LinearLayout card = column();
-    GradientDrawable background = new GradientDrawable();
-    background.setColor(CREAM);
-    background.setCornerRadius(dp(18));
-    card.setBackground(background);
-    card.setPadding(dp(12), dp(8), dp(12), dp(12));
+    card.setBackgroundResource(R.drawable.panel_parchment);
+    card.setPadding(dp(16), dp(12), dp(16), dp(16));
     LinearLayout bar = row();
     buildTitle = text("FORTRESS", 20, INK);
-    buildTitle.setTag("panelTitle"); buildTitle.setTypeface(null, Typeface.BOLD);
+    buildTitle.setTag("panelTitle"); buildTitle.setTypeface(Typeface.create("serif", Typeface.BOLD));
     bar.addView(buildTitle, new LinearLayout.LayoutParams(0, -2, 1));
     GameButton close = button("✕", this::closeBuild);
     close.setTag("closeBuild");
@@ -636,27 +633,23 @@ public final class MainActivity extends Activity {
     buildResources = text("", 12, MUTED);
     buildResources.setPadding(dp(4), 0, 0, dp(6));
     card.addView(buildResources);
-    LinearLayout navigation = row();
-    String[] labels = {"Fence", "Mill", "Shop", "Barracks"};
-    for (int i = 0; i < 4; i++) {
-      final int page = i;
-      buildTabs[i] = button(labels[i], () -> selectBuildPage(page));
-      buildTabs[i].setTag("buildTab" + i);
-      buildTabs[i].setTextSize(compactTextSize(11, 16));
-      buildTabs[i].setMaxLines(1); buildTabs[i].setPadding(dp(2), dp(4), dp(2), dp(4));
-      LinearLayout.LayoutParams tab = new LinearLayout.LayoutParams(0, -1, 1);
-      tab.setMargins(dp(2), 0, dp(2), 0); navigation.addView(buildTabs[i], tab);
+    // Task order is independent of retained page IDs (map taps and rotation use those IDs).
+    String[] labels = {"Fence", "Mill", "Farm", "Crew", "Equipment", "Supplies"};
+    int[] order = {0, 2, 1, 3, 5, 4};
+    for (int line = 0; line < 2; line++) {
+      LinearLayout navigation = row();
+      for (int col = 0; col < 3; col++) {
+        final int page = order[line * 3 + col];
+        buildTabs[page] = button(labels[page], () -> selectBuildPage(page));
+        buildTabs[page].setTag("buildTab" + page);
+        buildTabs[page].setTextSize(compactTextSize(12, 16));
+        buildTabs[page].setMaxLines(1);
+        buildTabs[page].setPadding(dp(2), dp(4), dp(2), dp(4));
+        LinearLayout.LayoutParams tab = new LinearLayout.LayoutParams(0, -1, 1);
+        tab.setMargins(dp(2), dp(2), dp(2), dp(2)); navigation.addView(buildTabs[page], tab);
+      }
+      card.addView(navigation);
     }
-    card.addView(navigation);
-    LinearLayout loadout = row();
-    buildTabs[4] = button("Equipment", () -> selectBuildPage(4));
-    buildTabs[4].setTag("buildTab4");
-    loadout.addView(buildTabs[4], new LinearLayout.LayoutParams(0, -2, 1));
-    GameButton assignments = button("Assign buttons", this::assignButtons);
-    assignments.setTag("assignButtons");
-    LinearLayout.LayoutParams assignSize = new LinearLayout.LayoutParams(0, -2, 1);
-    assignSize.setMargins(dp(4), 0, 0, 0); loadout.addView(assignments, assignSize);
-    card.addView(loadout);
     buildScroll = new ScrollView(this); buildScroll.setTag("panelScroll");
     buildScroll.setSmoothScrollingEnabled(false);
     buildItems = column(); buildItems.setTag("panelItems");
@@ -667,6 +660,14 @@ public final class MainActivity extends Activity {
     FrameLayout.LayoutParams centered = new FrameLayout.LayoutParams(cardWidth, -1, Gravity.CENTER);
     buildOverlay.addView(card, centered);
     window.addView(buildOverlay, new FrameLayout.LayoutParams(-1, -1));
+  }
+
+  private void buildSection(String title, String description) {
+    TextView heading = text(title, 16, INK);
+    heading.setTypeface(Typeface.create("serif", Typeface.BOLD));
+    heading.setPadding(dp(4), dp(14), dp(4), dp(4)); if (Build.VERSION.SDK_INT >= 28) heading.setAccessibilityHeading(true);
+    buildItems.addView(heading);
+    TextView copy = text(description, 12, MUTED); copy.setPadding(dp(4), 0, dp(4), dp(6)); buildItems.addView(copy);
   }
 
   private void addBuildAction(GameButton action) {
@@ -686,40 +687,56 @@ public final class MainActivity extends Activity {
     java.util.Arrays.fill(rallyButtons, null);
     shopHarvest = null; shopPlant = null; heroBuy = null; costButton = null;
     java.util.Arrays.fill(itemBuy, null); java.util.Arrays.fill(advanced, null);
-    label(buildTitle, buildTab == 4 ? "EQUIPMENT" : selectedBuilding < 0 ? "FENCE" : new String[] {"MILL", "SHOP", "BARRACKS"}[selectedBuilding]);
-    if (selectedBuilding >= 0) {
-      addConstruction(selectedBuilding);
-      if (selectedBuilding == 0) { addTimber(); addAdvanced(0); addUpgrade(1); }
-      else if (selectedBuilding == 1) {
-        shopHarvest = button("", () -> { if (canAct()) { game.harvestAll(); changed(); } });
-        shopHarvest.setTag("shopHarvest"); addBuildAction(shopHarvest);
-        shopPlant = button("", () -> { if (canAct()) { game.plantAll(selectedCrop); changed(); } });
-        shopPlant.setTag("shopPlant"); addBuildAction(shopPlant);
-        addUpgrade(2); addUpgrade(3);
-        for (int type = 0; type < Game.ITEMS.length; type++) {
-          final int item = type;
-          itemBuy[type] = button("", () -> { if (canAct()) { if (!game.buyItem(item)) showPrice(itemBuy[item], game.itemPrice(item), 0); else clearHint(); changed(); } });
-          itemBuy[type].setTag("buyItem" + type);
-          itemBuy[type].setCompoundDrawablesRelativeWithIntrinsicBounds(new ItemIcon(type, dp(28)), null, null, null);
-          itemBuy[type].setCompoundDrawablePadding(dp(6)); addBuildAction(itemBuy[type]);
-        }
-      } else {
-        addSquad(); addUpgrade(0); addAdvanced(1);
-        heroBuy = button("", () -> { if (canAct()) { if (!game.buyHero()) showPrice(heroBuy, 360, 20); else clearHint(); changed(); } });
-        heroBuy.setTag("buyHero"); addBuildAction(heroBuy); addAdvanced(2);
-      }
-    } else if (buildTab == 0) {
-      addTimber();
-      repairOverlay = button("", () -> { if (canAct()) { game.repair(); changed(); } });
-      repairOverlay.setTag("repair"); addBuildAction(repairOverlay);
+    label(buildTitle, new String[] {"FENCE", "MILL", "FARM", "CREW", "EQUIPMENT", "SUPPLIES"}[buildTab]);
+    if (buildTab == 0) {
+      buildSection("Borders", "Build gaps, repair damage, then strengthen each side.");
       for (int i = 0; i < 4; i++) {
         final int side = i;
         wallPurchase[i] = button("", () -> { if (canAct()) { if (game.wallDamaged(side)) { if (!game.repairWall(side)) showPrice(wallPurchase[side], 8, 0); }
           else if (!game.upgradeBorder(side)) showPrice(wallPurchase[side], game.borderCoinCost(side), game.borderWoodCost(side)); changed(); } });
         wallPurchase[i].setTag("constructWall" + i); addBuildAction(wallPurchase[i]);
       }
+      buildSection("Homestead", "Restore the core and fortify the whole haven.");
+      repairOverlay = button("", () -> { if (canAct()) { game.repair(); changed(); } });
+      repairOverlay.setTag("repair"); addBuildAction(repairOverlay); addUpgrade(1);
+    } else if (buildTab == 1) {
+      buildSection("Timber production", "Build the mill, then improve its output.");
+      addConstruction(0); addAdvanced(0);
+      buildSection("Materials", "Need framing now? Buy a timber bundle."); addTimber();
+    } else if (buildTab == 2) {
+      buildSection("Farm & market", "The market adds 25% to crop sales."); addConstruction(1);
+      shopHarvest = button("", () -> { if (canAct()) { game.harvestAll(); changed(); } });
+      shopHarvest.setTag("shopHarvest"); addBuildAction(shopHarvest);
+      shopPlant = button("", () -> { if (canAct()) { game.plantAll(selectedCrop); changed(); } });
+      shopPlant.setTag("shopPlant"); addBuildAction(shopPlant);
+      buildSection("Cultivation", "Grow faster and open more planting space."); addUpgrade(2); addUpgrade(3);
+    } else if (buildTab == 3) {
+      buildSection("Barracks", "Recruit and train your defenders."); addConstruction(2); addSquad();
+      addUpgrade(0); addAdvanced(1);
+      buildSection("Hero", "One hero fights alongside up to three mercenaries.");
+      heroBuy = button("", () -> { if (canAct()) { if (!game.buyHero()) showPrice(heroBuy, 360, 20); else clearHint(); changed(); } });
+      heroBuy.setTag("buyHero"); addBuildAction(heroBuy); addAdvanced(2);
+      buildSection("Orders", "Rally to a border or resume the perimeter patrol."); addOrders();
+    } else if (buildTab == 4) {
+      buildSection("Relic loadout", "Worn relics travel with you through the rift."); addEquipment();
+    } else if (buildTab == 5) {
+      if (game.ashenWorld()) buildSection(game.worldChapter(), "Ashfall: approaching foes −15% speed; Brutes / Ironhides +20% damage. Fifth-night boss: Cinder Regent.");
+      buildSection("Potions & magic", "Market required. Purchases add stock; they do not cast.");
+      for (int type = 0; type < Game.ITEMS.length; type++) {
+        final int item = type;
+        itemBuy[type] = button("", () -> { if (canAct()) { if (!game.buyItem(item)) showPrice(itemBuy[item], game.itemPrice(item), 0); else clearHint(); changed(); } });
+        itemBuy[type].setTag("buyItem" + type);
+        itemBuy[type].setCompoundDrawablesRelativeWithIntrinsicBounds(new ItemIcon(type, dp(28)), null, null, null);
+        itemBuy[type].setCompoundDrawablePadding(dp(6)); addBuildAction(itemBuy[type]);
+      }
+      if (!game.buildings[1]) {
+        GameButton market = button("Build market · Farm", () -> selectBuildPage(2));
+        market.setTag("suppliesMarket"); addBuildAction(market);
+      }
+      buildSection("Quick slots", "Assign any potion or spell to any of the three buttons.");
+      GameButton assignments = button("Assign buttons", this::assignButtons);
+      assignments.setTag("assignButtons"); addBuildAction(assignments);
     }
-    if (buildTab == 4) addEquipment();
     // Cancel stale scroll/focus from the detached page, then settle the new page at its start.
     buildScroll.scrollTo(0, 0);
     buildScroll.post(() -> {
@@ -761,6 +778,9 @@ public final class MainActivity extends Activity {
     hireButton = button("", () -> { if (canAct()) { if (!game.hire()) showPrice(hireButton, game.hireCost(), 6); changed(); } });
     hireButton.setTag("hire"); addBuildAction(hireButton);
     roster = text("", 13, INK); roster.setPadding(dp(6), dp(8), dp(6), dp(8)); buildItems.addView(roster);
+  }
+
+  private void addOrders() {
     LinearLayout rally = row();
     for (int i = 0; i < 4; i++) {
       final int side = i;
@@ -769,7 +789,7 @@ public final class MainActivity extends Activity {
       rallyButtons[i] = action; action.setTag("rally" + i);
       rally.addView(action, new LinearLayout.LayoutParams(0, -2, 1));
     }
-    buildItems.addView(text("Rally", 12, MUTED)); buildItems.addView(rally);
+    buildItems.addView(rally);
     patrolButton = button("Resume perimeter patrol", () -> { if (canAct()) { game.resumePatrol(); changed(); } });
     patrolButton.setTag("patrol"); addBuildAction(patrolButton);
   }
@@ -839,8 +859,8 @@ public final class MainActivity extends Activity {
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
     label(survived, "Survived " + (game.worldComplete ? 100 : game.day - 1) + (game.day == 2 ? " day" : " days") + (game.world > 1 ? " · World " + game.world : ""));
     label(stats, game.coins + " coins · " + game.wood + " timber");
-    label(status, "Day " + game.day + " · " + Settlement.NAMES[game.settlementStyle()] + " · " + Game.WEATHER[game.weather] + " · Farm "
-        + Math.round(game.health) + "/" + game.maxHealth() + (game.boss() != null ? " · BOSS" : game.bossDay() ? " · Boss tonight" : ""));
+    label(status, game.worldName() + " · Day " + game.day + " · " + game.settlementName() + " · " + game.weatherName() + " · Farm "
+        + Math.round(game.health) + "/" + game.maxHealth() + (game.boss() != null ? " · " + game.bossName() : game.bossDay() ? " · Boss tonight" : ""));
     stats.setContentDescription(game.coins + " coins, " + game.wood + " timber");
     label(play, game.defeated ? "Rebuild" : paused ? "Play" : "Pause");
     play.setContentDescription(game.defeated ? "Recover homestead free and resume" : paused ? "Resume game" : "Pause game");
@@ -907,8 +927,10 @@ public final class MainActivity extends Activity {
       buildTabs[i].setSelected(buildTab == i);
       buildTabs[i].colors(buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
     }
-    buildTabs[4].setSelected(buildTab == 4);
-    buildTabs[4].colors(buildTab == 4 ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
+    for (int i = 4; i < buildTabs.length; i++) {
+      buildTabs[i].setSelected(buildTab == i);
+      buildTabs[i].colors(buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
+    }
     for (int i = 0; i < 9; i++) {
       boolean unlocked = i < game.plots(); int crop = game.crop[i]; boolean ripe = crop >= 0 && game.growth[i] >= 1;
       label(plotButtons[i], !unlocked ? "Land +" : crop < 0 ? game.scorched[i] ? "Replant" : "+" : ripe ? "+" + game.sale(crop) + "c" : game.harvestSeconds(i) + "s");
@@ -989,7 +1011,7 @@ public final class MainActivity extends Activity {
       label(costButton, costText);
       if (costButton == fenceUpgrade) costButton.setTextSize(getResources().getConfiguration().fontScale >= 1.5f ? 7 : 10);
     }
-    terrain.phase(game.night);
+    terrain.phase(game.night, game.ashenWorld());
     board.refreshSettlement();
     updateAudio(0);
     scene.invalidate();

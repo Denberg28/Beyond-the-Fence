@@ -39,11 +39,11 @@ final class FarmView extends View {
     Game g = model.get(); float d = geometry.density;
     if (g == null || d == 0 || getHeight() == 0) return;
     // Every frame starts opaque; weather cannot leak alpha into subsequent backgrounds.
-    color(g.night ? 0xff213e32 : 0xff4b793a);
+    color(World.ground(g.world, g.night));
     c.drawRect(0, 0, getWidth(), getHeight(), p);
     // Distant woodland, worn approach tracks, rock outcrops and abandoned camp debris.
     for (int band = 0; band < 3; band++) {
-      color(g.night ? 0xff182f2c + band * 0x00050502 : 0xff385a38 + band * 0x00070702);
+      color(g.ashenWorld() ? (g.night ? 0xff211f29 : 0xff423d39) + band * 0x00040403 : g.night ? 0xff182f2c + band * 0x00050502 : 0xff385a38 + band * 0x00070702);
       woods.reset(); woods.moveTo(0, 0);
       for (int tree = 0; tree <= 20; tree++) {
         float tx = tree * getWidth() / 20f;
@@ -54,7 +54,7 @@ final class FarmView extends View {
       woods.lineTo(getWidth(), 0); woods.close(); c.drawPath(woods, p);
     }
     float road = geometry.worldX(.50f);
-    line(c, road - 5 * d, getHeight(), road + 16 * d, geometry.fortBottom, g.night ? 0xff4c5140 : 0xffa39b70, 27 * d);
+    line(c, road - 5 * d, getHeight(), road + 16 * d, geometry.fortBottom, g.ashenWorld() ? 0xff8c7660 : g.night ? 0xff4c5140 : 0xffa39b70, 27 * d);
     for (int stone = 0; stone < 12; stone++) {
       float sx = stone % 2 == 0 ? 10 * d : getWidth() - 14 * d;
       float sy = (50 + stone * 47) * d % getHeight();
@@ -69,16 +69,26 @@ final class FarmView extends View {
       if (x > l - 12 * d && x < r + 12 * d && y > t - 12 * d && y < b + 12 * d) continue;
       if (i % 3 == 0) {
         circle(c, x + d, y + 3 * d, 10 * d, 0x44312c20);
-        circle(c, x, y, 9 * d, g.night ? 0xff294d35 : 0xff37632e);
-        circle(c, x - 2 * d, y - 2 * d, 5 * d, g.night ? 0xff365b3c : 0xff668e43);
+        circle(c, x, y, 9 * d, g.ashenWorld() ? 0xff3e3939 : g.night ? 0xff294d35 : 0xff37632e);
+        circle(c, x - 2 * d, y - 2 * d, 5 * d, g.ashenWorld() ? 0xff706051 : g.night ? 0xff365b3c : 0xff668e43);
       } else box(c, x, y, 3 * d, 2 * d, d, i % 2 == 0 ? 0xff8a9a59 : 0xff335b32);
+    }
+    if (g.ashenWorld()) {
+      // Charred trunks and ruined kiln pillars frame the playable courtyard.
+      for (int ruin = 0; ruin < 6; ruin++) {
+        float rx = ruin % 2 == 0 ? 14 * d : getWidth() - 24 * d;
+        float ry = (70 + ruin * 63) * d % getHeight();
+        box(c, rx, ry, 10 * d, 18 * d, d, g.night ? 0xff49414a : 0xff534b47);
+        line(c, rx + 2 * d, ry + 7 * d, rx + 8 * d, ry + 4 * d, 0xffb77343, 2 * d);
+        line(c, rx + 5 * d, ry, rx - 3 * d, ry - 9 * d, 0xff332c2b, 3 * d);
+      }
     }
     courtyard.reset();
     for (int step = 0; step <= 80; step++) {
       float px = geometry.worldX(g.ringXAt(step / 20f, 0)), py = geometry.worldY(g.ringYAt(step / 20f, 0));
       if (step == 0) courtyard.moveTo(px, py); else courtyard.lineTo(px, py);
     }
-    courtyard.close(); color(g.night ? 0xff486444 : g.settlementStyle() == 2 ? 0xff8e9c7e : 0xff8eb45a); c.drawPath(courtyard, p);
+    courtyard.close(); color(g.ashenWorld() ? g.night ? 0xff5b514b : 0xffa38d68 : g.night ? 0xff486444 : g.settlementStyle() == 2 ? 0xff8e9c7e : 0xff8eb45a); c.drawPath(courtyard, p);
     if (g.settlementStyle() > 0) {
       for (int paving = 0; paving < 18; paving++) {
         float px = l + (r - l) * (.14f + paving % 3 * .35f), py = t + (b - t) * (.12f + paving / 3 * .14f);
@@ -147,12 +157,17 @@ final class FarmView extends View {
       boolean attacking = !paused.get() && !g.reducedMotion && (enemy.breached ? enemy.advance >= 1 && enemy.attackClock > 1
           : enemy.x <= (enemy.type == 3 ? .26f : 0));
       zombie(c, x, y, size, enemy.type, g.reducedMotion ? 0 : g.elapsed * (enemy.type == 1 ? 10 : 6) + enemy.offset * 7, attacking);
+      if (g.ashenWorld() && (enemy.type == 2 || enemy.type == 5 || enemy.type == Campaign.BOSS)) {
+        line(c, x - 4 * size, y - 6 * size, x + 3 * size, y + 2 * size, 0xffe5a35a, 2 * size);
+        circle(c, x + 4 * size, y - 7 * size, 2 * size, 0xffffcc7d);
+      }
       box(c, x - 8 * d, y - 22 * d, 16 * d, 2 * d, 0, 0xff172e26);
       box(c, x - 8 * d, y - 22 * d, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
     }
     Game.Enemy boss = g.boss();
     if (boss != null) {
       float width = Math.min(getWidth() - 24 * d, 240 * d), bx = (getWidth() - width) / 2;
+      color(0xfff5e5c4); p.setTextSize(10 * d); p.setTypeface(Typeface.DEFAULT_BOLD); c.drawText(g.bossName(), bx, 12 * d, p);
       box(c, bx, 16 * d, width, 5 * d, 2 * d, 0xff291e2b);
       box(c, bx, 16 * d, width * boss.hp / boss.maxHp, 5 * d, 2 * d, 0xffce6b87);
     }
@@ -180,7 +195,14 @@ final class FarmView extends View {
         float y = (i * 53 * d + (g.reducedMotion || paused.get() ? 0 : SystemClock.uptimeMillis() / 14)) % getHeight();
         line(c, x, y, x - 3 * d, y + 8 * d, 0x449fced8, d);
       }
-    if (g.weather == 2) box(c, 0, 0, getWidth(), getHeight() * .3f, 0, 0x22e5eadb);
+    if (g.weather == 2) {
+      box(c, 0, 0, getWidth(), getHeight() * .3f, 0, g.ashenWorld() ? 0x228e7f7c : 0x22e5eadb);
+      if (g.ashenWorld()) for (int ash = 0; ash < 28; ash++) {
+        float ax = (ash * 97 * d + (g.reducedMotion ? 0 : g.elapsed * 6 * d)) % getWidth();
+        float ay = (ash * 59 * d + (g.reducedMotion ? 0 : g.elapsed * 12 * d)) % getHeight();
+        circle(c, ax, ay, d, ash % 5 == 0 ? 0xffe4b16c : 0x779b918d);
+      }
+    }
   }
   private void fenceSide(Canvas c, Game g, int side, float d) {
     int tier = g.wallHealth[side] > 0 ? g.walls[side] : 0;

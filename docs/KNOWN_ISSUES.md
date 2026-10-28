@@ -1,3 +1,10 @@
+# 0.14 development limitations
+
+- First Ashen March slice shares the existing century economy, enemy silhouettes and arena champions. Cinder units add ember markings; later numbered worlds reuse this biome. Chapter names are flavor, not quests or cutscenes.
+- New layout and world require final Android builds/lint/package audits and installed-app API26/35 checks plus screenshot review before candidate promotion. Local JVM results alone do not validate rendering.
+- Physical handset endurance, TalkBack, audible quality and human balance remain unvalidated. Stable promotion remains blocked.
+- Schema9 is unchanged. Pre-update exports preserve rollback; old code can read world2 bytes but displays its original biome/rules.
+
 # 0.13 current limitations
 
 - Published0.13.0-rc.2 passed all required automated candidate gates, including API26/35 full native suites and actual signed release upgrade checks. Physical-phone validation remains pending; this is a prerelease.

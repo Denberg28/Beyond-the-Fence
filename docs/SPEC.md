@@ -1,3 +1,17 @@
+# 0.14 focus navigation and Ashen March acceptance
+
+Baseline: published0.13.0-rc.2, repository main d4bd381. Scope: reorganize existing build actions, theme all popups, implement the first authored second-world biome. No new permissions/dependencies, signing identity or save schema.
+
+- F1: Tabs appear left-to-right as Fence / Farm / Mill, then Crew / Supplies / Equipment. IDs remain0/2/1/3/5/4 so map routing and saved UI state stay compatible. Each has >=48dp targets; page changes reset scroll and stale feedback, rotation retains selection, panels pause and stay paused on exit.
+- F2: Fence owns borders, homestead repair and fortification. Farm owns market, planting/selling, irrigation/expansion. Mill owns construction, output and timber bundles. Crew owns barracks, recruits, uniforms/drills, hero/training and orders, in that order. Supplies owns all four purchases and quick-slot assignment; missing-market link opens Farm. Equipment owns relics. No copied purchases on unrelated pages; exact prices/economy unchanged.
+- F3: Shared parchment/timber/gold popup surface covers Build, arena/portal/arrival, native options/help, equipment and quick-slot selectors. Body text remains legible, system text enlargement and fixed adventure actions remain supported.
+- W1: Day100 still waits for an outstanding arena choice before crossing. Relics/gear, quick slots, accessibility/audio preferences and director setting carry; all farm assets/currency/supplies reset. Fresh arrival is paused.
+- W2: World2 is Ashen March: charred ground/trees, kiln ruins, ember-marked heavy foes, ash particles, offset settlement cycle, four named25-day chapters. World1 is Greenhaven and retains its mechanics/art.
+- W3: Ashfall uses weather2, slowing approaching enemies15%; Brute/Ironhide damage rises20% only during ashfall. Every fifth day is ashfall after dawn/recovery; Cinder Regent uses existing boss cadence/silhouette with10% more HP/damage. All enemy quotas/rank caps/rewards/loot odds remain unchanged. Deterministic simulation, reduced motion, pause/lifecycle, corruption checks and schema9 bounds must pass.
+- W4: Later numbered worlds reuse Ashen March; additional authored worlds and a new full story campaign are outside this first slice. No claim of handset or human balance validation.
+
+Failure/recovery: closing a panel leaves play paused; unavailable market supplies cannot spend coins; defeat retries same world/day; alternating checkpoints and imports retain their existing validation. Rollback uses a pre-update export and prior APK. Schema9 bytes stay compatible, though old apps render the second world with their old art/rules.
+
 # 0.13 acceptance — TAG fantasy survival
 
 Baseline main70191f4, century source3d1e94c. Preserve package/signing identity and all critical farm survival/economy/lifecycle gates.

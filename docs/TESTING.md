@@ -1,3 +1,13 @@
+# 0.14 validation plan — 28 October 2026
+
+Baseline main d4bd381 / released0.13.0-rc.2: local JDK17 + JUnit4.13.2,93 cases PASS. New source:100 JVM cases PASS, including seven WorldTest cases covering all100 days,20 once-only bosses, schema9 bounds/continuation, real ashfall movement/wall damage, relaxed mode, weather fronts, recovery, portal carry/reset and chapter boundaries.
+
+Required source gates: debug/release unit tests, APK/test APK builds, both lint targets, versionCode18 /0.14.0-rc.1 package identity, zero permissions, six unchanged original WAVs and <=5MiB audit. Required integration: full exact-APK API26/35 native suites; focus-tab order and action classification; actual purchase/assignment transactions; market dependency link; pause, rotation and200% font; portal→paused Ashen arrival; new biome ground/geometry and Cinder Regent spawn. Screenshots add supplies, Ashen arrival, daytime world and boss to the existing scenes. Review every new UI scene before candidate promotion.
+
+Signing certificate/schema9 remain unchanged. Source-only CI cannot publish: the retained0.13 signed payload points at older source and fails the exact-source publish condition. A future signed candidate must pass the existing exact compiled-content, pinned-certificate and installed upgrade gates. No local emulator/KVM or physical phone is available. Record final Android/CI results in the implementation PR; a pending check is not PASS. Physical-phone validation remains NOT TESTED; HIL N/A because this is an offline game.
+
+Acceptance mapping: F1–F3 use native pointer/navigation/layout/screenshots; W1–W3 use WorldTest plus installed portal/arrival/raid checks; W4 is an explicit scope limitation in README/known issues. Self-review is not independent review. Rollback retains the prior release and pre-update export.
+
 # Published0.13.0-rc.2 verification — 28 October 2026
 
 Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.13.0-rc.2

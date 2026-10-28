@@ -1,3 +1,9 @@
+# 0.14 world and panel design
+
+`World` derives biome identity, chapter, settlement offset, weather front and palette from the existing persisted world/day. No new save fields or random draws are introduced. Worlds>=2 reuse the authored Ashen March biome. Enemy IDs stay stable; the Cinder Regent uses boss7, with HP below schema9's2200 ceiling. Existing mid-raid world2 imports retain saved enemy HP/weather rather than rewriting live state; future dawn/recovery applies the new weather front.
+
+`MainActivity` retains page IDs0 Fence,1 Mill,2 Farm,3 Crew,4 Equipment and adds5 Supplies. The visible two-row order is0/2/1 then3/5/4. Rebuilding detaches old controls, clears references/hints and resets scroll. Map buildings still route to their retained IDs. Sections provide a stable construction→upgrade→orders sequence; Supplies provides the market dependency link. Parchment drawable is shared by overlay cards and the inherited native alert theme. Canvas biome decoration shares the existing geometry, with no hitbox changes.
+
 # Fantasy extension (0.13)
 
 Game remains the deterministic Android-independent simulation. Equipment describes a finite45-item collection with9 fixed stat slots and5 rarities; Game applies aggregate caps and an independently saved loot RNG. SaveCodec9 appends validated collection/gear/director/arena/world data to the existing layout, retaining schemas1–8. No timers use wall time.
