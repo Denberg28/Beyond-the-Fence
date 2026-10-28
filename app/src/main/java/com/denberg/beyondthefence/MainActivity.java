@@ -29,7 +29,7 @@ public final class MainActivity extends Activity {
   private boolean buildOpen;
   private long lastFrame, lastUi, lastSave;
   private TextView survived, stats, status, notice, saving, buildTitle;
-  private GameButton plantButton, fenceUpgrade, shopHarvest, shopPlant, heroBuy;
+  private GameButton pondButton, controlsToggle, plantButton, fenceUpgrade, shopHarvest, shopPlant, heroBuy;
   private final GameButton[] itemSlots = new GameButton[3], itemBuy = new GameButton[4], advanced = new GameButton[3];
   private final int[] slotIcons = {-1, -1, -1};
   private GameButton costButton;
@@ -40,7 +40,7 @@ public final class MainActivity extends Activity {
       plotButtons = new GameButton[9], upgradeButtons = new GameButton[4],
       wallButtons = new GameButton[4], buildingButtons = new GameButton[3],
       wallPurchase = new GameButton[4], construction = new GameButton[3], buildTabs = new GameButton[6], rallyButtons = new GameButton[4];
-  private LinearLayout seedTray, buildItems;
+  private LinearLayout seedTray, buildItems, commandDock;
   private TextView buildResources, roster;
   private FrameLayout window, buildOverlay;
   private LinearLayout boardContent, gameShell;
@@ -117,7 +117,7 @@ public final class MainActivity extends Activity {
     if (storageBlocked)
       handler.post(
           () ->
-              new AlertDialog.Builder(this)
+              new SwipeDialogBuilder(this)
                   .setTitle("Save needs attention")
                   .setMessage(
                       "Both local checkpoints are damaged or unsupported. They have not been"
@@ -300,7 +300,6 @@ public final class MainActivity extends Activity {
       final int plot = i;
       plotButtons[i] = button("", () -> {
         if (!canAct() || buildOpen) return;
-        if (game.fishingSpace(plot)) { showFishing(); return; }
         if (plot >= game.plots()) { showBuild(2); return; }
         if (game.crop[plot] < 0) {
           if (game.plant(plot, selectedCrop)) gentle("Seed planted.");
@@ -310,11 +309,14 @@ public final class MainActivity extends Activity {
         changed();
       });
       plotButtons[i].setTag("plot" + i);
-      if (i >= Game.FLOATING_START) plotButtons[i].setOnLongClickListener(v -> { showFishing(); return true; });
       plotButtons[i].setTextSize(11);
       plotButtons[i].setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
       board.plot(i, plotButtons[i]);
     }
+    pondButton = button("Fish", this::showFishing);
+    pondButton.setTag("pond"); pondButton.setTextSize(11);
+    pondButton.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+    board.pond(pondButton);
     for (int i = 0; i < 3; i++) {
       final int kind = i;
       buildingButtons[i] = button("", () -> showBuilding(kind));
@@ -336,7 +338,14 @@ public final class MainActivity extends Activity {
 
     HorizontalScrollView seedScroll = new HorizontalScrollView(this);
     seedScroll.setFillViewport(true); seedScroll.addView(seedTray);
-    gameShell.addView(seedScroll);
+    SwipeDismissLayout seedSheet = new SwipeDismissLayout(this, () -> seedTray.setVisibility(View.GONE));
+    seedSheet.addView(seedScroll); gameShell.addView(seedSheet);
+    commandDock = column();
+    SwipeDismissLayout commandSheet = new SwipeDismissLayout(this, () -> setControlsVisible(false));
+    commandSheet.addView(commandDock); gameShell.addView(commandSheet);
+    controlsToggle = button("Show controls ↑", () -> setControlsVisible(true));
+    controlsToggle.setTag("showControls"); controlsToggle.setVisibility(View.GONE);
+    gameShell.addView(controlsToggle);
     createCommandDock();
     LinearLayout dock = row(); dock.setTag("actions"); dock.setPadding(dp(4), 0, dp(4), 0);
     seedsToggle = button("Seeds", () -> {
@@ -362,7 +371,7 @@ public final class MainActivity extends Activity {
       item.setMargins(dp(4), 0, dp(4), 0);
       dock.addView(action, item);
     }
-    gameShell.addView(dock);
+    commandDock.addView(dock);
     saving = text(saveMessage, 10, 0xffc2d2be);
     saving.setPadding(dp(8), dp(4), dp(8), dp(4));
     for (TextView label : new TextView[] {survived, stats, status, saving}) label.setShadowLayer(dp(2), 0, dp(1), INK);
@@ -399,12 +408,14 @@ public final class MainActivity extends Activity {
     fenceUpgrade.setTag("fenceUpgrade"); fenceUpgrade.setTextSize(16);
     FrameLayout.LayoutParams middle = new FrameLayout.LayoutParams(dp(48), dp(48));
     middle.leftMargin = dp(48); middle.topMargin = dp(48); cross.addView(fenceUpgrade, middle);
-    plantButton = button("Plant", this::showPlanting);
+    plantButton = button("Plant", () -> {
+      if (canAct() && !buildOpen) { game.plantAll(selectedCrop); changed(); }
+    });
     plantButton.setTag("plant"); plantButton.setTextSize(11);
     LinearLayout rightSlots = column(); rightSlots.setGravity(Gravity.CENTER);
     rightSlots.addView(plantButton, new LinearLayout.LayoutParams(-1, commandButtonHeight()));
     addItemSlot(rightSlots, 1); controls.addView(rightSlots, new LinearLayout.LayoutParams(0, -1, 1));
-    gameShell.addView(controls);
+    commandDock.addView(controls);
   }
 
   private void gentle(String message) {
@@ -412,45 +423,10 @@ public final class MainActivity extends Activity {
     gentleToast = Toast.makeText(this, message, Toast.LENGTH_SHORT); gentleToast.show();
   }
 
-  @android.annotation.SuppressLint("SetTextI18n") // English-only candidate; dynamic transaction totals.
-  private void showPlanting() {
-    if (!canAct() || buildOpen) return;
-    if (gentleToast != null) gentleToast.cancel();
-    paused = true; clearHint(); refresh();
-    if (!game.canPlantCrop(selectedCrop)) {
-      gentle(Game.CROPS[selectedCrop] + " needs " + game.plantingCondition(selectedCrop) + ".");
-      seedTray.setVisibility(View.VISIBLE); return;
-    }
-    java.util.ArrayList<Integer> empty = new java.util.ArrayList<>();
-    for (int i = 0; i < game.plots(); i++) if (game.farmPlot(i) && game.crop[i] < 0) empty.add(i);
-    if (empty.isEmpty()) { gentle("Beds are growing. Rest."); return; }
-    String[] choices = new String[empty.size()]; boolean[] selected = new boolean[empty.size()];
-    for (int i = 0; i < choices.length; i++) choices[i] = "Bed " + (empty.get(i) + 1) + " · " + Game.SEED[selectedCrop] + " coins";
-    AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Plant " + Game.CROPS[selectedCrop])
-        .setMultiChoiceItems(choices, selected, (d, which, checked) -> {
-          selected[which] = checked;
-          int count = 0; for (boolean pick : selected) if (pick) count++;
-          Button action = ((AlertDialog)d).getButton(AlertDialog.BUTTON_POSITIVE);
-          action.setText("Plant " + count + " · " + count * Game.SEED[selectedCrop] + "c");
-          action.setEnabled(count > 0 && count * Game.SEED[selectedCrop] <= game.coins);
-        })
-        .setPositiveButton("Select beds", (d, which) -> {
-          int count = 0; for (boolean pick : selected) if (pick) count++;
-          int[] beds = new int[count]; int at = 0;
-          for (int i = 0; i < selected.length; i++) if (selected[i]) beds[at++] = empty.get(i);
-          if (game.plantSelected(selectedCrop, beds) > 0) gentle("Beds planted.");
-          changed();
-        })
-        .setNeutralButton("Plant all · " + game.plantablePlots(selectedCrop), (d, which) -> {
-          if (game.plantAll(selectedCrop) > 0) gentle("Beds planted. Breathe."); changed();
-        }).setNegativeButton("Close", null).create();
-    dialog.setOnShowListener(d -> {
-      for (int which : new int[] {AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL})
-        dialog.getButton(which).setTextSize(compactTextSize(12, 18));
-      dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-      dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setEnabled(game.plantablePlots(selectedCrop) > 0);
-    });
-    dialog.show();
+  private void setControlsVisible(boolean visible) {
+    commandDock.setVisibility(visible ? View.VISIBLE : View.GONE);
+    controlsToggle.setVisibility(visible ? View.GONE : View.VISIBLE);
+    if (!visible) seedTray.setVisibility(View.GONE);
   }
 
   private void showFishing() {
@@ -463,7 +439,7 @@ public final class MainActivity extends Activity {
     TextView caption = text("", 14, INK); caption.setTag("fishingCaption");
     caption.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE); content.addView(caption);
     ScrollView scroll = new ScrollView(this); scroll.addView(content);
-    AlertDialog dialog = new AlertDialog.Builder(this).setTitle("A quiet corner")
+    AlertDialog dialog = new SwipeDialogBuilder(this).setTitle("A quiet corner")
         .setView(scroll).setPositiveButton("Cast", null).setNegativeButton("Back to haven", null).create();
     fishingDialog = dialog;
     Runnable update = new Runnable() {
@@ -481,8 +457,8 @@ public final class MainActivity extends Activity {
             : game.fishing.state == Fishing.MISSED ? "It slipped away. Nothing lost; cast again when you like."
             : game.fishing.state == Fishing.CAUGHT ? game.notice : "Reel when the ripple meets the gold ring. No hurry between casts.";
         label(caption, message + "\n\n" + (game.fishingCatches < Game.DAILY_CATCHES
-            ? (Game.DAILY_CATCHES - game.fishingCatches) + " reward catches left · then 3 floating beds open"
-            : "Floating beds ready · further catches are released") + "\nYour haven is paused.");
+            ? (Game.DAILY_CATCHES - game.fishingCatches) + " reward catches left today"
+            : "Further catches are released") + "\nYour haven is paused.");
         water.invalidate(); handler.postDelayed(this, game.reducedMotion ? 100 : 33);
       }
     };
@@ -504,6 +480,7 @@ public final class MainActivity extends Activity {
       paused = true; changed();
     });
     dialog.show();
+    SwipeDismissLayout.install(dialog);
   }
 
   // Keep short dock captions whole while still enlarging them by up to50% with system text.
@@ -532,7 +509,7 @@ public final class MainActivity extends Activity {
     paused = true; clearHint(); refresh();
     String[] choices = new String[Game.ITEMS.length];
     for (int i = 0; i < choices.length; i++) choices[i] = Game.ITEMS[i] + " · " + game.itemStock(i) + " owned";
-    new AlertDialog.Builder(this).setTitle("Quick slot " + (slot + 1))
+    new SwipeDialogBuilder(this).setTitle("Quick slot " + (slot + 1))
         .setItems(choices, (d, choice) -> { game.equipItem(slot, choice); changed(); })
         .setNegativeButton("Close", null).show();
   }
@@ -541,7 +518,7 @@ public final class MainActivity extends Activity {
     paused = true; refresh();
     String[] slots = new String[3];
     for (int i = 0; i < 3; i++) slots[i] = "Button " + (i + 1) + " · " + Game.ITEMS[game.equipped[i]];
-    new AlertDialog.Builder(this).setTitle("Potion or magic")
+    new SwipeDialogBuilder(this).setTitle("Potion or magic")
         .setItems(slots, (d, slot) -> chooseItem(slot)).setNegativeButton("Close", null).show();
   }
 
@@ -582,7 +559,7 @@ public final class MainActivity extends Activity {
         codes.add(code); labels.add(Equipment.RARITIES[rarity] + " · " + Equipment.name(code) + "\n" + Equipment.effect(code));
       }
     }
-    new AlertDialog.Builder(this).setTitle(Equipment.SLOTS[slot])
+    new SwipeDialogBuilder(this).setTitle(Equipment.SLOTS[slot])
         .setSingleChoiceItems(labels.toArray(new String[0]), selected, (d, choice) -> {
           game.equipGear(slot, codes.get(choice)); d.dismiss(); rebuildBuildItems(); changed();
         }).setNegativeButton("Close", null).show();
@@ -672,7 +649,7 @@ public final class MainActivity extends Activity {
       paused = !paused; lastFrame = SystemClock.elapsedRealtime(); refresh();
     }); arenaPause.setTag("arenaPause"); content.addView(arenaPause);
     ScrollView scroll = new ScrollView(this); scroll.addView(content);
-    arenaDialog = new AlertDialog.Builder(this).setTitle(Game.CHAMPIONS[game.arenaChampion]).setView(scroll)
+    arenaDialog = new SwipeDialogBuilder(this).setTitle(Game.CHAMPIONS[game.arenaChampion]).setView(scroll)
         .setNegativeButton("Retreat", null).setCancelable(false)
         .setOnDismissListener(d -> { paused = true; adventureDialog = false; }).create();
     arenaDialog.setOnShowListener(d -> arenaDialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(v -> {
@@ -721,7 +698,7 @@ public final class MainActivity extends Activity {
   }
 
   private void createBuildOverlay() {
-    buildOverlay = new FrameLayout(this);
+    buildOverlay = new SwipeDismissLayout(this, this::closeBuild);
     buildOverlay.setBackgroundColor(0xd010241e);
     buildOverlay.setClickable(true);
     buildOverlay.setVisibility(View.GONE);
@@ -1047,25 +1024,23 @@ public final class MainActivity extends Activity {
       buildTabs[i].colors(buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
     }
     for (int i = 0; i < 9; i++) {
-      if (game.fishingSpace(i)) {
-        label(plotButtons[i], "Fish");
-        plotButtons[i].setEnabled(available && !game.night && !game.arenaActive && game.arenaOfferDay == 0 && !game.worldComplete);
-        plotButtons[i].setContentDescription("Fishing ground, " + Math.max(0, Game.DAILY_CATCHES - game.fishingCatches)
-            + " reward catches left today. Pauses the farm. " + (game.night ? "Available after the raid." : "Tap to fish."));
-        plotButtons[i].colors(Color.TRANSPARENT, 0xff8dcdd5, CREAM); continue;
-      }
       boolean unlocked = game.farmPlot(i); int crop = game.crop[i]; boolean ripe = crop >= 0 && game.growth[i] >= 1;
-      label(plotButtons[i], !unlocked ? "Land +" : crop < 0 ? game.scorched[i] ? "Replant" : i >= Game.FLOATING_START ? "Plant" : "+" : ripe ? "+" + game.sale(crop) + "c" : game.harvestSeconds(i) + "s");
+      label(plotButtons[i], !unlocked ? "Land +" : crop < 0 ? game.scorched[i] ? "Replant" : "+" : ripe ? "+" + game.sale(crop) + "c" : game.harvestSeconds(i) + "s");
       plotButtons[i].setEnabled(available);
-      plotButtons[i].setContentDescription((i >= Game.FLOATING_START ? "Floating bed, hold to fish, " : "Farm plot ") + (i + 1) + ", " + (!unlocked ? "locked, tap for expansion" : crop < 0
+      plotButtons[i].setContentDescription("Farm plot " + (i + 1) + ", " + (!unlocked ? "locked, tap for expansion" : crop < 0
           ? (game.scorched[i] ? "crop destroyed, replant " : "empty, plant ") + Game.CROPS[selectedCrop] + " for " + Game.SEED[selectedCrop] + " coins"
           : Game.CROPS[crop] + ", health " + Math.round(game.cropHealth[i]) + " of40" + (ripe ? ", tap to harvest " + game.sale(crop) + " coins and " + game.cropTimber(crop) + " timber" : ", growing, " + game.harvestSeconds(i) + " seconds")));
       plotButtons[i].colors(0x00583c28, ripe ? GOLD : unlocked ? 0xffb9965c : 0xff8cb061, ripe ? GOLD : CREAM);
     }
+    label(pondButton, "Fish");
+    pondButton.setEnabled(available && !game.night && !game.arenaActive && game.arenaOfferDay == 0 && !game.worldComplete);
+    pondButton.setContentDescription("Fishing pond outside the south fence, " + Math.max(0, Game.DAILY_CATCHES - game.fishingCatches)
+        + " reward catches left today. Pauses the farm. " + (game.night ? "Available after the raid." : "Tap to fish."));
+    pondButton.colors(Color.TRANSPARENT, 0xff8dcdd5, CREAM);
     label(plantButton, "Plant");
-    plantButton.setContentDescription("Plant " + Game.CROPS[selectedCrop] + " in one, selected, or all empty plots, "
+    plantButton.setContentDescription("Plant " + Game.CROPS[selectedCrop] + " in all affordable empty plots without pausing, "
         + Game.SEED[selectedCrop] + " coins per plot. " + game.plantingCondition(selectedCrop));
-    plantButton.setEnabled(available);
+    plantButton.setEnabled(available && game.plantablePlots(selectedCrop) > 0);
     plantButton.colors(Color.TRANSPARENT, 0xffa8bc87, CREAM);
     boolean canUpgradeFence = selectedWall >= 0 && !game.borderMaxed(selectedWall);
     fenceUpgrade.setEnabled(available && canUpgradeFence);
@@ -1123,7 +1098,7 @@ public final class MainActivity extends Activity {
         rallyButtons[side].colors(game.lane == side ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
       if (patrolButton != null) patrolButton.setEnabled(available && game.lane >= 0);
     }
-    String[] upgrades = {"Uniform " + game.weapon + "/" + game.upgradeCap(0) + " · " + Game.UNIFORMS[Math.min(5, game.weapon)] + "\n+3 damage · +20 crew health · armor · faster fire", "Fortify · rank " + game.fence + "/" + game.upgradeCap(1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Permanent floating beds · plant before the quota"};
+    String[] upgrades = {"Uniform " + game.weapon + "/" + game.upgradeCap(0) + " · " + Game.UNIFORMS[Math.min(5, game.weapon)] + "\n+3 damage · +20 crew health · armor · faster fire", "Fortify · rank " + game.fence + "/" + game.upgradeCap(1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Expand farmland · open three more soil plots"};
     for (int i = 0; i < 4; i++) if (upgradeButtons[i] != null) {
       label(upgradeButtons[i], upgrades[i] + (game.maxed(i) ? " · MAX" : "\n" + game.cost(i) + " coins"));
       upgradeButtons[i].setEnabled(available && !game.maxed(i));
@@ -1143,7 +1118,7 @@ public final class MainActivity extends Activity {
 
   private void welcome() {
     paused = true; adventureDialog = true;
-    new AlertDialog.Builder(this)
+    new SwipeDialogBuilder(this)
         .setTitle("TAG: Zombie Survival Fantasy")
         .setMessage("A fence. A seed. A second chance.\n\nGrow a haven, gather allies, and survive the nights. Plant at your own pace while paused, or take a quiet fishing break.")
         .setPositiveButton("Awaken", (d, w) -> {
@@ -1155,8 +1130,8 @@ public final class MainActivity extends Activity {
   }
 
   private void howToPlay() {
-    new AlertDialog.Builder(this).setTitle("Build. Fight. Survive.")
-        .setMessage("Seeds chooses a crop. Plant fills one, selected, or all empty beds; tap ripe beds to harvest. New plants unlock as days pass. Rare seeds need their shown season and weather only when planting.\n\nTap the bottom water row for a quiet ripple-timing break. Reel when the ripple meets the gold ring. The farm pauses; the first three catches each day give coins or a small chance of equipment from day 10. Meeting the quota opens three floating beds for any available crop. Planted crops remain at dawn. Hold a floating bed to fish again. Expansion opens them permanently.\n\nBuild fences and recruit crew for raids. Crew holds uniform upgrades. Hold a quick slot to assign potions or magic; relics live in Equipment. Pause whenever you need a breather.")
+    new SwipeDialogBuilder(this).setTitle("Build. Fight. Survive.")
+        .setMessage("Seeds chooses a crop. Plant fills all affordable empty beds without pausing; tap ripe beds to harvest. New plants unlock as days pass. Rare seeds need their shown season and weather only when planting.\n\nTap the pond below the south fence for a quiet ripple-timing break. Reel when the ripple meets the gold ring. The farm pauses; the first three catches each day give coins or a small chance of equipment from day 10. Fishing does not change your farm plots. Farm expansion opens three additional soil beds. Swipe down on Seeds, controls or a panel to tuck it away; Show controls brings the buttons back.\n\nBuild fences and recruit crew for raids. Crew holds uniform upgrades. Hold a quick slot to assign potions or magic; relics live in Equipment. Pause whenever you need a breather.")
         .setPositiveButton("Ready", null).show();
   }
 
@@ -1166,7 +1141,7 @@ public final class MainActivity extends Activity {
     content.addView(new BestiaryView(this), new LinearLayout.LayoutParams(-1, dp(112)));
     TextView copy = text(Bestiary.description(), 15, INK); content.addView(copy);
     ScrollView scroll = new ScrollView(this); scroll.addView(content);
-    new AlertDialog.Builder(this).setTitle("Frontier bestiary").setView(scroll).setPositiveButton("Ready", null).show();
+    new SwipeDialogBuilder(this).setTitle("Frontier bestiary").setView(scroll).setPositiveButton("Ready", null).show();
   }
 
   private void options() {
@@ -1187,7 +1162,7 @@ public final class MainActivity extends Activity {
       "Equipment & button assignments",
       "Bestiary · foes & tactics"
     };
-    new AlertDialog.Builder(this)
+    new SwipeDialogBuilder(this)
         .setTitle("Take a breather")
         .setItems(
             items,
@@ -1203,7 +1178,7 @@ public final class MainActivity extends Activity {
                 options();
               } else if (which == 3) exportSave();
               else if (which == 4)
-                new AlertDialog.Builder(this)
+                new SwipeDialogBuilder(this)
                     .setTitle("Replace this farm?")
                     .setMessage(
                         "Import replaces current progress. Export a backup first if you want to"
@@ -1212,7 +1187,7 @@ public final class MainActivity extends Activity {
                     .setNegativeButton("Cancel", null)
                     .show();
               else if (which == 5)
-                new AlertDialog.Builder(this)
+                new SwipeDialogBuilder(this)
                     .setTitle("Start a new farm?")
                     .setMessage(
                         "This replaces local progress. Export a backup to keep your current farm.")

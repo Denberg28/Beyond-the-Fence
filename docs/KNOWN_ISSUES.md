@@ -1,3 +1,12 @@
+# 0.16 verification limits
+
+- Physical-phone touch/gesture navigation, TalkBack, endurance, audio comfort, frame timing and human balance are not yet validated.
+- Swipe down dismisses scrollable panels only when their content is at its top; horizontal seed scrolling is retained.
+- Required recovery/progression and arena choices retain explicit actions to avoid accidental loss or repeated prompts.
+- New schema12 exports cannot be opened by older apps. Export a backup before upgrading; same-key updates retain local data.
+
+---
+
 # 0.15.0-rc.1 prerelease limits
 
 - Automated candidate gates passed in run40783160472:116 tests per variant, builds/lint/package and exact-source signing audits,2231 installed checks plus both4-check upgrade stages on each API26/35. Plant/fishing/floating screenshots were visually self-reviewed at200% text. This remains a prerelease; handset validation is pending.

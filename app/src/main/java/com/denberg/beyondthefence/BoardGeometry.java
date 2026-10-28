@@ -10,6 +10,7 @@ final class BoardGeometry {
       left = Math.round(x); top = Math.round(y); right = Math.round(x + w); bottom = Math.round(y + h);
     }
   }
+  final Box pond = new Box();
   final Box[] plots = new Box[9], buildings = new Box[3];
   boolean wide;
   float density, fortLeft, fortTop, fortRight, fortBottom;
@@ -20,7 +21,7 @@ final class BoardGeometry {
   }
   static int minimumHeight(float density, float fontScale, boolean wide) {
     float cell = Math.max(48, 28 * fontScale + 12);
-    return (int) Math.ceil(density * (wide ? 3 * cell + 160 : 4 * cell + 198));
+    return (int) Math.ceil(density * (wide ? 3 * cell + 184 : 4 * cell + 198));
   }
   void layout(int width, int height, float density, boolean wide, float fontScale) { layout(width, height, density, wide, fontScale, 0); }
   void layout(int width, int height, float density, boolean wide, float fontScale, int style) {
@@ -48,11 +49,13 @@ final class BoardGeometry {
     }
     float cw = (cropRight - left - gap * 2) / 3, ch = (bottom - cropTop - gap * 2) / 3;
     for (int i = 0; i < 9; i++) plots[i].set(left + (i % 3) * (cw + gap), cropTop + (i / 3) * (ch + gap), cw, ch);
+    // Separate 56dp pond in the approach terrain below the south fence. Never covers crops.
+    pond.set(width / 2f - 28 * density, fortBottom + 12 * density, 56 * density, 48 * density);
     if (style > 0) {
       Box[] old = new Box[3];
       for (int i = 0; i < 3; i++) { old[i] = new Box(); old[i].set(buildings[i].left, buildings[i].top, buildings[i].width(), buildings[i].height()); }
       for (int i = 0; i < 3; i++) { Box b = old[(i + style) % 3]; buildings[i].set(b.left, b.top, b.width(), b.height()); }
-      // Garden coordinates stay stable: the entire lower row is the pond / floating garden.
+      // Keep garden coordinates stable across settlement styles.
     }
   }
   float worldX(float x) {

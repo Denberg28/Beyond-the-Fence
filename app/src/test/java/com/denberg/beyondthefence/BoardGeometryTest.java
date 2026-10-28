@@ -17,9 +17,11 @@ public class BoardGeometryTest {
             assertTrue("Roaming terrain on both horizontal sides", g.fortLeft >= 56 * density);
             assertTrue("Roaming terrain above and below", g.fortTop >= 48 * density);
             assertTrue("Farm stays compact in tall windows", g.fortBottom - g.fortTop < (height + extra) * .82f);
-            BoardGeometry.Box[] boxes = new BoardGeometry.Box[12];
+            BoardGeometry.Box[] boxes = new BoardGeometry.Box[13];
             System.arraycopy(g.plots, 0, boxes, 0, 9);
             System.arraycopy(g.buildings, 0, boxes, 9, 3);
+            boxes[12] = g.pond;
+            assertTrue("Pond outside the south fence", g.pond.top > g.fortBottom);
             for (int i = 0; i < boxes.length; i++) {
               BoardGeometry.Box b = boxes[i];
               assertTrue(b.left >= 0 && b.top >= 0 && b.right <= width && b.bottom <= height + extra);

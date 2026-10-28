@@ -47,25 +47,37 @@ public class GardenFishingTest {
       assertTrue(g.cropTimber(type) / Game.GROW[type] <= 6f / 43f);
     }
   }
-  @Test public void bottomRowBecomesThreeFloatingBedsAndPlantsSurviveDawnAndReload() throws Exception {
+  @Test public void pondQuotaNeverUnlocksOrClosesFarmland() throws Exception {
     Game g = new Game(); g.coins = 1000;
-    for (int i = 6; i < 9; i++) { assertTrue(g.fishingSpace(i)); assertFalse(g.plant(i, 0)); }
-    catchOne(g); catchOne(g); assertEquals(6, g.plots()); catchOne(g);
-    assertTrue(g.floatingBedsOpen()); assertEquals(9, g.farmCapacity());
-    assertEquals(3, g.plantSelected(0, new int[] {6, 7, 8}));
-    Game saved = SaveCodec.decode(SaveCodec.encode(g)); assertEquals(3, saved.fishingCatches);
+    for (int i = 6; i < 9; i++) assertFalse(g.plant(i, 0));
+    catchOne(g); catchOne(g); catchOne(g);
+    assertEquals(6, g.plots()); assertEquals(6, SaveCodec.decode(SaveCodec.encode(g)).plots());
+    assertTrue(g.upgrade(3)); assertEquals(9, g.farmCapacity());
+    assertEquals(9, g.plantAll(0));
+    Game saved = SaveCodec.decode(SaveCodec.encode(g));
     saved.night = true; saved.spawned = saved.quota(); saved.enemies.clear(); saved.tick(.1f);
-    assertEquals(2, saved.day); assertEquals(0, saved.fishingCatches);
-    for (int i = 6; i < 9; i++) { assertEquals(0, saved.crop[i]); assertFalse(saved.fishingSpace(i)); }
-    saved = SaveCodec.decode(SaveCodec.encode(saved));
-    saved.growth[6] = 1; assertTrue(saved.harvest(6)); assertTrue(saved.fishingSpace(6));
-    assertFalse(saved.plant(6, 0)); saved.land = 1; assertTrue(saved.plant(6, 0));
+    assertEquals(0, saved.fishingCatches); assertEquals(9, saved.plots());
+    saved.growth[6] = 1; assertTrue(saved.harvest(6)); assertTrue(saved.plant(6, 0));
   }
-  @Test public void everyAvailableCropCanUseEveryFloatingBed() {
+  @Test public void everyAvailableCropCanUseEveryExpandedSoilBed() {
     for (int type = 0; type < Game.CROPS.length; type++) {
       Game g = new Game(); g.day = type == 6 ? 81 : type == 7 ? 91 : 61;
-      g.weather = type == 6 ? 2 : type == 7 ? 3 : 1; g.fishingCatches = 3; g.coins = 1000;
-      assertEquals(3, g.plantSelected(type, new int[] {6, 7, 8}));
+      g.weather = type == 6 ? 2 : type == 7 ? 3 : 1; g.land = 1; g.coins = 1000;
+      assertEquals(9, g.plantAll(type));
+      for (int crop : g.crop) assertEquals(type, crop);
+    }
+  }
+  @Test public void releasedFloatingGardenMigratesToPermanentSoilWithoutLosingCrops() throws Exception {
+    for (boolean planted : new boolean[] {false, true}) {
+      Game g = new Game(); g.coins = 1000;
+      if (planted) { g.crop[6] = 0; g.growth[6] = .5f; g.cropHealth[6] = Game.CROP_HEALTH; }
+      else g.fishingCatches = 3;
+      byte[] old = SaveCodec.encode(g); ByteBuffer.wrap(old).putInt(4, 11);
+      CRC32 crc = new CRC32(); crc.update(old, 0, old.length - 8); ByteBuffer.wrap(old).putLong(old.length - 8, crc.getValue());
+      Game restored = SaveCodec.decode(old);
+      assertEquals(1, restored.land); assertEquals(9, restored.farmCapacity());
+      assertEquals(g.coins, restored.coins); assertArrayEquals(g.crop, restored.crop);
+      assertArrayEquals(g.growth, restored.growth, 0);
     }
   }
   @Test public void missedCancelledEarlyAndDuplicateReelsHaveNoReward() {
@@ -107,7 +119,7 @@ public class GardenFishingTest {
     restored.fishingCatches = 4; reject(SaveCodec.encode(restored));
     restored.fishingCatches = 0; restored.crop[0] = Game.CROPS.length; reject(SaveCodec.encode(restored));
   }
-  @Test public void bottomWaterRowStaysLowerCentralInAllLayouts() {
+  @Test public void bottomSoilRowStaysLowerCentralInAllLayouts() {
     for (int style = 0; style < 3; style++) for (boolean wide : new boolean[] {false, true}) {
       BoardGeometry b = new BoardGeometry(); b.layout(wide ? 700 : 360, 600, 1, wide, 1, style);
       assertTrue(b.plots[6].left < b.plots[7].left && b.plots[7].left < b.plots[8].left);

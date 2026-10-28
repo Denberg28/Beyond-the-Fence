@@ -118,3 +118,7 @@ Record baseline, supported configuration, assumptions, completed work, blockers,
 Report concisely: what changed/why; version/commit/artifact; checks/results; untested/blocked areas; release tier; limitations/rollback; next concrete check if needed. Distinguish **built**, **uploaded**, **published**, and **validated**.
 
 **Done means agreed scope implemented, applicable verification passed, documentation current, and authorized deliverable available. Never claim stable readiness without evidence.**
+
+## Standing publication scope — constitution v3.1, 26 October 2026
+
+User instruction: **Always release in GitHub for all our projects.** Development/build/release requests authorize reviewed commits, branch pushes, PRs and eligible versioned builds in the established public `Denberg28/Beyond-the-Fence` repository. Finish required gates before publishing a prerelease; physical-phone validation is required for stable promotion. Preserve signing identity and existing releases; do not publish secrets, user data, force pushes, or changes in visibility. This mirrors the current user-authored Marlou Prompt Constitution v3.1 section7.

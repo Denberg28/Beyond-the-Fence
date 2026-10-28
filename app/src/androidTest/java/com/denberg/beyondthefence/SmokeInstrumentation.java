@@ -230,6 +230,10 @@ public final class SmokeInstrumentation extends Instrumentation {
           check(tile.getContentDescription() != null, "Tile has an accessible action label");
         }
       }
+      View pond = control(a, "pond");
+      check(pond.getParent() == field && pond.getWidth() >= min && pond.getHeight() >= min
+          && pond.getTop() > map.geometry.fortBottom && pond.getBottom() <= field.getHeight(),
+          "Separate accessible pond fits outside the south fence");
       View cross = control(a, "fenceCross");
       View n = control(a, "wall0"), e = control(a, "wall1"), s = control(a, "wall2"), w = control(a, "wall3");
       for (View command : new View[] {n, e, s, w}) {
@@ -352,11 +356,11 @@ public final class SmokeInstrumentation extends Instrumentation {
         return seed.getGlobalVisibleRect(visible) && visible.height() == seed.getHeight();
       }), "Seeds opens a visible tray above the fixed commands without scrolling");
       touch(a, "seed0");
-      touch(a, "plot6"); checkDialogActions("Cast", "Back to haven");
-      check(onUi(() -> a.paused && a.game.coins == 80 && a.game.fishingCatches == 0), "Bottom water opens a paused fishing break without spending");
+      touch(a, "pond"); checkDialogActions("Cast", "Back to haven");
+      check(onUi(() -> a.paused && a.game.coins == 80 && a.game.fishingCatches == 0), "Separate pond opens a paused fishing break without spending");
       dialogAction("Back to haven");
       touch(a, "build"); touch(a, "buildTab2");
-      check(onUi(() -> a.paused && a.game.coins == 80 && control(a, "upgrade3").isShown()), "Permanent floating expansion remains in Farm without spending");
+      check(onUi(() -> a.paused && a.game.coins == 80 && control(a, "upgrade3").isShown()), "Ordinary farmland expansion remains in Farm without spending");
       touch(a, "closeBuild");
       touch(a, "plot0");
       check(onUi(() -> a.game.crop[0] == 0 && a.game.coins == 76), "Pointer plants inside fortress");
@@ -841,62 +845,92 @@ public final class SmokeInstrumentation extends Instrumentation {
   }
 
   private void testGardenFishing(MainActivity a) throws Exception {
-    Game garden = new Game(); garden.day = 61; garden.weather = 1; garden.coins = 1000; garden.tutorialDone = true;
+    Game garden = new Game(); garden.day = 61; garden.weather = 1; garden.coins = 1000; garden.land = 1; garden.tutorialDone = true;
     runOnMainSync(() -> { a.game = garden; a.paused = true; a.refresh(); }); awaitIdle();
+    touch(a, "seeds"); swipeDown(a, control(a, "seed0"));
+    check(onUi(() -> !control(a, "seed0").isShown() && garden.coins == 1000), "Swiping Seeds hides the tray without planting or spending");
     touch(a, "seeds"); touch(a, "seed0");
-    for (int i = 6; i < 9; i++) {
-      final int water = i;
-      check(onUi(() -> garden.fishingSpace(water) && ((android.widget.TextView)control(a, "plot" + water)).getText().toString().equals("Fish")),
-          "All three bottom spaces begin as fishing ground");
-    }
+    touch(a, "play"); touch(a, "plant");
+    check(onUi(() -> !a.paused && garden.coins == 964 && garden.crop[0] == 0 && garden.crop[8] == 0),
+        "Plant fills all nine available beds in one tap without pausing the running game");
+    touch(a, "play"); screenshot("smoke-planting.png");
+    runOnMainSync(() -> { garden.growth[0] = 1; a.refresh(); }); touch(a, "plot0"); touch(a, "plant");
+    check(onUi(() -> garden.crop[0] == 0 && garden.coins == 972 && a.paused), "Bulk replant touches only harvested beds and preserves pause state");
+    runOnMainSync(() -> { garden.crop[1] = garden.crop[2] = -1; garden.growth[1] = garden.growth[2] = 0;
+      garden.cropHealth[1] = garden.cropHealth[2] = 0; garden.coins = 5; a.refresh(); });
     touch(a, "plant");
-    dialogAction("Bed 1 · 4 coins"); dialogAction("Bed 2 · 4 coins");
-    checkDialogActions("Plant 2 · 8c", "Plant all · 6", "Close"); screenshot("smoke-planting.png");
-    dialogAction("Plant 2 · 8c");
-    check(onUi(() -> garden.crop[0] == 0 && garden.crop[1] == 0 && garden.coins == 992 && a.paused),
-        "Plant shortcut fills exactly selected beds with one debit and pauses the farm");
-    runOnMainSync(() -> { garden.growth[0] = 1; a.refresh(); });
-    touch(a, "plot0"); touch(a, "plot0");
-    check(onUi(() -> garden.crop[0] == 0 && garden.coins == 1000), "Harvested single bed replants for the shown seed price");
-    touch(a, "plant"); dialogAction("Plant all · 4");
-    check(onUi(() -> garden.coins == 984 && garden.crop[5] == 0 && garden.crop[6] == -1), "Bulk planting leaves fishing water intact before quota");
+    check(onUi(() -> garden.coins == 1 && garden.crop[1] == 0 && garden.crop[2] == -1), "Plant respects a partial seed budget without replacing existing crops");
+    runOnMainSync(() -> { garden.coins = 984; a.refresh(); }); touch(a, "plant");
+    swipeDown(a, control(a, "plant"));
+    check(onUi(() -> !control(a, "plant").isShown() && control(a, "showControls").isShown()), "Command buttons minimize with a downward swipe");
+    touch(a, "showControls"); check(onUi(() -> control(a, "plant").isShown()), "Show controls restores every command");
+    touch(a, "build"); swipeDown(a, control(a, "panelTitle"));
+    check(onUi(() -> !control(a, "panelTitle").isShown() && a.paused), "Panel swipes close without resuming the game");
     float elapsed = garden.elapsed, growth = garden.growth[0];
-    touch(a, "plot6"); checkDialogActions("Cast", "Back to haven"); screenshot("smoke-fishing.png");
+    touch(a, "pond"); checkDialogActions("Cast", "Back to haven"); screenshot("smoke-fishing.png");
     dialogAction("Cast"); dialogAction("Reel");
-    check(onUi(() -> garden.fishing.state == Fishing.MISSED && garden.fishingCatches == 0 && garden.coins == 984),
+    check(onUi(() -> garden.fishing.state == Fishing.MISSED && garden.fishingCatches == 0 && garden.coins == 980),
         "Early reel is loss-free and spends no daily catch");
+    dialogAction("Cast");
+    // Resolve the visible dialog surface from its active window, then inject a real downward drag.
+    AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow(); Rect bounds = new Rect(); root.getBoundsInScreen(bounds);
+    swipeCoordinates(bounds.centerX(), bounds.top + Math.round(28 * a.getResources().getDisplayMetrics().density), a.getResources().getDisplayMetrics().density);
+    awaitUi(a::hasWindowFocus, "Swiping fishing returns focus to the farm");
+    check(onUi(() -> garden.fishing.state == Fishing.IDLE && garden.fishingCatches == 0 && a.paused), "Fishing swipe cancels a pending cast without rewards");
+    touch(a, "pond");
     for (int i = 0; i < 3; i++) {
-      dialogAction("Cast");
-      awaitUi(() -> garden.fishing.catchWindow(), "Actual dialog clock opens a visible ripple catch window");
-      dialogAction("Reel");
+      dialogAction("Cast"); awaitUi(() -> garden.fishing.catchWindow(), "Actual dialog clock opens a visible ripple catch window"); dialogAction("Reel");
       final int caught = i + 1;
-      check(onUi(() -> garden.fishingCatches == caught && garden.fishing.state == Fishing.CAUGHT), "Timed reel grants one saved daily catch");
+      check(onUi(() -> garden.fishingCatches == caught && garden.fishing.state == Fishing.CAUGHT), "Timed pond reel grants one saved daily catch");
     }
-    check(onUi(() -> garden.elapsed == elapsed && garden.growth[0] == growth && a.paused), "Fishing freezes raid countdown and crops");
+    check(onUi(() -> garden.elapsed == elapsed && garden.growth[0] == growth && a.paused), "Pond fishing freezes raid countdown and crops");
     dialogAction("Back to haven");
-    for (int i = 6; i < 9; i++) {
-      final int bed = i;
-      check(onUi(() -> garden.farmPlot(bed) && ((android.widget.TextView)control(a, "plot" + bed)).getText().toString().equals("Plant")),
-          "Daily quota converts all three bottom water spaces into floating planting beds");
-    }
-    touch(a, "plot6"); touch(a, "plant"); dialogAction("Plant all · 2");
-    check(onUi(() -> garden.crop[6] == 0 && garden.crop[7] == 0 && garden.crop[8] == 0), "Single and bulk planting both use floating beds");
+    for (int i = 6; i < 9; i++) { final int bed = i;
+      check(onUi(() -> garden.farmPlot(bed) && garden.crop[bed] == 0), "Bottom soil beds remain planted through fishing quota"); }
     runOnMainSync(() -> { garden.growth[6] = 1; a.refresh(); }); touch(a, "plot6");
     touch(a, "seeds"); touch(a, "seed8"); touch(a, "plot6");
-    check(onUi(() -> garden.crop[6] == 8), "Scrolling seed tray selects a seasonal Rain lily for a real floating bed");
-    SystemClock.sleep(2500); // Let the optional short toast finish before visual inspection.
-    screenshot("smoke-floating-garden.png");
+    check(onUi(() -> garden.crop[6] == 8), "Seasonal Rain lily plants in ordinary expanded soil");
+    SystemClock.sleep(2500); screenshot("smoke-pond-garden.png");
     Game saved = SaveCodec.decode(SaveCodec.encode(garden));
-    check(saved.fishingCatches == 3 && saved.crop[6] == 8 && saved.crop[8] == 0, "Floating crops and reward quota survive a checkpoint");
-    runOnMainSync(() -> control(a, "plot7").performLongClick()); awaitIdle();
-    int coins = garden.coins;
-    dialogAction("Cast"); awaitUi(() -> garden.fishing.catchWindow(), "Practice fishing is still available after quota"); dialogAction("Reel");
+    check(saved.fishingCatches == 3 && saved.crop[6] == 8 && saved.land == 1, "Crops, normal expansion and reward quota survive a checkpoint");
+    touch(a, "pond"); int coins = garden.coins;
+    dialogAction("Cast"); awaitUi(() -> garden.fishing.catchWindow(), "Practice fishing remains available at the pond after quota"); dialogAction("Reel");
     check(onUi(() -> garden.coins == coins && garden.fishingCatches == 3), "Catch and release cannot inflate coins");
     dialogAction("Back to haven");
     runOnMainSync(() -> { garden.night = true; garden.spawned = garden.quota(); garden.enemies.clear(); garden.tick(.1f); a.refresh(); });
-    check(onUi(() -> garden.fishingCatches == 0 && garden.crop[6] == 8 && garden.crop[8] == 0), "Dawn resets catches without evicting floating crops");
-    // Keep actual pointer/layout checks for Plant and pond at the active200% font configuration.
-    checkBoard(a); checkDock(a);
+    check(onUi(() -> garden.fishingCatches == 0 && garden.crop[6] == 8 && garden.crop[8] == 0), "Dawn resets pond catches without affecting soil crops");
+    checkBoard(a); checkDock(a); checkWolfArt();
+  }
+
+  private void swipeDown(MainActivity a, View view) {
+    int[] xy = new int[2];
+    runOnMainSync(() -> { view.getLocationOnScreen(xy); xy[0] += view.getWidth()/2; xy[1] += Math.min(view.getHeight()/3, 24 * a.getResources().getDisplayMetrics().density); });
+    swipeCoordinates(xy[0], xy[1], a.getResources().getDisplayMetrics().density); settle(a);
+  }
+
+  private void swipeCoordinates(float x, float y, float density) {
+    long start = SystemClock.uptimeMillis();
+    for (int step = 0; step <= 8; step++) {
+      int action = step == 0 ? MotionEvent.ACTION_DOWN : step == 8 ? MotionEvent.ACTION_UP : MotionEvent.ACTION_MOVE;
+      MotionEvent event = MotionEvent.obtain(start, start + step * 35, action, x, y + step * 9 * density, 0);
+      event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+      check(getUiAutomation().injectInputEvent(event, true), "Swipe pointer delivered"); event.recycle();
+    }
+    awaitAndroidFrame();
+  }
+
+  private void checkWolfArt() throws IOException {
+    Bitmap first = Bitmap.createBitmap(128,128,Bitmap.Config.ARGB_8888), north = Bitmap.createBitmap(128,128,Bitmap.Config.ARGB_8888);
+    Bitmap trot = Bitmap.createBitmap(128,128,Bitmap.Config.ARGB_8888), sheet = Bitmap.createBitmap(512,256,Bitmap.Config.ARGB_8888);
+    FantasyArt art = new FantasyArt(); art.enemy(new Canvas(first),Bestiary.WOLF,64,64,1.5f,0,false,0);
+    art.enemy(new Canvas(north),Bestiary.WOLF,64,64,1.5f,0,false,90);
+    check(first.sameAs(north), "Northbound wolf remains upright instead of rotating onto its side");
+    art.enemy(new Canvas(trot),Bestiary.WOLF,64,64,1.5f,(float)Math.PI/2,false,0);
+    check(!first.sameAs(trot), "Wolf trot advances its articulated legs");
+    Canvas canvas = new Canvas(sheet); canvas.drawColor(0xff486345);
+    for (int i=0;i<8;i++) art.enemy(canvas,Bestiary.WOLF,64+(i%4)*128,64+(i/4)*128,1.5f,(i%4)*(float)Math.PI/2,i>=4,i>=4?180:0);
+    try(FileOutputStream out = new FileOutputStream(new File(getTargetContext().getFilesDir(),"smoke-wolf-animation.png"))) { check(sheet.compress(Bitmap.CompressFormat.PNG,100,out), "Wolf animation evidence saved"); }
+    first.recycle(); north.recycle(); trot.recycle(); sheet.recycle();
   }
 
   private void checkDock(MainActivity a) {

@@ -14,7 +14,6 @@ final class FarmView extends View {
   private final HomesteadArt homestead = new HomesteadArt();
   private final FantasyArt fantasy = new FantasyArt();
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-  private final BoardGeometry.Box floatingTile = new BoardGeometry.Box();
   private final RectF rect = new RectF();
   private final Path woods = new Path(), courtyard = new Path();
   private static final int[] UNIFORM_COLORS = {0xff897b60, 0xff4d774b, 0xffb6a36f, 0xff687f8c, 0xff315b42, 0xff303d48};
@@ -110,16 +109,8 @@ final class FarmView extends View {
         box(c, x, y, 3 * d, 2 * d, 0, 0x2479a353);
     for (int i = 0; i < 9; i++) {
       BoardGeometry.Box tile = geometry.plots[i];
-      if (i >= Game.FLOATING_START) {
-        pond(c, tile, d, g);
-        if (g.fishingSpace(i)) continue;
-      }
       boolean open = g.farmPlot(i);
-      if (i >= Game.FLOATING_START && open) {
-        BoardGeometry.Box raft = floatingTile;
-        raft.set(tile.left + 4 * d, tile.top + 4 * d, tile.width() - 8 * d, tile.height() - 8 * d);
-        homestead.plot(c, raft, true, g.scorched[i], d);
-      } else homestead.plot(c, tile, open, g.scorched[i], d);
+      homestead.plot(c, tile, open, g.scorched[i], d);
       if (!open) continue;
       if (g.scorched[i]) {
         line(c, tile.left + 10 * d, tile.top + 8 * d, tile.right - 10 * d, tile.top + 20 * d, 0xffb56a46, 3 * d);
@@ -145,11 +136,15 @@ final class FarmView extends View {
             3 * d, 0, g.buildingHealth[i] < 50 ? 0xffe99b55 : 0xffa8ce6b);
       }
     }
+    pond(c, geometry.pond, d, g);
     for (int side = 0; side < 4; side++) fenceSide(c, g, side, d);
     for (Game.Roamer roamer : g.roamers) {
       float x = geometry.worldX(g.ringXAt(roamer.progress, roamer.distance));
       float y = geometry.worldY(g.ringYAt(roamer.progress, roamer.distance));
-      zombie(c, x, y, d, roamer.type, g.reducedMotion || !g.roamerActive(roamer) ? 0 : g.elapsed * 2 + roamer.progress * 8, false);
+      float nextX = geometry.worldX(g.ringXAt((roamer.progress + .01f) % 4, roamer.distance));
+      float nextY = geometry.worldY(g.ringYAt((roamer.progress + .01f) % 4, roamer.distance));
+      float heading = (float)Math.toDegrees(Math.atan2(nextY - y, nextX - x));
+      zombie(c, x, y, d, roamer.type, g.reducedMotion || !g.roamerActive(roamer) ? 0 : g.elapsed * 2 + roamer.progress * 8, false, heading);
     }
     for (Game.Enemy enemy : g.enemies) {
       float x = geometry.worldX(g.foeX(enemy)), y = geometry.worldY(g.foeY(enemy));
@@ -164,7 +159,13 @@ final class FarmView extends View {
       }
       boolean attacking = !paused.get() && !g.reducedMotion && (enemy.breached ? enemy.advance >= 1 && enemy.attackClock > 1
           : enemy.x <= (Bestiary.ranged(enemy.type) ? .26f : 0));
-      zombie(c, x, y, size, enemy.type, g.reducedMotion ? 0 : g.elapsed * (enemy.type == 1 ? 10 : 6) + enemy.offset * 7, attacking);
+      float targetX = (l + r) / 2, targetY = (t + b) / 2;
+      if (enemy.breached && enemy.target >= 0) {
+        BoardGeometry.Box target = enemy.target < 9 ? geometry.plots[enemy.target] : geometry.buildings[enemy.target - 9];
+        targetX = (target.left + target.right) / 2f; targetY = (target.top + target.bottom) / 2f;
+      }
+      float heading = (float)Math.toDegrees(Math.atan2(targetY - y, targetX - x));
+      zombie(c, x, y, size, enemy.type, g.reducedMotion ? 0 : g.elapsed * (enemy.type == 1 ? 10 : 6) + enemy.offset * 7, attacking, heading);
       if (g.ashenWorld() && (Bestiary.heavy(enemy.type) || enemy.type == Campaign.BOSS)) {
         line(c, x - 4 * size, y - 6 * size, x + 3 * size, y + 2 * size, 0xffe5a35a, 2 * size);
         circle(c, x + 4 * size, y - 7 * size, 2 * size, 0xffffcc7d);
@@ -231,10 +232,8 @@ final class FarmView extends View {
     }
   }
 
-  private void zombie(Canvas c, float x, float y, float d, int type, float phase, boolean attacking) {
+  private void zombie(Canvas c, float x, float y, float d, int type, float phase, boolean attacking, float heading) {
     if (type >= Bestiary.KOBOLD) {
-      float heading = (float)Math.toDegrees(Math.atan2((geometry.fortTop + geometry.fortBottom) / 2 - y,
-          (geometry.fortLeft + geometry.fortRight) / 2 - x));
       fantasy.enemy(c, type, x, y, d, phase, attacking, heading); return;
     }
     c.save(); c.translate(x, y); c.scale(d, d);
