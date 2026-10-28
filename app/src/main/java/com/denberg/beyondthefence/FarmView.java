@@ -14,6 +14,7 @@ final class FarmView extends View {
   private final HomesteadArt homestead = new HomesteadArt();
   private final FantasyArt fantasy = new FantasyArt();
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final BoardGeometry.Box floatingTile = new BoardGeometry.Box();
   private final RectF rect = new RectF();
   private final Path woods = new Path(), courtyard = new Path();
   private static final int[] UNIFORM_COLORS = {0xff897b60, 0xff4d774b, 0xffb6a36f, 0xff687f8c, 0xff315b42, 0xff303d48};
@@ -109,8 +110,16 @@ final class FarmView extends View {
         box(c, x, y, 3 * d, 2 * d, 0, 0x2479a353);
     for (int i = 0; i < 9; i++) {
       BoardGeometry.Box tile = geometry.plots[i];
-      boolean open = i < g.plots();
-      homestead.plot(c, tile, open, g.scorched[i], d);
+      if (i >= Game.FLOATING_START) {
+        pond(c, tile, d, g);
+        if (g.fishingSpace(i)) continue;
+      }
+      boolean open = g.farmPlot(i);
+      if (i >= Game.FLOATING_START && open) {
+        BoardGeometry.Box raft = floatingTile;
+        raft.set(tile.left + 4 * d, tile.top + 4 * d, tile.width() - 8 * d, tile.height() - 8 * d);
+        homestead.plot(c, raft, true, g.scorched[i], d);
+      } else homestead.plot(c, tile, open, g.scorched[i], d);
       if (!open) continue;
       if (g.scorched[i]) {
         line(c, tile.left + 10 * d, tile.top + 8 * d, tile.right - 10 * d, tile.top + 20 * d, 0xffb56a46, 3 * d);
@@ -295,9 +304,27 @@ final class FarmView extends View {
     }
     c.restore();
   }
+  private void pond(Canvas c, BoardGeometry.Box tile, float d, Game g) {
+    box(c, tile.left, tile.top, tile.width(), tile.height(), 9 * d, 0xff7e8565);
+    box(c, tile.left + 3 * d, tile.top + 3 * d, tile.width() - 6 * d, tile.height() - 6 * d, 8 * d, g.night ? 0xff294c59 : 0xff427e88);
+    float x = tile.left + tile.width() * .5f, y = tile.top + tile.height() * .35f;
+    color(0xffa0d3cd); p.setStyle(Paint.Style.STROKE); p.setStrokeWidth(d);
+    for (int ring = 0; ring < 3; ring++) {
+      float radius = (4 + ring * 4) * d;
+      c.drawOval(x - radius, y - radius * .4f, x + radius, y + radius * .4f, p);
+    }
+    p.setStyle(Paint.Style.FILL);
+    circle(c, tile.left + 9 * d, tile.top + 9 * d, 4 * d, 0xff9bbd75);
+    line(c, tile.right - 7 * d, tile.top + 17 * d, tile.right - 9 * d, tile.top + 4 * d, 0xffc5c589, 2 * d);
+    line(c, tile.right - 11 * d, tile.top + 16 * d, tile.right - 13 * d, tile.top + 6 * d, 0xff8fa66c, 2 * d);
+  }
   private void crop(Canvas c, float x, float y, int type, float growth, float size) {
     c.save(); c.translate(x, y); c.scale(size * (.4f + growth * .6f), size * (.4f + growth * .6f));
-    circle(c, 0, 0, type == 2 ? 7 : 5, type == 0 ? 0xffdec9d7 : type == 1 ? 0xfff4d05d : 0xffe5923e);
+    circle(c, 0, 0, type == 2 ? 7 : 5, Game.CROP_COLOR[type]);
+    if (type == 3) { line(c, 0, 1, 0, 12, Game.CROP_COLOR[type], 4); }
+    if (type == 4) { circle(c, -2, -1, 5, 0xffd2e2a5); circle(c, 2, 0, 3, 0xff6c9f60); }
+    if (type == 5) { circle(c, -2, 1, 1, 0xfff0d7a1); circle(c, 2, -1, 1, 0xfff0d7a1); }
+    if (type >= 6) { circle(c, -5, -2, 3, Game.CROP_COLOR[type]); circle(c, 5, -2, 3, Game.CROP_COLOR[type]); circle(c, 0, -4, 3, 0xfff1df9b); }
     box(c, -6, -8, 5, 7, 1, 0xff9fca61); box(c, 0, -9, 6, 8, 1, 0xffbbd978);
     c.restore();
   }

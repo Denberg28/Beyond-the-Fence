@@ -1,3 +1,19 @@
+# 0.15.0-rc.1 development verification — 29October2026 (Asia/Manila)
+
+Baseline: main9031288, published0.14.0-rc.2. Scope: Plant shortcut, selection transaction,9crop varieties/season+environment gates, three water/floating spaces, loss-free fishing, bounded rewards and schema11. Preserve all prior combat/save/damage/economy/API/font/lifecycle gates. Intentional acceptance changes: Merc↑ routes to Plant, uniforms purchased in Crew, crop availability expands after day6, bottom-row geometry stays fixed, and expansion gives permanent floating access. Original first-six crop economics, upgrade prices, quotas, enemy RNG and loot odds remain.
+
+PASS — reviewed/JVM simulated:116JUnit cases including all106baseline cases and10GardenFishingTest cases. New tests cover exact selection rollback, unlock+weather+season gates in both worlds, yield ceilings, all three floating spaces/every crop, dawn retention/reload, cancelled/missed/duplicate catches, saved cap/recovery/practice RNG isolation,10,000reward observations and low-tier-only equipment, legacy10full-garden migration and strict new fields, lower-row geometry in all layouts. Same schema9fixture migration now expects schema11. Tests run with downloaded Corretto17.0.21/JUnit4.13.2.
+
+PASS — source compile: all main and instrumentation Java compile against Android35 android.jar using a temporary resource-ID stub outside the repository. This verifies Java/API references only; it is not an Android APK build or resource/lint check.
+
+BLOCKED locally — full Gradle Android build: dependency requests in the Gradle daemon cannot reach the environment's HTTP proxy (Connection refused / Network unreachable); pinned Gradle8.9distribution and SDK35/build-tools35downloaded successfully. CI must build both unit variants/APKs and run lint and package/version/API/permission/audio/size audits before candidate release. Local emulator/KVM and the retained private signing key are unavailable here. Do not treat source compile as APK validation or substitute a new signing identity.
+
+New installed acceptance: actual Plant selection/single/all pointer flows; early/no-cost miss; actual dialog-clock catch window; three reward catches with farm clocks/growth frozen; automatic three-bed conversion; single/bulk floating planting; saved crop/quota; catch-and-release with no reward; dawn retains floating crops; original dock/layout checks at200%font. Capture fishing and floating-garden scenes and review both API26/35screenshots. Existing uniform purchase checks now use Crew without removing price/health assertions.
+
+Required before release: CI source/build, API26/35installed and screenshot review, exact-APK signing/upgrade validation. Physical-phone endurance/audio/TalkBack/performance and human balance are NOT TESTED; stable remains blocked. HIL N/A: no external hardware. Rollback uses prior APK plus pre-update backup because older apps reject schema11.
+
+---
+
 # Published0.14.0-rc.2 verification — 29 October2026 (Asia/Manila)
 
 Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2

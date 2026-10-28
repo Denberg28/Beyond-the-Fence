@@ -5,9 +5,16 @@ import java.util.Iterator;
 
 /** Deterministic simulation. No Android, disk, network or wall-clock dependencies. */
 public final class Game {
-  public static final String[] CROPS = {"Turnip", "Corn", "Pumpkin"};
-  public static final int[] SEED = {4, 10, 18}, SALE = {12, 26, 44};
-  public static final float[] GROW = {16, 29, 43};
+  public static final String[] CROPS = {"Turnip", "Corn", "Pumpkin", "Carrot", "Cabbage", "Strawberry", "Moonleaf", "Sunpepper", "Rain lily"};
+  public static final int[] CROP_DAY = {1, 2, 3, 6, 12, 20, 30, 45, 60};
+  public static final int[] CROP_COLOR = {0xffdec9d7, 0xfff4d05d, 0xffe5923e, 0xffeea24d, 0xffa8ca77, 0xffd86b78, 0xffbdb0e4, 0xffedba59, 0xff8dcdd5};
+  public static final String[] SEASONS = {"Spring", "Summer", "Autumn", "Winter"};
+  public static final int POND = 7, FLOATING_START = 6, DAILY_CATCHES = 3;
+  public int fishingCatches, fishingState = 91873;
+  public final Fishing fishing = new Fishing();
+  public static final int[] SEED = {4, 10, 18, 8, 14, 22, 24, 28, 30}, SALE = {12, 26, 44, 22, 36, 54, 60, 70, 76};
+  private static final int[] CROP_TIMBER = {2, 4, 6, 3, 4, 6, 6, 6, 6};
+  public static final float[] GROW = {16, 29, 43, 24, 37, 54, 64, 76, 84};
   public static final String[] WEATHER = {"Clear", "Rain", "Fog", "Heat"};
   public static final String[] FOES = {"Walker", "Runner", "Brute", "Spitter", "Ghoul", "Ironhide", "Wraith", "Grave Warden", "Kobold skirmisher", "Orc raider", "Dire wolf", "Goblin hexer"};
   public static final String[] UNIFORMS = {"Workwear", "Scout green", "Desert kit", "Urban armor", "Ranger kit", "Black ops"};
@@ -100,11 +107,75 @@ public final class Game {
   }
 
   public int plots() {
-    return land == 0 ? 6 : 9;
+    if (land > 0 || fishingCatches >= DAILY_CATCHES) return 9;
+    for (int i = FLOATING_START; i < 9; i++) if (crop[i] >= 0) return 9;
+    return 6;
   }
 
   public int unlockedCrops() {
-    return Math.min(3, day);
+    int count = 0;
+    while (count < CROP_DAY.length && day >= CROP_DAY[count]) count++;
+    return count;
+  }
+
+  public boolean floatingBedsOpen() { return land > 0 || fishingCatches >= DAILY_CATCHES; }
+  public boolean fishingSpace(int plot) { return plot >= FLOATING_START && plot < 9 && crop[plot] < 0 && !floatingBedsOpen(); }
+  public boolean farmPlot(int plot) { return plot >= 0 && plot < 9 && (plot < FLOATING_START || floatingBedsOpen() || crop[plot] >= 0); }
+  public int farmCapacity() { return floatingBedsOpen() ? 9 : 6; }
+  public int season() { return ((day - 1) / 10) % SEASONS.length; }
+  public String seasonName() { return SEASONS[season()]; }
+  public boolean plantingSeason(int type) {
+    return type >= 0 && type < CROPS.length && (type < 6
+        || type == 6 && season() == 0 && weather == 2
+        || type == 7 && season() == 1 && weather == 3
+        || type == 8 && season() == 2 && weather == 1);
+  }
+  public String plantingCondition(int type) {
+    return type < 6 ? "Any season" : type == 6 ? "Spring · " + World.weatherName(world, 2)
+        : type == 7 ? "Summer · " + World.weatherName(world, 3) : "Autumn · " + World.weatherName(world, 1);
+  }
+  public boolean canPlantCrop(int type) { return type >= 0 && type < unlockedCrops() && plantingSeason(type); }
+  public int cropTimber(int type) { return CROP_TIMBER[type]; }
+
+  /** Exact selection is atomic: stale, occupied, locked, duplicate or unaffordable plots spend nothing. */
+  public int plantSelected(int type, int[] selection) {
+    if (!canPlantCrop(type) || defeated || selection == null || selection.length == 0 || selection.length > 9) return 0;
+    boolean[] seen = new boolean[9];
+    for (int plot : selection) {
+      if (!farmPlot(plot) || seen[plot] || crop[plot] >= 0) return 0;
+      seen[plot] = true;
+    }
+    if (coins < selection.length * SEED[type]) { notice = "Choose fewer plots for your seed budget."; return 0; }
+    for (int plot : selection) plant(plot, type);
+    notice = "Planted " + selection.length + ". A little order, a little room to breathe.";
+    return selection.length;
+  }
+
+  public boolean castLine() {
+    if (defeated || night || arenaActive || arenaOfferDay > 0 || worldComplete) return false;
+    return fishing.cast(2 + (fishingState >>> 1) % 21 / 10f);
+  }
+
+  /** Fishing has its own RNG and three reward catches per day, unaffected by reopening or backups. */
+  public boolean reelFish() {
+    if (defeated || night || arenaActive || arenaOfferDay > 0 || worldComplete || !fishing.reel()) return false;
+    if (fishingCatches >= DAILY_CATCHES) {
+      notice = "A gentle catch and release. Take a breather; the pond will be here."; return true;
+    }
+    fishingCatches++;
+    fishingState = fishingState * 1664525 + 1013904223;
+    int roll = fishingState >>> 1;
+    if (day >= 10 && roll % 100 < 2) {
+      int code = ((roll / 100) % 9) * 5 + ((roll / 900) % 5 == 0 ? 1 : 0);
+      boolean duplicate = collected[code]; collected[code] = true; lastDrop = code;
+      notice = (duplicate ? "A familiar find · " : "Pond treasure · ") + Equipment.name(code)
+          + (duplicate ? ". Already in your collection." : ". Open Equipment when you like.");
+    } else {
+      int value = 6 + roll % 5;
+      money(value);
+      notice = new String[] {"Pond perch", "Silver minnow", "Reed carp"}[roll % 3] + " · +" + value + " coins. A quiet moment well spent.";
+    }
+    return true;
   }
 
   public int maxHealth() {
@@ -149,10 +220,9 @@ public final class Game {
 
   public boolean plant(int plot, int type) {
     if (defeated
-        || plot < 0
-        || plot >= plots()
+        || !farmPlot(plot)
         || type < 0
-        || type >= unlockedCrops()
+        || !canPlantCrop(type)
         || crop[plot] >= 0) return false;
     if (coins < SEED[type]) {
       notice = "Need " + SEED[type] + " coins for seeds. Night rewards can help.";
@@ -183,9 +253,9 @@ public final class Game {
 
   /** Number of empty plots affordable now; never removes or replaces an existing crop. */
   public int plantablePlots(int type) {
-    if (defeated || type < 0 || type >= unlockedCrops()) return 0;
+    if (defeated || type < 0 || !canPlantCrop(type)) return 0;
     int empty = 0;
-    for (int p = 0; p < plots(); p++) if (crop[p] < 0) empty++;
+    for (int p = 0; p < plots(); p++) if (farmPlot(p) && crop[p] < 0) empty++;
     return Math.min(empty, coins / SEED[type]);
   }
 
@@ -196,7 +266,7 @@ public final class Game {
       return 0;
     }
     for (int p = 0; p < plots() && planted < available; p++)
-      if (crop[p] < 0 && plant(p, type)) planted++;
+      if (farmPlot(p) && crop[p] < 0 && plant(p, type)) planted++;
     notice = "Planted " + planted + " plots · " + planted * SEED[type] + " coins spent.";
     return planted;
   }
@@ -205,11 +275,11 @@ public final class Game {
     if (defeated || plot < 0 || plot >= plots() || crop[plot] < 0 || growth[plot] < 1) return false;
     int type = crop[plot];
     money(sale(type));
-    timber(2 + type * 2);
+    timber(cropTimber(type));
     harvested++;
     crop[plot] = -1;
     growth[plot] = 0; cropHealth[plot] = 0;
-    notice = "+" + sale(type) + " coins · +" + (2 + type * 2) + " timber · " + CROPS[type];
+    notice = "+" + sale(type) + " coins · +" + cropTimber(type) + " timber · " + CROPS[type];
     return true;
   }
 
@@ -244,7 +314,7 @@ public final class Game {
               "Uniform upgraded. Better aim, armor and faster fire for all three guards.",
               "Fence reinforced. +50 strength.",
               "Irrigation upgraded. Crops grow 20% faster.",
-              "Three more farm plots unlocked."
+              "Permanent floating beds unlocked. Plant the water row before the fishing quota, too."
             }
             [kind];
     return true;
@@ -269,6 +339,7 @@ public final class Game {
     if (night || defeated || arenaActive || arenaOfferDay > 0 || worldComplete) return;
     raidStrain = 0;
     night = true;
+    fishing.cancel();
     elapsed = 0;
     spawned = 0; bossSpawned = false;
     for (Roamer roamer : roamers) {
@@ -406,6 +477,7 @@ public final class Game {
 
   private void dawn() {
     int finished = day;
+    fishingCatches = 0; fishing.cancel();
     evaluateDirector();
     if (finished <= 100 && finished % 10 == 0 && arenaDay < finished) arenaOfferDay = finished;
     worldComplete = finished >= 100; // Older endless-mode farms finish their current night before the rift.

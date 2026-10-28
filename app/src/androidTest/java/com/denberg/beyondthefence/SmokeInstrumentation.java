@@ -244,12 +244,12 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(center.getParent() == cross && center.getWidth() >= min && center.getHeight() >= min
           && center.getLeft() == n.getLeft() && center.getTop() == e.getTop(), "Center upgrade fills the middle48dp target");
       check(!control(a, "notice").isShown(), "Instruction banner is absent from the playing field");
-      check(((android.widget.TextView) control(a, "quickUniform")).getText().toString().equals("Merc ↑"), "Compact Merc upgrade label");
+      check(((android.widget.TextView) control(a, "plant")).getText().toString().equals("Plant"), "Plant replaces the Merc shortcut");
       View commands = control(a, "commands"); int[] dockAt = new int[2]; commands.getLocationOnScreen(dockAt);
       check(Math.abs(at[0] + cross.getWidth() / 2 - (dockAt[0] + commands.getWidth() / 2)) <= 2,
           "Repair cross is horizontally centered in its rendered bar: cross=" + at[0] + "/" + cross.getWidth()
               + ", bar=" + dockAt[0] + "/" + commands.getWidth());
-      for (String tag : new String[] {"itemSlot2", "quickUniform", "itemSlot0", "itemSlot1"}) {
+      for (String tag : new String[] {"itemSlot2", "plant", "itemSlot0", "itemSlot1"}) {
         View shortcut = control(a, tag);
         check(shortcut.getWidth() >= min && shortcut.getHeight() >= min && shortcut.getContentDescription() != null,
             "Direct mercenary command is accessible and at least48dp");
@@ -564,10 +564,11 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> threatened.mercenaries.size() == 3 && !control(reopened, "hire").isEnabled()),
           "Three-mercenary cap is visible and enforced");
       touch(reopened, "closeBuild");
-      touch(reopened, "quickUniform"); touch(reopened, "quickUniform");
+      touch(reopened, "squad"); touch(reopened, "upgrade0"); touch(reopened, "upgrade0");
       check(onUi(() -> threatened.weapon == 2 && threatened.mercenaries.get(0).health == threatened.guardMaxHealth()),
           "Uniform purchase improves existing crew armor and health");
-      check(!control(reopened, "closeBuild").isShown(), "Direct uniforms stay on the field");
+      touch(reopened, "closeBuild");
+      check(!control(reopened, "closeBuild").isShown(), "Uniforms remain available in Crew");
       // Every direction repairs only its own side, with no timber or pause/menu side effect.
       runOnMainSync(() -> {
         threatened.coins = 100; threatened.wood = 0; threatened.walls[3] = 1;
@@ -626,10 +627,11 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> compact.coins == 0 && compact.walls[0] == 1
           && ((android.widget.TextView)control(reopened, "fenceUpgrade")).getText().toString().contains("32c")),
           "Unaffordable fence upgrade shows coin requirement in the button with no panel or debit");
-      touch(reopened, "quickUniform");
+      touch(reopened, "squad"); touch(reopened, "upgrade0");
       check(onUi(() -> compact.weapon == 0 && compact.coins == 0
-          && ((android.widget.TextView)control(reopened, "quickUniform")).getText().toString().contains("80c")),
-          "Unaffordable mercenary upgrade shows its price inside the button");
+          && ((android.widget.TextView)control(reopened, "upgrade0")).getText().toString().contains("80c")),
+          "Unaffordable mercenary upgrade in Crew shows its price without spending");
+      touch(reopened, "closeBuild");
       runOnMainSync(() -> { compact.coins = 200; compact.wood = 100; compact.plant(0, 0); compact.growth[0] = 1; reopened.refresh(); });
       touch(reopened, "building1");
       check(((android.widget.TextView) control(reopened, "panelTitle")).getText().toString().equals("FARM")
@@ -723,6 +725,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       screenshot("smoke-century.png");
       testFantasy(reopened);
       testMedieval(reopened);
+      testGardenFishing(reopened);
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
@@ -834,9 +837,63 @@ public final class SmokeInstrumentation extends Instrumentation {
     }
   }
 
+  private void testGardenFishing(MainActivity a) throws Exception {
+    Game garden = new Game(); garden.day = 61; garden.weather = 1; garden.coins = 1000; garden.tutorialDone = true;
+    runOnMainSync(() -> { a.game = garden; a.paused = true; a.refresh(); }); awaitIdle();
+    touch(a, "seeds"); touch(a, "seed0");
+    for (int i = 6; i < 9; i++) {
+      final int water = i;
+      check(onUi(() -> garden.fishingSpace(water) && ((android.widget.TextView)control(a, "plot" + water)).getText().toString().equals("Fish")),
+          "All three bottom spaces begin as fishing ground");
+    }
+    touch(a, "plant");
+    dialogAction("Bed 1 · 4 coins"); dialogAction("Bed 2 · 4 coins");
+    dialogAction("Plant 2 · 8c");
+    check(onUi(() -> garden.crop[0] == 0 && garden.crop[1] == 0 && garden.coins == 992 && a.paused),
+        "Plant shortcut fills exactly selected beds with one debit and pauses the farm");
+    runOnMainSync(() -> { garden.growth[0] = 1; a.refresh(); });
+    touch(a, "plot0"); touch(a, "plot0");
+    check(onUi(() -> garden.crop[0] == 0 && garden.coins == 1000), "Harvested single bed replants for the shown seed price");
+    touch(a, "plant"); dialogAction("Plant all · 4");
+    check(onUi(() -> garden.coins == 984 && garden.crop[5] == 0 && garden.crop[6] == -1), "Bulk planting leaves fishing water intact before quota");
+    float elapsed = garden.elapsed, growth = garden.growth[0];
+    touch(a, "plot6"); checkDialogActions("Cast", "Back to haven"); screenshot("smoke-fishing.png");
+    dialogAction("Cast"); dialogAction("Reel");
+    check(onUi(() -> garden.fishing.state == Fishing.MISSED && garden.fishingCatches == 0 && garden.coins == 984),
+        "Early reel is loss-free and spends no daily catch");
+    for (int i = 0; i < 3; i++) {
+      dialogAction("Cast");
+      awaitUi(() -> garden.fishing.catchWindow(), "Actual dialog clock opens a visible ripple catch window");
+      dialogAction("Reel");
+      final int caught = i + 1;
+      check(onUi(() -> garden.fishingCatches == caught && garden.fishing.state == Fishing.CAUGHT), "Timed reel grants one saved daily catch");
+    }
+    check(onUi(() -> garden.elapsed == elapsed && garden.growth[0] == growth && a.paused), "Fishing freezes raid countdown and crops");
+    dialogAction("Back to haven");
+    for (int i = 6; i < 9; i++) {
+      final int bed = i;
+      check(onUi(() -> garden.farmPlot(bed) && ((android.widget.TextView)control(a, "plot" + bed)).getText().toString().equals("Plant")),
+          "Daily quota converts all three bottom water spaces into floating planting beds");
+    }
+    touch(a, "plot6"); touch(a, "plant"); dialogAction("Plant all · 2");
+    check(onUi(() -> garden.crop[6] == 0 && garden.crop[7] == 0 && garden.crop[8] == 0), "Single and bulk planting both use floating beds");
+    screenshot("smoke-floating-garden.png");
+    Game saved = SaveCodec.decode(SaveCodec.encode(garden));
+    check(saved.fishingCatches == 3 && saved.crop[8] == 0, "Floating crops and reward quota survive a checkpoint");
+    runOnMainSync(() -> control(a, "plot7").performLongClick()); awaitIdle();
+    int coins = garden.coins;
+    dialogAction("Cast"); awaitUi(() -> garden.fishing.catchWindow(), "Practice fishing is still available after quota"); dialogAction("Reel");
+    check(onUi(() -> garden.coins == coins && garden.fishingCatches == 3), "Catch and release cannot inflate coins");
+    dialogAction("Back to haven");
+    runOnMainSync(() -> { garden.night = true; garden.spawned = garden.quota(); garden.enemies.clear(); garden.tick(.1f); a.refresh(); });
+    check(onUi(() -> garden.fishingCatches == 0 && garden.crop[6] == 0 && garden.crop[8] == 0), "Dawn resets catches without evicting floating crops");
+    // Keep actual pointer/layout checks for Plant and pond at the active200% font configuration.
+    checkBoard(a); checkDock(a);
+  }
+
   private void checkDock(MainActivity a) {
     runOnMainSync(() -> {
-      View hire = control(a, "itemSlot2"), uniform = control(a, "quickUniform");
+      View hire = control(a, "itemSlot2"), uniform = control(a, "plant");
       View left = control(a, "itemSlot0"), right = control(a, "itemSlot1");
       check(hire.getWidth() == uniform.getWidth() && hire.getHeight() == uniform.getHeight(), "Mercenary command sizes match");
       check(left.getWidth() == right.getWidth() && left.getHeight() == right.getHeight(), "Item slot sizes remain symmetric during boost");

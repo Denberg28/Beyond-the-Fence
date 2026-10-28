@@ -1,17 +1,11 @@
-# TAG: Zombie Survival Fantasy0.14.0-rc.2
+# 0.15.0-rc.1 — Quiet water, floating gardens
 
-Medieval kitchen gardens replace flat planting beds. Palisade stakes, stone battlements and iron-bound masonry show defense progression with the same independent HP, prices and touch geometry.
+The Merc shortcut is now Plant: choose one or several empty beds, or plant all affordable beds. Direct taps still plant and harvest individual beds. Uniforms remain in Crew. The three bottom spaces form a fishing ground in every settlement layout. Three successful catches per in-game day open all three as floating beds for any currently available crop. Existing floating crops keep growing across dawn, saves and upgrades; emptied beds return to water until the quota is met again. The existing200-coin expansion now provides permanent floating beds before the quota. Hold any bottom bed to fish, including catch-and-release after the reward limit.
 
-Four original fantasy species join the undead: Kobold skirmishers (Day2), Dire wolves (Day3), Orc raiders (Day6) and Goblin hexers (Day12). The roster remains bounded by the existing quota. Wolves rush, Orcs break walls, and Hexers attack from outside intact defenses. Crew/Options Bestiary explains the new foes with illustrations. Boss timing, salvage and relic odds remain; Ashfall also strengthens Orc damage20%.
+Fishing pauses farm time and leaves it paused on exit. Cast, wait for the ripple, and reel while it lies between the two gold rings (a1-second catch window). Misses cost nothing and do not consume the quota. The first three catches pay6–10coins or, from day10, have a2% chance of a Common/Uncommon equipment find. Further catches release the fish with no coin, equipment or RNG rewards. Fishing uses separate saved randomness; combat/loot RNG and maximum equipment bonuses are unchanged. The quota resets only at dawn, including after save/reload and recovery.
 
-Arena combat gains an armored/caped vanguard, distinct Hollow Knight / Grave Huntress / Bone Colossus / Ash Witch, weapons and magic, and a heraldic stone stage. Attack effects use battle clocks and obey reduced motion; the arena still preserves farm clocks/HP.
+The original Turnip/Corn/Pumpkin economics are unchanged. Carrot/day6, Cabbage/day12 and Strawberry/day20 add steady options. Moonleaf/day30 needs Spring+Fog (Ashfall in World2), Sunpepper/day45 needs Summer+Heat, and Rain lily/day60 needs Autumn+Rain. Seasons rotate every10in-game days. Conditions apply when planting only; existing plants remain viable afterward. New crops never exceed Pumpkin net coin or timber yield per second. Gentle optional-action messages and a shorter welcome/help replace repeated instructions.
 
-Includes the focused Fence→Farm→Mill→Crew→Supplies→Equipment menus and first Ashen March world slice from rc.1. Equipment/settings still cross the Day100 rift; later worlds currently reuse Ashen March.
+Schema11 appends the saved fishing quota and independent RNG, accepts nine crop IDs, and reads schemas1–10. All nine existing crop positions, growth, health, investments, equipment and world progress are retained. Old expanded gardens arrive as permanent floating beds; no crop is evicted or auto-sold. Older apps reject schema11 exports: retain the prior APK and pre-update backup for rollback.
 
-Schema10 reads prior1–9 saves and preserves active enemies/assets/equipment. Earlier apps cannot read new exports. Export before updating and keep the prior APK/save for rollback. Package/certificate pin, zero permissions and offline operation remain. This is development/prerelease work; signed release/install-r and physical-phone/human-balance gates remain separate.
-
-Required candidate checks: both unit variants, builds/lint/package audits, full installed API26/35 regression and visual review of plots/materials/species/all four champions. No stable promotion is implied.
-
-Published prerelease: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2
-
-Validation passed:106 unit cases in each variant, builds/lint/package/signing audits,1974 installed checks per API26/35 and both4-check in-place upgrade stages per API. Evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40737650198 . Physical-phone/human balance validation remains pending.
+Required candidate checks: final debug/release unit variants, Android builds/lint, package audits, API26/35 native regression and new fishing/planting flows, screenshots and same-certificate installation/migration. This source is a development candidate until those gates are recorded. Physical-phone endurance/audio/TalkBack/performance and human balance remain unvalidated; no stable promotion.

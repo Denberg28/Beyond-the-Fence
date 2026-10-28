@@ -1,3 +1,11 @@
+## 0.15.0-rc.1 — 29October2026
+
+- Plant shortcut: one, exact selection, or all affordable empty beds; uniforms stay in Crew.
+- Entire bottom water row converts to three floating beds after the daily fishing quota, retaining crops across dawn. Expansion grants permanent access; old crops stay intact.
+- Loss-free ripple timing, farm pause, three saved daily reward catches,6–10coin fish and scarce low-tier equipment; unlimited reward-free practice.
+- Six new crops with day unlocks, ten-day seasons and rare environmental planting gates; original economy and new yield ceilings tested.
+- Shorter welcome/help and gentle farming/breather messages; schema11 migration and regression coverage.
+
 # 0.14.0-rc.2 — Medieval frontier and fantasy bestiary (published prerelease)
 
 Published29 October2026 (Asia/Manila): https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2 . Delivery run40737650198 passed106 cases per variant,1974 native cases plus both4-check upgrade stages on each API26/35. Signed Release.apk retains the pinned certificate. Physical-phone/human balance validation remains pending.

@@ -1,3 +1,15 @@
+# 0.15.0-rc.1 — Quiet water, floating gardens
+
+The Merc shortcut is now Plant: choose one or several empty beds, or plant all affordable beds. Direct taps still plant and harvest individual beds. Uniforms remain in Crew. The three bottom spaces form a fishing ground in every settlement layout. Three successful catches per in-game day open all three as floating beds for any currently available crop. Existing floating crops keep growing across dawn, saves and upgrades; emptied beds return to water until the quota is met again. The existing200-coin expansion now provides permanent floating beds before the quota. Hold any bottom bed to fish, including catch-and-release after the reward limit.
+
+Fishing pauses farm time and leaves it paused on exit. Cast, wait for the ripple, and reel while it lies between the two gold rings (a1-second catch window). Misses cost nothing and do not consume the quota. The first three catches pay6–10coins or, from day10, have a2% chance of a Common/Uncommon equipment find. Further catches release the fish with no coin, equipment or RNG rewards. Fishing uses separate saved randomness; combat/loot RNG and maximum equipment bonuses are unchanged. The quota resets only at dawn, including after save/reload and recovery.
+
+The original Turnip/Corn/Pumpkin economics are unchanged. Carrot/day6, Cabbage/day12 and Strawberry/day20 add steady options. Moonleaf/day30 needs Spring+Fog (Ashfall in World2), Sunpepper/day45 needs Summer+Heat, and Rain lily/day60 needs Autumn+Rain. Seasons rotate every10in-game days. Conditions apply when planting only; existing plants remain viable afterward. New crops never exceed Pumpkin net coin or timber yield per second. Gentle optional-action messages and a shorter welcome/help replace repeated instructions.
+
+Schema11 appends the saved fishing quota and independent RNG, accepts nine crop IDs, and reads schemas1–10. All nine existing crop positions, growth, health, investments, equipment and world progress are retained. Old expanded gardens arrive as permanent floating beds; no crop is evicted or auto-sold. Older apps reject schema11 exports: retain the prior APK and pre-update backup for rollback.
+
+---
+
 # TAG: Zombie Survival Fantasy
 
 A small farm, a warm home, and something moving past the fence. An offline Android farming and survival game with original vector artwork, quick sessions, and no accounts, ads, purchases or internet permission.

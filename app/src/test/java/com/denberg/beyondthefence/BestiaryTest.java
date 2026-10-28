@@ -61,7 +61,7 @@ public class BestiaryTest {
     assertEquals(.75f,g.growth[0],0);assertTrue(g.buildings[0]);assertEquals(2,g.gear[0]);assertEquals(3,g.equipped[2]);
     assertEquals(4,g.bolts);assertEquals(3,g.blasts);assertTrue(g.night);assertEquals(2,g.enemies.size());
     assertEquals(2,g.enemies.get(0).type);assertEquals(5,g.enemies.get(1).type);assertEquals(90,g.enemies.get(0).hp,0);
-    byte[] migrated=SaveCodec.encode(g);assertEquals(10,ByteBuffer.wrap(migrated).getInt(4));
+    byte[] migrated=SaveCodec.encode(g);assertEquals(11,ByteBuffer.wrap(migrated).getInt(4));
     Game copy=SaveCodec.decode(migrated);for(int i=0;i<100;i++){g.tick(.1f);copy.tick(.1f);}
     assertArrayEquals(SaveCodec.encode(g),SaveCodec.encode(copy));
   }

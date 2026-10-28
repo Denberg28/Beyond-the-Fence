@@ -29,14 +29,14 @@ public final class MainActivity extends Activity {
   private boolean buildOpen;
   private long lastFrame, lastUi, lastSave;
   private TextView survived, stats, status, notice, saving, buildTitle;
-  private GameButton quickUniform, fenceUpgrade, shopHarvest, shopPlant, heroBuy;
+  private GameButton plantButton, fenceUpgrade, shopHarvest, shopPlant, heroBuy;
   private final GameButton[] itemSlots = new GameButton[3], itemBuy = new GameButton[4], advanced = new GameButton[3];
   private final int[] slotIcons = {-1, -1, -1};
   private GameButton costButton;
   private String costText;
   private long costToken;
   private GameButton play, phase, harvest, repair, build, seedsToggle, hireButton, repairOverlay, materialsButton, patrolButton;
-  private final GameButton[] cropButtons = new GameButton[3],
+  private final GameButton[] cropButtons = new GameButton[Game.CROPS.length],
       plotButtons = new GameButton[9], upgradeButtons = new GameButton[4],
       wallButtons = new GameButton[4], buildingButtons = new GameButton[3],
       wallPurchase = new GameButton[4], construction = new GameButton[3], buildTabs = new GameButton[6], rallyButtons = new GameButton[4];
@@ -51,6 +51,8 @@ public final class MainActivity extends Activity {
   private int panelRevision;
   private AlertDialog arenaDialog;
   private TextView arenaStatus;
+  private AlertDialog fishingDialog;
+  private Toast gentleToast;
   ArenaView arenaView;
   private GameButton arenaStrike, arenaPause;
   private final GameButton[] arenaItems = new GameButton[3];
@@ -168,6 +170,7 @@ public final class MainActivity extends Activity {
     foreground = false;
     if (music != null) music.pause();
     paused = true;
+    if (fishingDialog != null) fishingDialog.dismiss();
     if (session.observer == this) session.observer = null;
     handler.removeCallbacks(frame);
     if (!storageBlocked) save();
@@ -257,6 +260,7 @@ public final class MainActivity extends Activity {
       if (storageBlocked || ioBusy || buildOpen) return;
       if (game.defeated) { game.recover(); changed(); }
       paused = !paused;
+      if (paused) gentle("Take a breather. Your haven can wait.");
       lastFrame = SystemClock.elapsedRealtime();
       refresh();
     });
@@ -271,7 +275,7 @@ public final class MainActivity extends Activity {
 
     seedTray = row();
     seedTray.setVisibility(View.GONE);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < Game.CROPS.length; i++) {
       final int type = i;
       cropButtons[i] = button("", () -> {
         if (storageBlocked || ioBusy || buildOpen) return;
@@ -284,7 +288,7 @@ public final class MainActivity extends Activity {
       cropButtons[i].setCompoundDrawablesRelativeWithIntrinsicBounds(new CropIcon(i, dp(26)), null, null, null);
       cropButtons[i].setCompoundDrawablePadding(dp(3));
       cropButtons[i].setTextSize(11);
-      LinearLayout.LayoutParams card = new LinearLayout.LayoutParams(0, -2, 1);
+      LinearLayout.LayoutParams card = new LinearLayout.LayoutParams(dp(156), -2);
       card.setMargins(dp(2), dp(4), dp(2), dp(4));
       seedTray.addView(cropButtons[i], card);
     }
@@ -296,12 +300,17 @@ public final class MainActivity extends Activity {
       final int plot = i;
       plotButtons[i] = button("", () -> {
         if (!canAct() || buildOpen) return;
+        if (game.fishingSpace(plot)) { showFishing(); return; }
         if (plot >= game.plots()) { showBuild(2); return; }
-        if (game.crop[plot] < 0) game.plant(plot, selectedCrop);
+        if (game.crop[plot] < 0) {
+          if (game.plant(plot, selectedCrop)) gentle("One seed at a time. " + Game.CROPS[selectedCrop] + " planted.");
+          else gentle(game.canPlantCrop(selectedCrop) ? game.notice : Game.CROPS[selectedCrop] + " needs " + game.plantingCondition(selectedCrop));
+        }
         else if (!game.harvest(plot)) game.notice = "Still growing · " + game.harvestSeconds(plot) + "s to harvest.";
         changed();
       });
       plotButtons[i].setTag("plot" + i);
+      if (i >= Game.FLOATING_START) plotButtons[i].setOnLongClickListener(v -> { showFishing(); return true; });
       plotButtons[i].setTextSize(11);
       plotButtons[i].setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
       board.plot(i, plotButtons[i]);
@@ -325,7 +334,9 @@ public final class MainActivity extends Activity {
     notice.setVisibility(View.GONE);
     boardContent.addView(notice);
 
-    gameShell.addView(seedTray);
+    HorizontalScrollView seedScroll = new HorizontalScrollView(this);
+    seedScroll.setFillViewport(true); seedScroll.addView(seedTray);
+    gameShell.addView(seedScroll);
     createCommandDock();
     LinearLayout dock = row(); dock.setTag("actions"); dock.setPadding(dp(4), 0, dp(4), 0);
     seedsToggle = button("Seeds", () -> {
@@ -335,7 +346,7 @@ public final class MainActivity extends Activity {
     seedsToggle.setTag("seeds");
     build = button("Build", () -> { selectedBuilding = -1; showBuild(); });
     build.setTag("build");
-    harvest = button("Harvest", () -> { if (canAct() && !buildOpen) { game.harvestAll(); changed(); } });
+    harvest = button("Harvest", () -> { if (canAct() && !buildOpen) { game.harvestAll(); gentle("Harvest gathered. A tidy garden, a fresh start."); changed(); } });
     harvest.setTag("harvest");
     phase = button("Night", () -> {
       if (storageBlocked || ioBusy || buildOpen) return;
@@ -388,14 +399,104 @@ public final class MainActivity extends Activity {
     fenceUpgrade.setTag("fenceUpgrade"); fenceUpgrade.setTextSize(16);
     FrameLayout.LayoutParams middle = new FrameLayout.LayoutParams(dp(48), dp(48));
     middle.leftMargin = dp(48); middle.topMargin = dp(48); cross.addView(fenceUpgrade, middle);
-    quickUniform = button("", () -> { if (canAct() && !buildOpen) {
-      if (!game.upgrade(0)) showPrice(quickUniform, game.cost(0), 0); else clearHint(); changed();
-    } });
-    quickUniform.setTag("quickUniform"); quickUniform.setTextSize(11);
+    plantButton = button("Plant", this::showPlanting);
+    plantButton.setTag("plant"); plantButton.setTextSize(11);
     LinearLayout rightSlots = column(); rightSlots.setGravity(Gravity.CENTER);
-    rightSlots.addView(quickUniform, new LinearLayout.LayoutParams(-1, commandButtonHeight()));
+    rightSlots.addView(plantButton, new LinearLayout.LayoutParams(-1, commandButtonHeight()));
     addItemSlot(rightSlots, 1); controls.addView(rightSlots, new LinearLayout.LayoutParams(0, -1, 1));
     gameShell.addView(controls);
+  }
+
+  private void gentle(String message) {
+    if (gentleToast != null) gentleToast.cancel();
+    gentleToast = Toast.makeText(this, message, Toast.LENGTH_SHORT); gentleToast.show();
+  }
+
+  private void showPlanting() {
+    if (!canAct() || buildOpen) return;
+    paused = true; clearHint(); refresh();
+    if (!game.canPlantCrop(selectedCrop)) {
+      gentle(Game.CROPS[selectedCrop] + " needs " + game.plantingCondition(selectedCrop) + ". Choose another seed.");
+      seedTray.setVisibility(View.VISIBLE); return;
+    }
+    java.util.ArrayList<Integer> empty = new java.util.ArrayList<>();
+    for (int i = 0; i < game.plots(); i++) if (game.farmPlot(i) && game.crop[i] < 0) empty.add(i);
+    if (empty.isEmpty()) { gentle("The beds are planted. Let them grow; take a breather."); return; }
+    String[] choices = new String[empty.size()]; boolean[] selected = new boolean[empty.size()];
+    for (int i = 0; i < choices.length; i++) choices[i] = "Bed " + (empty.get(i) + 1) + " · " + Game.SEED[selectedCrop] + " coins";
+    AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Plant " + Game.CROPS[selectedCrop])
+        .setMultiChoiceItems(choices, selected, (d, which, checked) -> {
+          selected[which] = checked;
+          int count = 0; for (boolean pick : selected) if (pick) count++;
+          Button action = ((AlertDialog)d).getButton(AlertDialog.BUTTON_POSITIVE);
+          action.setText("Plant " + count + " · " + count * Game.SEED[selectedCrop] + "c");
+          action.setEnabled(count > 0 && count * Game.SEED[selectedCrop] <= game.coins);
+        })
+        .setPositiveButton("Plant selected", (d, which) -> {
+          int count = 0; for (boolean pick : selected) if (pick) count++;
+          int[] beds = new int[count]; int at = 0;
+          for (int i = 0; i < selected.length; i++) if (selected[i]) beds[at++] = empty.get(i);
+          if (game.plantSelected(selectedCrop, beds) > 0) gentle(game.notice);
+          changed();
+        })
+        .setNeutralButton("Plant all · " + game.plantablePlots(selectedCrop), (d, which) -> {
+          if (game.plantAll(selectedCrop) > 0) gentle("Beds planted. A little order, a little room to breathe."); changed();
+        }).setNegativeButton("Close", null).create();
+    dialog.setOnShowListener(d -> {
+      dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+      dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setEnabled(game.plantablePlots(selectedCrop) > 0);
+    });
+    dialog.show();
+  }
+
+  private void showFishing() {
+    if (!canAct() || buildOpen || game.night || game.arenaActive || game.arenaOfferDay > 0 || game.worldComplete || fishingDialog != null) return;
+    paused = true; game.fishing.cancel(); refresh();
+    LinearLayout content = column(); content.setPadding(dp(16), dp(8), dp(16), dp(8));
+    FishingView water = new FishingView(this, game.fishing, () -> game.reducedMotion);
+    water.setTag("fishingWater"); content.addView(water, new LinearLayout.LayoutParams(-1, dp(136)));
+    TextView caption = text("", 14, INK); caption.setTag("fishingCaption");
+    caption.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE); content.addView(caption);
+    ScrollView scroll = new ScrollView(this); scroll.addView(content);
+    AlertDialog dialog = new AlertDialog.Builder(this).setTitle("A quiet corner")
+        .setView(scroll).setPositiveButton("Cast", null).setNegativeButton("Back to haven", null).create();
+    fishingDialog = dialog;
+    Runnable update = new Runnable() {
+      long previous = SystemClock.elapsedRealtime();
+      @Override public void run() {
+        if (fishingDialog != dialog || !foreground) return;
+        long now = SystemClock.elapsedRealtime();
+        if (dialog.getWindow() != null && dialog.getWindow().getDecorView().hasWindowFocus()) game.fishing.tick((now - previous) / 1000f);
+        previous = now;
+        boolean active = game.fishing.state == Fishing.WAITING || game.fishing.state == Fishing.RIPPLE;
+        label(dialog.getButton(AlertDialog.BUTTON_POSITIVE), active ? "Reel" : "Cast");
+        String message = game.fishing.catchWindow() ? "Catch now · ripple meets the ring!"
+            : game.fishing.state == Fishing.WAITING ? "Let the water settle…"
+            : game.fishing.state == Fishing.RIPPLE ? "Watch the ripple approach the gold ring…"
+            : game.fishing.state == Fishing.MISSED ? "It slipped away. Nothing lost; cast again when you like."
+            : game.fishing.state == Fishing.CAUGHT ? game.notice : "Reel when the ripple meets the gold ring. No hurry between casts.";
+        label(caption, message + "\n\n" + (game.fishingCatches < Game.DAILY_CATCHES
+            ? (Game.DAILY_CATCHES - game.fishingCatches) + " reward catches left · then 3 floating beds open"
+            : "Floating beds ready · further catches are released") + "\nYour haven is paused.");
+        water.invalidate(); handler.postDelayed(this, game.reducedMotion ? 100 : 33);
+      }
+    };
+    dialog.setOnShowListener(d -> {
+      dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTag("fishingAction");
+      dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTag("fishingClose");
+      dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+        if (game.fishing.state == Fishing.WAITING || game.fishing.state == Fishing.RIPPLE) {
+          if (game.reelFish()) { gentle(game.notice); changed(); }
+        } else game.castLine();
+        handler.removeCallbacks(update); handler.post(update);
+      });
+      handler.post(update);
+    });
+    dialog.setOnDismissListener(d -> {
+      handler.removeCallbacks(update); game.fishing.cancel(); fishingDialog = null;
+      paused = true; changed();
+    });
+    dialog.show();
   }
 
   // Keep short dock captions whole while still enlarging them by up to50% with system text.
@@ -861,7 +962,7 @@ public final class MainActivity extends Activity {
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
     label(survived, "Survived " + (game.worldComplete ? 100 : game.day - 1) + (game.day == 2 ? " day" : " days") + (game.world > 1 ? " · World " + game.world : ""));
     label(stats, game.coins + " coins · " + game.wood + " timber");
-    label(status, game.worldName() + " · Day " + game.day + " · " + game.settlementName() + " · " + game.weatherName() + " · Farm "
+    label(status, game.worldName() + " · Day " + game.day + " · " + game.settlementName() + " · " + game.weatherName() + " · " + game.seasonName() + " · Farm "
         + Math.round(game.health) + "/" + game.maxHealth() + (game.boss() != null ? " · " + game.bossName() : game.bossDay() ? " · Boss tonight" : ""));
     stats.setContentDescription(game.coins + " coins, " + game.wood + " timber");
     label(play, game.defeated ? "Rebuild" : paused ? "Play" : "Pause");
@@ -881,14 +982,19 @@ public final class MainActivity extends Activity {
     phase.setEnabled(!storageBlocked && !ioBusy && !game.arenaActive && game.arenaOfferDay == 0 && (!game.night || game.defeated));
     if (game.worldComplete) label(phase, "Rift\nOpen");
     phase.colors(0xff536f48, 0xffa8bc87, CREAM);
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < Game.CROPS.length; i++) {
       boolean unlocked = i < game.unlockedCrops(), selected = selectedCrop == i;
-      label(cropButtons[i], unlocked ? Game.CROPS[i] + "\n" + Game.SEED[i] + "c · sell " + game.sale(i)
-          : Game.CROPS[i] + "\nDay " + (i + 1));
-      cropButtons[i].setEnabled(unlocked && !storageBlocked && !ioBusy);
+      label(cropButtons[i], Game.CROPS[i] + "\n" + (unlocked
+          ? Game.SEED[i] + "c · sell " + game.sale(i) + "\n" + game.plantingCondition(i)
+          : "Day " + Game.CROP_DAY[i]));
+      cropButtons[i].setEnabled(unlocked && game.plantingSeason(i) && !storageBlocked && !ioBusy);
       cropButtons[i].setSelected(selected);
-      cropButtons[i].setContentDescription(Game.CROPS[i] + (unlocked ? ", seed " + Game.SEED[i] + " coins, sells for " + game.sale(i) + " coins and " + (2 + 2 * i) + " timber" + (selected ? ", selected" : "") : ", available on day " + (i + 1)));
+      cropButtons[i].setContentDescription(Game.CROPS[i] + (unlocked ? ", seed " + Game.SEED[i] + " coins, sells for " + game.sale(i)
+          + " coins and " + game.cropTimber(i) + " timber, " + game.plantingCondition(i) + (game.plantingSeason(i) ? "" : ", unavailable now")
+          + (selected ? ", selected" : "") : ", available on day " + Game.CROP_DAY[i]));
       cropButtons[i].colors(selected ? GOLD : 0xffe9e5d3, selected ? GOLD : 0xff9baf83, INK);
+    }
+    for (int i = 0; i < 3; i++) {
       label(buildingButtons[i], new String[] {"Mill", "Shop", "Camp"}[i]
           + (game.buildingRuins[i] ? "\nRuins" : game.buildings[i] && game.buildingHealth[i] < Game.BUILDING_HEALTH
               ? "\n" + Math.round(game.buildingHealth[i]) + "HP" : ""));
@@ -934,19 +1040,26 @@ public final class MainActivity extends Activity {
       buildTabs[i].colors(buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
     }
     for (int i = 0; i < 9; i++) {
-      boolean unlocked = i < game.plots(); int crop = game.crop[i]; boolean ripe = crop >= 0 && game.growth[i] >= 1;
-      label(plotButtons[i], !unlocked ? "Land +" : crop < 0 ? game.scorched[i] ? "Replant" : "+" : ripe ? "+" + game.sale(crop) + "c" : game.harvestSeconds(i) + "s");
+      if (game.fishingSpace(i)) {
+        label(plotButtons[i], "Fish");
+        plotButtons[i].setEnabled(available && !game.night && !game.arenaActive && game.arenaOfferDay == 0 && !game.worldComplete);
+        plotButtons[i].setContentDescription("Fishing ground, " + Math.max(0, Game.DAILY_CATCHES - game.fishingCatches)
+            + " reward catches left today. Pauses the farm. " + (game.night ? "Available after the raid." : "Tap to fish."));
+        plotButtons[i].colors(Color.TRANSPARENT, 0xff8dcdd5, CREAM); continue;
+      }
+      boolean unlocked = game.farmPlot(i); int crop = game.crop[i]; boolean ripe = crop >= 0 && game.growth[i] >= 1;
+      label(plotButtons[i], !unlocked ? "Land +" : crop < 0 ? game.scorched[i] ? "Replant" : i >= Game.FLOATING_START ? "Plant" : "+" : ripe ? "+" + game.sale(crop) + "c" : game.harvestSeconds(i) + "s");
       plotButtons[i].setEnabled(available);
-      plotButtons[i].setContentDescription("Farm plot " + (i + 1) + ", " + (!unlocked ? "locked, tap for expansion" : crop < 0
+      plotButtons[i].setContentDescription((i >= Game.FLOATING_START ? "Floating bed, hold to fish, " : "Farm plot ") + (i + 1) + ", " + (!unlocked ? "locked, tap for expansion" : crop < 0
           ? (game.scorched[i] ? "crop destroyed, replant " : "empty, plant ") + Game.CROPS[selectedCrop] + " for " + Game.SEED[selectedCrop] + " coins"
-          : Game.CROPS[crop] + ", health " + Math.round(game.cropHealth[i]) + " of40" + (ripe ? ", tap to harvest " + game.sale(crop) + " coins and " + (2 + crop * 2) + " timber" : ", growing, " + game.harvestSeconds(i) + " seconds")));
+          : Game.CROPS[crop] + ", health " + Math.round(game.cropHealth[i]) + " of40" + (ripe ? ", tap to harvest " + game.sale(crop) + " coins and " + game.cropTimber(crop) + " timber" : ", growing, " + game.harvestSeconds(i) + " seconds")));
       plotButtons[i].colors(0x00583c28, ripe ? GOLD : unlocked ? 0xffb9965c : 0xff8cb061, ripe ? GOLD : CREAM);
     }
-    label(quickUniform, "Merc ↑");
-    quickUniform.setContentDescription("Upgrade mercenary uniform, " + Game.UNIFORMS[Math.min(5, game.weapon)]
-        + (game.maxed(0) ? ", maximum" : ", " + game.cost(0) + " coins"));
-    quickUniform.setEnabled(available && !game.maxed(0));
-    quickUniform.colors(Color.TRANSPARENT, Color.TRANSPARENT, CREAM);
+    label(plantButton, "Plant");
+    plantButton.setContentDescription("Plant " + Game.CROPS[selectedCrop] + " in one, selected, or all empty plots, "
+        + Game.SEED[selectedCrop] + " coins per plot. " + game.plantingCondition(selectedCrop));
+    plantButton.setEnabled(available);
+    plantButton.colors(Color.TRANSPARENT, 0xffa8bc87, CREAM);
     boolean canUpgradeFence = selectedWall >= 0 && !game.borderMaxed(selectedWall);
     fenceUpgrade.setEnabled(available && canUpgradeFence);
     label(fenceUpgrade, "↑"); fenceUpgrade.setTextSize(16);
@@ -1003,7 +1116,7 @@ public final class MainActivity extends Activity {
         rallyButtons[side].colors(game.lane == side ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
       if (patrolButton != null) patrolButton.setEnabled(available && game.lane >= 0);
     }
-    String[] upgrades = {"Uniform " + game.weapon + "/" + game.upgradeCap(0) + " · " + Game.UNIFORMS[Math.min(5, game.weapon)] + "\n+3 damage · +20 crew health · armor · faster fire", "Fortify · rank " + game.fence + "/" + game.upgradeCap(1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Farm expansion · 6 → 9 plots"};
+    String[] upgrades = {"Uniform " + game.weapon + "/" + game.upgradeCap(0) + " · " + Game.UNIFORMS[Math.min(5, game.weapon)] + "\n+3 damage · +20 crew health · armor · faster fire", "Fortify · rank " + game.fence + "/" + game.upgradeCap(1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Permanent floating beds · plant before the quota"};
     for (int i = 0; i < 4; i++) if (upgradeButtons[i] != null) {
       label(upgradeButtons[i], upgrades[i] + (game.maxed(i) ? " · MAX" : "\n" + game.cost(i) + " coins"));
       upgradeButtons[i].setEnabled(available && !game.maxed(i));
@@ -1025,7 +1138,7 @@ public final class MainActivity extends Activity {
     paused = true; adventureDialog = true;
     new AlertDialog.Builder(this)
         .setTitle("TAG: Zombie Survival Fantasy")
-        .setMessage("One life ended. Your survival story begins.\n\nYou awaken in a world claimed by the dead. Build a haven. Gather allies. Unearth forgotten magic.\n\nSurvive one hundred days—and the rift will carry you to another world.\n\nA fence. A seed. A second chance.")
+        .setMessage("A fence. A seed. A second chance.\n\nGrow a haven, gather allies, and survive the nights. Plant at your own pace while paused, or take a quiet fishing break.")
         .setPositiveButton("Awaken", (d, w) -> {
           game.tutorialDone = true; paused = game.arenaActive || game.arenaOfferDay > 0 || game.worldComplete;
           lastFrame = SystemClock.elapsedRealtime(); changed();
@@ -1036,7 +1149,7 @@ public final class MainActivity extends Activity {
 
   private void howToPlay() {
     new AlertDialog.Builder(this).setTitle("Build. Fight. Survive.")
-        .setMessage("Plant and harvest for coins and timber. Close fence gaps; upgrade defenses. Hire and rally crew in Barracks.\n\nHold any quick slot, or open Assign buttons, to choose a potion or magic. Buy potions and magic in Supplies. Timber comes from Mill; fortification belongs to Fence.\n\nRare relics go to Equipment. Equip Best fits your strongest collection. Bosses come every fifth night; optional champion arenas follow every tenth victory.\n\nThe local director varies the spacing of future reinforcements slightly. Enemy damage, health, quotas and loot odds stay fixed. Disable it in Options for fixed pacing. Export a backup before updating.")
+        .setMessage("Seeds chooses a crop. Plant fills one, selected, or all empty beds; tap ripe beds to harvest. New plants unlock as days pass. Rare seeds need their shown season and weather only when planting.\n\nTap the bottom water row for a quiet ripple-timing break. Reel when the ripple meets the gold ring. The farm pauses; the first three catches each day give coins or a small chance of equipment from day 10. Meeting the quota opens three floating beds for any available crop. Planted crops remain at dawn. Hold a floating bed to fish again. Expansion opens them permanently.\n\nBuild fences and recruit crew for raids. Crew holds uniform upgrades. Hold a quick slot to assign potions or magic; relics live in Equipment. Pause whenever you need a breather.")
         .setPositiveButton("Ready", null).show();
   }
 
