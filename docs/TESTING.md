@@ -1,3 +1,27 @@
+# Published 0.15.0-rc.1 verification — 29 October 2026 (Asia/Manila)
+
+Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.15.0-rc.1
+
+Reviewed source: `c57782ab2a001649d566d5ae49a58f9e34c9d285`; signed delivery: `61df8e518ce5b445596bc065f66379efaca7c662`. Delivery evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40783160472 . Source run40747440049 and both downloaded emulator archives were checked against their GitHub SHA-256 digests; the source ZIP exactly matches the reviewed tree. Delivery rebuilt the same source and verified every signed compiled entry against that fresh build.
+
+| Gate | Observed result |
+| --- | --- |
+| Source/build | PASS:116 unit tests per debug/release variant; debug/test/release APK builds; both lint targets |
+| Packaging/signing | PASS: versionCode20, Android8.0+/API26–35, zero permissions, package/audio/size audits, pinned certificate and exact compiled-entry comparison |
+| Installed behavior/regression | PASS:2231 checks on each API26/35 using the exact signed preview/test APKs, including Plant selection, timed catches/misses, saved reward caps, three floating beds, seasonal planting, schema migration, combat and lifecycle regression |
+| Upgrade retention | PASS:4 old-fixture→preview checks and4 preview→non-debuggable signed-release checks on each API26/35 |
+| Visual self-review | PASS: API26/35 Plant/fishing/floating-garden screenshots at200% text; actions fit, no message covers fishing controls, and seasonal Rain lily is planted in the lower row |
+| Physical phone | NOT TESTED: endurance, measured performance, audio comfort, TalkBack and human balance; stable promotion remains blocked |
+| External HIL | N/A: offline game controls no external equipment |
+
+Release.apk is3155009 bytes, SHA256 `bb7d283475870e64306f3e1e26f2bc687c62bda7359b15bb7db6cca3d33b9e5c`. The retained0.12+ signing identity matches the pinned certificate. No private keystore/password is in source, public payloads or release assets. Same-certificate installation preserves local data; older disposable-key previews still require one-time backup transfer.
+
+The old0.11.1 fixture is re-signed only for emulator migration testing; it does not make original disposable-key phone installations compatible. Schema11 preserves existing nine-bed crops/expansion, equipment and world progress; older apps reject new exports. Export before updating and retain the old APK plus pre-update backup for rollback.
+
+The signed delivery passed on its first attempt with the original assertions and deadlines. Earlier source-run API35 attempt1 paused-arena/focus failure remains recorded in PR2; its unchanged retry passed. Source screenshot review does not imply physical-phone validation. Historical development notes below are superseded by this release record.
+
+---
+
 # 0.15 first Android pass and visual correction — 29 October 2026
 
 Runtime bd20e2d / PR merge7204e94 passed https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40745646209 :116 tests in each variant, all APK builds/lint/package audits, and2202 installed checks on each API26/35. Downloaded candidate and both emulator evidence archives match GitHub SHA256 digests; all53Java/resource/fixture files match the local runtime. Source ZIP records the PR merge commit. The CI preview uses a disposable debug certificate, not the retained production certificate; no install-over update or stable release is claimed.

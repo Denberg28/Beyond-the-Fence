@@ -1,6 +1,6 @@
-# 0.15.0-rc.1 development limits
+# 0.15.0-rc.1 prerelease limits
 
-- Fishing/planting source and simulation checks are recorded in TESTING.md. Android builds/lint, new installed API 26/35 flows and screenshot review are pending CI. No release or handset validation is implied.
+- Automated candidate gates passed in run40783160472:116 tests per variant, builds/lint/package and exact-source signing audits,2231 installed checks plus both4-check upgrade stages on each API26/35. Plant/fishing/floating screenshots were visually self-reviewed at200% text. This remains a prerelease; handset validation is pending.
 - Existing expansion is now permanent floating access; without it, quota unlock lasts until dawn. Planted floating crops always remain; empty spaces become fishable water. Existing 9-bed farms retain all nine plants and their paid expansion.
 - Seasons use game days, not the real calendar. Rare crops need current season/weather only at planting. Later worlds use their local weather names.
 - Fishing rewards stop after three catches/day. Practice is always available by holding a bottom bed during daytime; raids must finish first. No real-time/offline rewards. Equipment is Common/Uncommon only from day 10, duplicates do not pay or stack.

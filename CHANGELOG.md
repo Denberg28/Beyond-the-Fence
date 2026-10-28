@@ -1,4 +1,6 @@
-## 0.15.0-rc.1 — 29 October 2026
+## 0.15.0-rc.1 — 29 October 2026 (published prerelease)
+
+Published: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.15.0-rc.1 . Signed delivery run40783160472 passed116 tests per variant,2231 installed checks and both4-check upgrade stages on each API26/35. Retains package/signing identity; physical-phone validation remains pending.
 
 - Plant shortcut: one, exact selection, or all affordable empty beds; uniforms stay in Crew.
 - Entire bottom water row converts to three floating beds after the daily fishing quota, retaining crops across dawn. Expansion grants permanent access; old crops stay intact.
@@ -8,7 +10,7 @@
 
 # 0.14.0-rc.2 — Medieval frontier and fantasy bestiary (published prerelease)
 
-Published 29 October 2026 (Asia/Manila): https://github.com/Denberg 28/Beyond-the-Fence/releases/tag/v 0.14.0-rc.2 . Delivery run 40737650198 passed 106 cases per variant,1974 native cases plus both 4-check upgrade stages on each API 26/35. Signed Release.apk retains the pinned certificate. Physical-phone/human balance validation remains pending.
+Published 29 October 2026 (Asia/Manila): https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2 . Delivery run 40737650198 passed 106 cases per variant,1974 native cases plus both 4-check upgrade stages on each API 26/35. Signed Release.apk retains the pinned certificate. Physical-phone/human balance validation remains pending.
 
 - Raised timber-edged kitchen gardens, masonry cornerstones and furrows replace flat plots. Palisade / Stone wall / Ironbound tiers gain pointed stakes, coursed masonry, crenellations and iron bands; HP bars, costs, boundaries and touch targets remain.
 - Add Kobold skirmishers (Day 2), Dire wolves (Day 3), Orc raiders (Day 6) and Goblin hexers (Day 12) alongside all undead. Distinct silhouettes, stats and weighted reinforcement selection; hexers attack from outside intact walls. Boss ID 7, quotas, salvage and relic odds remain. Ashfall also strengthens Orc damage 20%.
