@@ -1,3 +1,7 @@
+# 0.14.0-rc.2 native roster correction
+
+Run40686876099 passed106 cases per variant, builds/lint/package gates, then both emulators found a four-entry array in the original materials-scene test indexing a new ID8. Expand only its observation array; still assert each original family0–3, and add coexisting Kobold/Wolf coverage. Inspection also found the initial new scout ordering could omit the Spitter on Day4. Lead with every unlocked legacy family, then add new species; rotate new species deterministically when the ten-scout cap has fewer slots than the full roster. Weighted raid reinforcements, quotas and boss scheduling do not change. Strengthen BestiaryTest to require every legacy family's scout entry across all100 days. Repeat final-source gates; retain the failed evidence.
+
 # 0.14.0-rc.2 verification plan — medieval frontier
 
 Baseline:0.14.0-rc.1 source31a7c9a, run40682262919,100 cases per variant and1659 installed checks per API26/35 passed. Source treea0527d7 is the reviewed baseline. Schema9 fixture `app/src/test/resources/schema9.b64` was generated with that prior compiled Game/SaveCodec before edits; it contains a damaged World2 farm, crop, relic, assignments and a live two-enemy raid.

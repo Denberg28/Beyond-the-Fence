@@ -15,9 +15,9 @@ final class Bestiary {
     return roll < legacy ? roll / 3 : NEW_TYPES[(roll - legacy) / 2];
   }
   static int scout(int day, int index) {
-    int count = unlocked(day);
-    // Keep the first three original scouts; show each new species as the roster grows.
-    return index >= 3 && index < 3 + count ? NEW_TYPES[index - 3] : index % Campaign.enemyKinds(day);
+    int legacy = Campaign.enemyKinds(day), count = unlocked(day), added = index - legacy;
+    // Show every unlocked undead first; rotate new species when the ten-scout cap is full.
+    return added >= 0 && added < count ? NEW_TYPES[(added + day / 5) % count] : index % legacy;
   }
   static boolean ranged(int type) { return type == 3 || type == HEXER; }
   static boolean heavy(int type) { return type == 2 || type == 5 || type == ORC; }

@@ -14,7 +14,9 @@ public class BestiaryTest {
       for(int roll=0;roll<Bestiary.weight(day);roll++) {
         int type=Bestiary.pick(day,roll);assertTrue(type>=0&&type<=Bestiary.LAST);assertNotEquals(Campaign.BOSS,type);seen[type]=true;
       }
-      for(int type=0;type<Campaign.enemyKinds(day);type++) assertTrue(seen[type]);
+      for(int type=0;type<Campaign.enemyKinds(day);type++) {
+        assertTrue(seen[type]); assertEquals(type, Bestiary.scout(day, type));
+      }
       assertEquals(day>=2,seen[Bestiary.KOBOLD]);assertEquals(day>=3,seen[Bestiary.WOLF]);
       assertEquals(day>=6,seen[Bestiary.ORC]);assertEquals(day>=12,seen[Bestiary.HEXER]);
     }

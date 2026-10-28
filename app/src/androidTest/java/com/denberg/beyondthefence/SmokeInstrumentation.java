@@ -554,9 +554,10 @@ public final class SmokeInstrumentation extends Instrumentation {
         threatened.night = false; threatened.enemies.clear(); threatened.roamers.clear();
         threatened.day = 4; threatened.xp = 150; threatened.elapsed = 0; threatened.populateRoamers(); reopened.refresh();
       });
-      boolean[] variants = new boolean[4];
+      boolean[] variants = new boolean[Game.FOES.length];
       for (Game.Roamer roamer : threatened.roamers) variants[roamer.type] = true;
-      for (boolean visible : variants) check(visible, "Redesigned zombie variant is present in the materials scene");
+      for (int type = 0; type < 4; type++) check(variants[type], "Original zombie family is present in the materials scene: " + Game.FOES[type]);
+      check(variants[Bestiary.KOBOLD] && variants[Bestiary.WOLF], "Unlocked fantasy scouts coexist with all four original families");
       screenshot("smoke-materials.png");
       runOnMainSync(() -> { threatened.coins = 2000; threatened.wood = 200; reopened.refresh(); });
       touch(reopened, "squad"); touch(reopened, "hire"); touch(reopened, "hire");
