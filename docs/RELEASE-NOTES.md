@@ -10,12 +10,16 @@ Android8.0+ preview, versionCode17. Renamed from Beyond the Fence; package com.d
 - Day100 opens a portal to a fresh-world farm with relics and assignments retained. Later worlds reuse the same campaign.
 - Schema9 reads1–8; equipment/loot RNG, arena continuation, director state and worlds are saved with strict validation. Export before updating; schema9 exports cannot downgrade to0.12.
 
-Required candidate checks: JVM regressions, builds/lint/package audit, API26/35 installed-app suites and private-key signature/content/upgrade checks. Stable remains blocked on physical-phone endurance, accessibility, audio/performance and human balance playtesting. See docs/TESTING.md for observed evidence. No claim of maximum satisfaction or100-day human playtesting.
+Arena and portal prompts use scrollable text with fixed action buttons, including system-bar clearance at large fonts. Deferring the welcome story does not block later invitations.
 
-Observed local checks: all93 JVM tests, debug/release/test-APK builds, debug/release lint, package/audio/version audit and pinned private signature/content comparison PASS. Installed-app API26/35 and actual install-r checks are NOT TESTED on this source. This locally signed development build has not been published to GitHub; publication requires the source push approval and unchanged required native gates.
+Validation passed: 93 unit tests in each build variant; builds, lint, package/audio audits; pinned signing certificate and exact compiled-content comparison; full installed-app suites on API26 and35; actual non-debuggable release installation and checkpoint retention.
 
-Latest local packaging: a separately signed Release.apk is available with debugging disabled, alongside the prior development preview. All93 tests pass in each debug/release variant; both variants pass package/audio audits. Certificate/content/alignment checks pass. No new gameplay changes; native installation and phone validation remain pending, and no public GitHub release was published.
+Install Release.apk on Android8.0 or newer. Export a save backup before updating. The retained signing identity supports same-key updates; older disposable-key previews require one-time save transfer.
 
-Authorized delivery: publish the verified signed Preview.apk and non-debuggable Release.apk, tests/source/checksums and API26/35 evidence as a GitHub prerelease after required gates pass. Both signed APK variants must match a fresh source build and the pinned certificate. Emulator checks run the complete preview suite plus an actual preview-to-release install-r and real checkpoint migration test. Phone validation is still pending; stable is not claimed.
+Prerelease: physical-phone endurance, accessibility, audio/performance and human balance playtesting remain pending.
 
-0.13.0-rc.2 shortens arena/portal prompts after screenshot review found clipped choices and title ellipsis at200% font. Native tests now require all arena/portal actions to fit the real screen and capture the welcome screen. The gameplay/save schema/signing identity is unchanged from the local0.13.0-rc.1 development builds.
+Evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40630736666
+
+
+Release APK SHA-256: `0a0df3e9c249954e43581934be14726902788b4367002ea313fe59abc81ac759`.
+Verified source: `9c4e00d80a0646413c06c2ff5dbeeebbd7145c1c`; delivery/tag commit: `245a91a62c8e8a0600c0c19fe24ad8b988dc962a`.

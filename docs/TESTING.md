@@ -1,3 +1,24 @@
+# Published0.13.0-rc.2 verification — 28 October 2026
+
+Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.13.0-rc.2
+
+Source9c4e00d80a0646413c06c2ff5dbeeebbd7145c1c passed run40603504318. Delivery245a91a62c8e8a0600c0c19fe24ad8b988dc962a passed run40630736666, attempt2. Public Release.apk SHA256: `0a0df3e9c249954e43581934be14726902788b4367002ea313fe59abc81ac759` (3134473 bytes).
+
+| Gate | Observed result |
+| --- | --- |
+| Build/unit/lint | PASS:93 unit cases in each debug/release variant, builds/test APK and both lint targets |
+| Packaging/security | PASS: API26/35 limits, title/versionCode17, zero permissions, audio/size audit, fixed certificate and exact compiled-content comparison |
+| Installed behavior/regression | PASS:1485 checks on each API26/35 emulator; equipment, assignments, champion/decline/retreat, rift, focus/lifecycle,200% font and original farm/economy/save flows |
+| Update delivery | PASS:4 old-to-preview install-r/checkpoint checks and4 preview-to-non-debuggable-release checks on each API26/35 emulator |
+| Visual self-review | PASS: new welcome/equipment/arena/rift screens; fixed action area and strengthened system-bar margins resolve clipped Android8 choices |
+| Hardware/field | NOT TESTED: phone endurance/audio/performance/TalkBack and human balance; stable remains blocked. HIL N/A: no external hardware |
+
+Attempt1 API35 failed because a system process ANR for ImmersiveModeConfirmation covered the visible game welcome. Failure capture/dumpsys identified the system FocusEvent timeout; the app crash log was empty. API26 and signing/build gates passed. The failed job was rerun on a fresh runner with unchanged APKs, assertions and timeouts; it passed1485 native plus both4-check update stages. Publication remained blocked until this result. Failed-attempt logs remain under https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40630736666/attempts/1 . Final evidence is in the release and https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40630736666/attempts/2 .
+
+The published APK retains the private certificate pin and compiled code from the verified source. Private keys remain outside GitHub. The source ZIP records the reviewed source commit; release notes/checksums/provenance and emulator evidence accompany the APK. New schema9 cannot downgrade to older apps; retain a pre-upgrade save/APK. Older disposable-key previews require one-time export/install/import; same-key updates retain checkpoints.
+
+## Development history
+
 # Fixed adventure action area
 
 Source e7aad20/run40602283578 passed all source gates and1485 native checks per emulator, but screenshot review still found Android8.0 choices under the navigation bar. Replace adventure prompts with a bounded dialog, scrollable message and fixed native action area; use a horizontal action row in landscape. Strengthen the screen check to require48dp controls and reserve24dp top/64dp bottom system-bar margins. Repeat source/signed gates and visual review.

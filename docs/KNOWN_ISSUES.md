@@ -1,6 +1,6 @@
 # 0.13 current limitations
 
-- Local build/lint/all93 JVM/package/signature checks pass; installed-app API26/35/upgrade gates are not yet run. GitHub push was blocked by automatic approval review pending explicit publication authorization. Development build only; no public0.13 release.
+- Published0.13.0-rc.2 passed all required automated candidate gates, including API26/35 full native suites and actual signed release upgrade checks. Physical-phone validation remains pending; this is a prerelease.
 
 - Candidate; physical-phone performance/endurance/accessibility/audio and human balance remain unvalidated. Automated mechanics cannot establish maximum user satisfaction.
 - Local adaptive director is a transparent bounded pacing rule, not an LLM; late reinforcement floors can limit its effect.
