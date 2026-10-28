@@ -352,8 +352,11 @@ public final class SmokeInstrumentation extends Instrumentation {
         return seed.getGlobalVisibleRect(visible) && visible.height() == seed.getHeight();
       }), "Seeds opens a visible tray above the fixed commands without scrolling");
       touch(a, "seed0");
-      touch(a, "plot6");
-      check(onUi(() -> a.paused && a.game.coins == 80 && control(a, "upgrade3").isShown()), "Locked soil opens expansion without spending");
+      touch(a, "plot6"); checkDialogActions("Cast", "Back to haven");
+      check(onUi(() -> a.paused && a.game.coins == 80 && a.game.fishingCatches == 0), "Bottom water opens a paused fishing break without spending");
+      dialogAction("Back to haven");
+      touch(a, "build"); touch(a, "buildTab2");
+      check(onUi(() -> a.paused && a.game.coins == 80 && control(a, "upgrade3").isShown()), "Permanent floating expansion remains in Farm without spending");
       touch(a, "closeBuild");
       touch(a, "plot0");
       check(onUi(() -> a.game.crop[0] == 0 && a.game.coins == 76), "Pointer plants inside fortress");

@@ -412,6 +412,7 @@ public final class MainActivity extends Activity {
     gentleToast = Toast.makeText(this, message, Toast.LENGTH_SHORT); gentleToast.show();
   }
 
+  @android.annotation.SuppressLint("SetTextI18n") // English-only candidate; dynamic transaction totals.
   private void showPlanting() {
     if (!canAct() || buildOpen) return;
     paused = true; clearHint(); refresh();
@@ -432,7 +433,7 @@ public final class MainActivity extends Activity {
           action.setText("Plant " + count + " · " + count * Game.SEED[selectedCrop] + "c");
           action.setEnabled(count > 0 && count * Game.SEED[selectedCrop] <= game.coins);
         })
-        .setPositiveButton("Plant selected", (d, which) -> {
+        .setPositiveButton("Select beds", (d, which) -> {
           int count = 0; for (boolean pick : selected) if (pick) count++;
           int[] beds = new int[count]; int at = 0;
           for (int i = 0; i < selected.length; i++) if (selected[i]) beds[at++] = empty.get(i);
@@ -443,6 +444,8 @@ public final class MainActivity extends Activity {
           if (game.plantAll(selectedCrop) > 0) gentle("Beds planted. A little order, a little room to breathe."); changed();
         }).setNegativeButton("Close", null).create();
     dialog.setOnShowListener(d -> {
+      for (int which : new int[] {AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL})
+        dialog.getButton(which).setTextSize(compactTextSize(12, 18));
       dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
       dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setEnabled(game.plantablePlots(selectedCrop) > 0);
     });
@@ -482,6 +485,8 @@ public final class MainActivity extends Activity {
       }
     };
     dialog.setOnShowListener(d -> {
+      dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextSize(compactTextSize(12, 18));
+      dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextSize(compactTextSize(12, 18));
       dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTag("fishingAction");
       dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTag("fishingClose");
       dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {

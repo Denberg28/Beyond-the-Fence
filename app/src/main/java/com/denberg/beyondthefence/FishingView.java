@@ -17,6 +17,7 @@ final class FishingView extends View {
     setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
   @Override protected void onDraw(Canvas c) {
+    super.onDraw(c);
     float x = getWidth() / 2f, y = getHeight() / 2f, radius = Math.min(x, y) * .88f;
     paint.setStyle(Paint.Style.FILL); paint.setColor(0xff315f68); c.drawRoundRect(0, 0, getWidth(), getHeight(), 18, 18, paint);
     paint.setColor(0xff7bb6b8); c.drawOval(x - 8, y - 5, x + 8, y + 5, paint);
