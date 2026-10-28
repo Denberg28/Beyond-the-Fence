@@ -11,3 +11,7 @@ Includes the focused Fence→Farm→Mill→Crew→Supplies→Equipment menus and
 Schema10 reads prior1–9 saves and preserves active enemies/assets/equipment. Earlier apps cannot read new exports. Export before updating and keep the prior APK/save for rollback. Package/certificate pin, zero permissions and offline operation remain. This is development/prerelease work; signed release/install-r and physical-phone/human-balance gates remain separate.
 
 Required candidate checks: both unit variants, builds/lint/package audits, full installed API26/35 regression and visual review of plots/materials/species/all four champions. No stable promotion is implied.
+
+Published prerelease: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2
+
+Validation passed:106 unit cases in each variant, builds/lint/package/signing audits,1974 installed checks per API26/35 and both4-check in-place upgrade stages per API. Evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40737650198 . Physical-phone/human balance validation remains pending.

@@ -2,9 +2,9 @@
 
 A small farm, a warm home, and something moving past the fence. An offline Android farming and survival game with original vector artwork, quick sessions, and no accounts, ads, purchases or internet permission.
 
-**Development:0.14.0-rc.2** adds medieval plots/walls, an original fantasy bestiary and illustrated arena combat, alongside focused build navigation and Ashen March. Published download below remains0.13.0-rc.2 until the new candidate passes its gates.
+**Published0.14.0-rc.2** adds medieval plots/walls, an original fantasy bestiary, illustrated arena combat, focused build navigation and Ashen March. All automated prerelease and signed-upgrade gates passed; physical-phone and human balance validation remain pending.
 
-**Current GitHub prerelease: [0.13.0-rc.2](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.13.0-rc.2).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
+**Current GitHub prerelease: [0.14.0-rc.2](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
 
 ## Play · farm fortress
 
@@ -42,7 +42,7 @@ The optional offline **adaptive director** measures raid strain and recent clean
 
 ## Install / upgrade / rollback
 
-Download **[Release.apk](https://github.com/Denberg28/Beyond-the-Fence/releases/download/v0.13.0-rc.2/TAG-Zombie-Survival-Fantasy-0.13.0-rc.2-Release.apk)** from [GitHub Releases](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.13.0-rc.2). Preview.apk is for debugging/testing; both APKs use the same retained certificate. Android8.0+; no permissions, accounts, ads or network access. Unsigned.apk is future production-signing output and is not installable directly.
+Download **[Release.apk](https://github.com/Denberg28/Beyond-the-Fence/releases/download/v0.14.0-rc.2/TAG-Zombie-Survival-Fantasy-0.14.0-rc.2-Release.apk)** from [GitHub Releases](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2). Preview.apk is for debugging/testing; both APKs use the same retained certificate. Android8.0+; no permissions, accounts, ads or network access. Unsigned.apk is future production-signing output and is not installable directly.
 
 Published TAG builds use one privately retained key, introduced in the0.12 development line, with its public fingerprint pinned in docs/signing-certificate.sha256. Future higher-version APKs signed with that same key install over the app and retain its local checkpoints. Private keys are never committed, cached in public CI or included in releases. Earlier disposable preview keys were not retained; the existing0.11.1 APK cannot be updated by this new key. A one-time export/import is required when moving from those older builds. Do not uninstall until you have exported and kept the backup. **Export your current `.btfs` save before upgrading or uninstalling.** A signing conflict requires export→uninstall→install→import. Uninstall removes local data. Store publication is not configured.
 

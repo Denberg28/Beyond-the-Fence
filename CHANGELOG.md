@@ -1,4 +1,6 @@
-# 0.14.0-rc.2 — Medieval frontier and fantasy bestiary (development)
+# 0.14.0-rc.2 — Medieval frontier and fantasy bestiary (published prerelease)
+
+Published29 October2026 (Asia/Manila): https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2 . Delivery run40737650198 passed106 cases per variant,1974 native cases plus both4-check upgrade stages on each API26/35. Signed Release.apk retains the pinned certificate. Physical-phone/human balance validation remains pending.
 
 - Raised timber-edged kitchen gardens, masonry cornerstones and furrows replace flat plots. Palisade / Stone wall / Ironbound tiers gain pointed stakes, coursed masonry, crenellations and iron bands; HP bars, costs, boundaries and touch targets remain.
 - Add Kobold skirmishers (Day2), Dire wolves (Day3), Orc raiders (Day6) and Goblin hexers (Day12) alongside all undead. Distinct silhouettes, stats and weighted reinforcement selection; hexers attack from outside intact walls. Boss ID7, quotas, salvage and relic odds remain. Ashfall also strengthens Orc damage20%.

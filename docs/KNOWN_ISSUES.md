@@ -1,9 +1,9 @@
-# 0.14.0-rc.2 development limitations
+# 0.14.0-rc.2 current limitations
 
 - Medieval art and four fantasy species extend the existing simulation, with no free placement/pathfinding or new quests. Wolves face the courtyard; humanoids use a consistent readable top-down pose.
 - Arena artwork is original vector illustration; the player still commands an automatic duel with Strike/potions rather than manual movement. Worn helmet changes headgear; other equipment retains its stat effects.
 - Expanded rosters retain the existing quota/economy/loot rules. Human balance and physical-phone rendering/endurance/accessibility/audio remain unvalidated.
-- Schema10 reads1–9; earlier apps reject new exports. Retain a pre-update save/APK for rollback. New signed release/install-r verification is required before publication.
+- Schema10 reads1–9; earlier apps reject new exports. Retain a pre-update save/APK for rollback. Signed release/install-r gates passed in run40737650198; physical-phone validation remains pending.
 
 # 0.14 development limitations
 

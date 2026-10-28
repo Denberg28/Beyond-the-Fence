@@ -1,3 +1,23 @@
+# Published0.14.0-rc.2 verification — 29 October2026 (Asia/Manila)
+
+Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2
+
+Source7b1ab119b1df48a14f6eaf4fca915b604800727a passed run40735575067. Deliverya2a421a689489ce2d3e06b29a6a776c11e5324df passed https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40737650198 . The immutable tag points at that delivery commit; source ZIP records the reviewed source. Public Release.apk:3146817 bytes, SHA256 `78826c25163b36ec978d72327c2bb1bac0c362feaedfd0888d2d824899856d5e`.
+
+| Gate | Observed result |
+| --- | --- |
+| Source/build | PASS:106 cases per debug/release variant; APK/test APK builds; both lint targets |
+| Packaging/signing | PASS: API26/35, versionCode19, zero permissions, <=5MiB, six original audio files, exact compiled-content comparison, pinned certificate and payload hashes |
+| Installed behavior/regression | PASS:1974 checks on each API26/35 using the exact signed preview/test APKs; new/legacy species, schema10 raid persistence, three settlement HP pixel states, Bestiary, four champions, arena/rift, fonts/rotation/focus/save behavior |
+| Update delivery | PASS:4 re-signed old-fixture→preview install-r/checkpoint checks and4 preview→non-debuggable signed-release checks on each API26/35 |
+| Visual self-review | PASS: both APIs' medieval gardens/wall templates, new species/Bestiary, all four arena champions and earlier panel/progression captures |
+| Physical phone | NOT TESTED: endurance, measured performance/audio/TalkBack and human balance; stable promotion remains blocked |
+| External HIL | N/A: offline game controls no external equipment |
+
+The old0.11.1 update fixture is re-signed for emulator testing only; it does not make disposable-key phone installs compatible. Published0.12+ TAG builds retain the same private identity. Schema9 active-raid fixture migration is separately covered in the106-case suite; new schema10 exports cannot be read by older apps. Keep a pre-update export and prior APK for rollback.
+
+Both source and delivery runs passed without weakening assertions/deadlines. Prior roster/pixel failures remain recorded below. Signed payloads are retained on delivery/0.14.0-rc.2; no private key/password is in GitHub or release assets. The GitHub asset digest matches the audited signed release.
+
 # 0.14.0-rc.2 shared-boundary pixel test correction
 
 Run40688122165 passed source gates and the extended roster, then its new Village wall check failed. The original HP-pixel helper sampled from the rectangular fortLeft/fortRight extents. In a tapered Village the fully healthy adjacent east wall falls inside that rectangle, so its green pixels remain when the north wall is breached. Derive the sample from the north ring's interior progress0.08–0.72 (y at0.4), excluding corners/adjacent walls. Keep the exact full>half>breached==0 assertions. Add this check plus native plot/target checks on all three settlement templates at200% font, and capture their medieval forms. No rendering/HP/price behavior changes; repeat the complete source/native gates. The process-crash output was the main-thread instrumentation AssertionError; its stack is in both retained crash logs.
