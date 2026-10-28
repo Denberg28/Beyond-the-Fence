@@ -1,3 +1,19 @@
+# 0.14.0-rc.2 — Medieval frontier and fantasy bestiary (development)
+
+- Raised timber-edged kitchen gardens, masonry cornerstones and furrows replace flat plots. Palisade / Stone wall / Ironbound tiers gain pointed stakes, coursed masonry, crenellations and iron bands; HP bars, costs, boundaries and touch targets remain.
+- Add Kobold skirmishers (Day2), Dire wolves (Day3), Orc raiders (Day6) and Goblin hexers (Day12) alongside all undead. Distinct silhouettes, stats and weighted reinforcement selection; hexers attack from outside intact walls. Boss ID7, quotas, salvage and relic odds remain. Ashfall also strengthens Orc damage20%.
+- Illustrate the arena vanguard and all four champions with original armor, capes, swords/shields, bow/quiver, bone anatomy and witch staff/orbs. Stone gate, heraldry, perspective floor and clock-driven attack cues; reduced motion keeps poses static. Portraits preserve aspect ratio.
+- Illustrated Bestiary is available from Crew and Options. Help now uses the focused tab names.
+- Schema10 reads1–9; a prior schema9 active-raid fixture protects migration. VersionCode19, same package/certificate pin, no new permission/dependency. Prior apps cannot read schema10; retain a pre-update export.
+
+# 0.14.0-rc.1 — Focused building and Ashen March (development)
+
+- Reorder build tabs Fence→Farm→Mill→Crew→Supplies→Equipment; group actions by purpose and move fortification to Fence, materials to Mill and consumables/assignments to Supplies.
+- Shared timber frame, parchment surface, gold trim and serif section headings align popups with the fantasy setting.
+- First authored World2 slice: Ashen March scenery, four chapter names, ashfall tactics and Cinder Regent boss variant; portal retains relics/settings and shows a paused arrival.
+- Save schema9/package identity/signing pin unchanged. VersionCode18. No new dependency/permission. Worlds3+ currently reuse Ashen March.
+- Candidate work; do not infer release or device-validation status from this entry.
+
 # 0.13.0-rc.2 — TAG fantasy survival release
 
 Publish the renamed game with interchangeable potion/magic buttons, nine equipment slots/five rarities/Equip best, optional tenth-day champion arenas, bounded offline director and reincarnation/Day100 portal lore. Fixed action areas keep adventure choices above system bars, including at200% font. Deferred welcome does not block invitations. VersionCode17, schema9, retained signing identity.93 unit tests per variant,1485 native checks and both actual update stages per API26/35 passed; physical-phone validation remains pending.

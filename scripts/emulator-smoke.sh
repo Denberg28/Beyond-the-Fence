@@ -24,8 +24,8 @@ if [ -f artifacts/Upgrade-Baseline.apk ]; then
   adb shell run-as com.denberg.beyondthefence cp /data/local/tmp/btf-upgrade.btfs files/farm-a.btfs
   adb shell run-as com.denberg.beyondthefence rm -f files/farm-b.btfs
 fi
-adb install -r artifacts/TAG-Zombie-Survival-Fantasy-0.13.0-rc.2-Preview.apk
-adb install -r artifacts/TAG-Zombie-Survival-Fantasy-0.13.0-rc.2-Tests.apk
+adb install -r artifacts/TAG-Zombie-Survival-Fantasy-0.14.0-rc.2-Preview.apk
+adb install -r artifacts/TAG-Zombie-Survival-Fantasy-0.14.0-rc.2-Tests.apk
 if [ -f artifacts/Upgrade-Baseline.apk ]; then
   timeout 60s adb shell am instrument -w -e upgradeOnly true com.denberg.beyondthefence.test/com.denberg.beyondthefence.SmokeInstrumentation | tee evidence/upgrade.txt
   grep -Eq '^OK \([0-9]+ upgrade checks\)' evidence/upgrade.txt
@@ -34,10 +34,10 @@ adb shell pm clear com.denberg.beyondthefence
 timeout 420s adb shell am instrument -w com.denberg.beyondthefence.test/com.denberg.beyondthefence.SmokeInstrumentation | tee evidence/instrumentation.txt
 grep -Eq '^OK \([0-9]+ checks\)' evidence/instrumentation.txt
 if grep -q 'FAILURES!!!' evidence/instrumentation.txt; then exit 1; fi
-for scene in welcome roaming farm night landscape upgrades-landscape large-font breach rebuilt materials survival shop compact barracks items village castle tabs boss potions century equipment arena-offer arena rift; do
+for scene in welcome roaming farm night landscape upgrades-landscape large-font breach rebuilt materials survival shop compact barracks items village castle tabs boss potions century equipment arena-offer arena rift ashen-arrival ashen-world supplies ashen-boss medieval-homestead medieval-castle medieval-farm bestiary fantasy-horde arena-champion-0 arena-champion-1 arena-champion-2 arena-champion-3; do
   adb exec-out run-as com.denberg.beyondthefence cat "files/smoke-$scene.png" > "evidence/$scene.png"
 done
-if [ -f artifacts/TAG-Zombie-Survival-Fantasy-0.13.0-rc.2-Release.apk ]; then
+if [ -f artifacts/TAG-Zombie-Survival-Fantasy-0.14.0-rc.2-Release.apk ]; then
   # Seed the installed preview's real data, then upgrade to the non-debuggable release.
   adb shell am force-stop com.denberg.beyondthefence
   base64 -d app/src/test/resources/schema7.b64 > evidence/release-upgrade-fixture.btfs
@@ -45,7 +45,7 @@ if [ -f artifacts/TAG-Zombie-Survival-Fantasy-0.13.0-rc.2-Release.apk ]; then
   adb shell chmod 644 /data/local/tmp/btf-release-upgrade.btfs
   adb shell run-as com.denberg.beyondthefence cp /data/local/tmp/btf-release-upgrade.btfs files/farm-a.btfs
   adb shell run-as com.denberg.beyondthefence rm -f files/farm-b.btfs
-  adb install -r artifacts/TAG-Zombie-Survival-Fantasy-0.13.0-rc.2-Release.apk
+  adb install -r artifacts/TAG-Zombie-Survival-Fantasy-0.14.0-rc.2-Release.apk
   timeout 60s adb shell am instrument -w -e upgradeOnly true com.denberg.beyondthefence.test/com.denberg.beyondthefence.SmokeInstrumentation | tee evidence/release-upgrade.txt
   grep -Eq '^OK \([0-9]+ upgrade checks\)' evidence/release-upgrade.txt
 fi

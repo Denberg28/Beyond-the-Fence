@@ -1,3 +1,17 @@
+# 0.14.0-rc.2 development limitations
+
+- Medieval art and four fantasy species extend the existing simulation, with no free placement/pathfinding or new quests. Wolves face the courtyard; humanoids use a consistent readable top-down pose.
+- Arena artwork is original vector illustration; the player still commands an automatic duel with Strike/potions rather than manual movement. Worn helmet changes headgear; other equipment retains its stat effects.
+- Expanded rosters retain the existing quota/economy/loot rules. Human balance and physical-phone rendering/endurance/accessibility/audio remain unvalidated.
+- Schema10 reads1–9; earlier apps reject new exports. Retain a pre-update save/APK for rollback. New signed release/install-r verification is required before publication.
+
+# 0.14 development limitations
+
+- First Ashen March slice shares the existing century economy, enemy silhouettes and arena champions. Cinder units add ember markings; later numbered worlds reuse this biome. Chapter names are flavor, not quests or cutscenes.
+- New layout and world require final Android builds/lint/package audits and installed-app API26/35 checks plus screenshot review before candidate promotion. Local JVM results alone do not validate rendering.
+- Physical handset endurance, TalkBack, audible quality and human balance remain unvalidated. Stable promotion remains blocked.
+- Schema9 is unchanged. Pre-update exports preserve rollback; old code can read world2 bytes but displays its original biome/rules.
+
 # 0.13 current limitations
 
 - Published0.13.0-rc.2 passed all required automated candidate gates, including API26/35 full native suites and actual signed release upgrade checks. Physical-phone validation remains pending; this is a prerelease.

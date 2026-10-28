@@ -1,3 +1,31 @@
+# Medieval frontier acceptance —0.14.0-rc.2
+
+M1: Garden plots display raised timber frames, cornerstones and furrows, with existing crop stages/health/growth bars. Locked plots remain tappable expansion land. Palisade / Stone wall / Ironbound boundaries show stakes / masonry / iron reinforcement. Draw every material on the shared normalized perimeter; retain independent side HP, repair costs, durability pixels, geometry and native targets across all three settlements, rotations and200% font.
+
+M2: Add IDs8 Kobold (Day2),9 Orc (Day6),10 Dire wolf (Day3),11 Goblin hexer (Day12). IDs0–7 retain their meanings, including boss7. Roster weights give each unlocked legacy type3 shares, each new type2. Every unlocked legacy family leads the scout roster; remaining slots expose unlocked species, rotating new species by five-day chapter when the ten-scout cap is full. Never select bosses through ordinary roster/scouts. New stats are explicit in Game; wolf is fastest, orc is a slow heavy wall breaker, hexer uses spitter-style ranged wall attacks. Existing quota/rank/economy/loot/boss gates remain. Ashfall's heavy multiplier includes Orcs.
+
+M3: Original fantasy creatures use distinct silhouettes and gear; inspiration is generic Japanese fantasy-adventure novel atmosphere, with no borrowed characters/assets. Existing undead remain. Crew/Options Bestiary provides illustrations, names, unlock days and tactics using native accessible text.
+
+M4: Arena shows a detailed vanguard and distinct Hollow Knight / Grave Huntress / Bone Colossus / Ash Witch, weapons, cape/armor and heraldic stone stage. Equipped helmet changes the vanguard's headgear. Attack poses derive from battle clocks, do not drive combat, and stop under reduced motion; pause freezes all clocks. Preserve aspect ratio. Every champion must pass actual fight/pause/retreat and farm-isolation checks.
+
+M5: Schema10 changes allowed enemy IDs only; record layout remains unchanged. Read schemas1–9, preserving live HP/types/assets/relics/arena/world. Reject new IDs in old schemas, out-of-range IDs and boss scouts. Validate deterministic continuation before/after migration, all100-day schedules and once-only20 bosses. Older apps reject schema10; rollback requires a pre-update export. Package/signing identity and zero permissions remain.
+
+Required verification: existing full suite plus BestiaryTest, debug/release/test builds, lint/package audits, exact-APK native API26/35 suites and screenshot review of medieval garden/materials, illustrated bestiary, mixed horde and all four arena champions. Hardware HIL N/A; physical phone performance/audio/accessibility/endurance and human balance remain separate pending gates.
+
+# 0.14 focus navigation and Ashen March acceptance
+
+Baseline: published0.13.0-rc.2, repository main d4bd381. Scope: reorganize existing build actions, theme all popups, implement the first authored second-world biome. No new permissions/dependencies, signing identity or save schema.
+
+- F1: Tabs appear left-to-right as Fence / Farm / Mill, then Crew / Supplies / Equipment. IDs remain0/2/1/3/5/4 so map routing and saved UI state stay compatible. Each has >=48dp targets; page changes reset scroll and stale feedback, rotation retains selection, panels pause and stay paused on exit.
+- F2: Fence owns borders, homestead repair and fortification. Farm owns market, planting/selling, irrigation/expansion. Mill owns construction, output and timber bundles. Crew owns barracks, recruits, uniforms/drills, hero/training and orders, in that order. Supplies owns all four purchases and quick-slot assignment; missing-market link opens Farm. Equipment owns relics. No copied purchases on unrelated pages; exact prices/economy unchanged.
+- F3: Shared parchment/timber/gold popup surface covers Build, arena/portal/arrival, native options/help, equipment and quick-slot selectors. Body text remains legible, system text enlargement and fixed adventure actions remain supported.
+- W1: Day100 still waits for an outstanding arena choice before crossing. Relics/gear, quick slots, accessibility/audio preferences and director setting carry; all farm assets/currency/supplies reset. Fresh arrival is paused.
+- W2: World2 is Ashen March: charred ground/trees, kiln ruins, ember-marked heavy foes, ash particles, offset settlement cycle, four named25-day chapters. World1 is Greenhaven and retains its mechanics/art.
+- W3: Ashfall uses weather2, slowing approaching enemies15%; Brute/Ironhide damage rises20% only during ashfall. Every fifth day is ashfall after dawn/recovery; Cinder Regent uses existing boss cadence/silhouette with10% more HP/damage. All enemy quotas/rank caps/rewards/loot odds remain unchanged. Deterministic simulation, reduced motion, pause/lifecycle, corruption checks and schema9 bounds must pass.
+- W4: Later numbered worlds reuse Ashen March; additional authored worlds and a new full story campaign are outside this first slice. No claim of handset or human balance validation.
+
+Failure/recovery: closing a panel leaves play paused; unavailable market supplies cannot spend coins; defeat retries same world/day; alternating checkpoints and imports retain their existing validation. Rollback uses a pre-update export and prior APK. Schema9 bytes stay compatible, though old apps render the second world with their old art/rules.
+
 # 0.13 acceptance — TAG fantasy survival
 
 Baseline main70191f4, century source3d1e94c. Preserve package/signing identity and all critical farm survival/economy/lifecycle gates.

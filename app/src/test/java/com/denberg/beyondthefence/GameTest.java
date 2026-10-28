@@ -300,7 +300,7 @@ public class GameTest {
     g.day = 8;
     g.fence = 4;
     g.health = 300;
-    boolean[] seen = new boolean[4];
+    boolean[] seen = new boolean[Game.FOES.length];
     for (int wave = 0; wave < 4; wave++) {
       g.startNight();
       for (int i = 0; i < 750; i++) {

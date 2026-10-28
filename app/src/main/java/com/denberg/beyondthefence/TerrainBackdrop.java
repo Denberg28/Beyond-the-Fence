@@ -9,7 +9,7 @@ import android.view.View;
 @android.annotation.SuppressLint("ViewConstructor")
 final class TerrainBackdrop extends View {
   private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-  private boolean night;
+  private boolean night, ashen;
 
   TerrainBackdrop(Context context) {
     super(context);
@@ -17,16 +17,16 @@ final class TerrainBackdrop extends View {
     setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
 
-  void phase(boolean value) {
-    if (night != value) { night = value; invalidate(); }
+  void phase(boolean value, boolean biome) {
+    if (night != value || ashen != biome) { night = value; ashen = biome; invalidate(); }
   }
 
   @Override protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
     float d = getResources().getDisplayMetrics().density;
-    canvas.drawColor(night ? 0xff213e32 : 0xff4b793a);
+    canvas.drawColor(World.ground(ashen ? 2 : 1, night));
     // Quiet low-contrast ground detail keeps native labels readable over the world.
-    paint.setColor(night ? 0xff2a4637 : 0xff507c3e);
+    paint.setColor(ashen ? night ? 0xff39333e : 0xff786b5a : night ? 0xff2a4637 : 0xff507c3e);
     for (int i = 0; i < 90; i++) {
       float x = (i * 137 + 17) * d % getWidth();
       float y = (i * 83 + 41) * d % getHeight();

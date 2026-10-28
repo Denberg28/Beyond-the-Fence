@@ -1,12 +1,31 @@
 <resources>
     <style name="BaseAppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
+        <item name="android:alertDialogTheme">@style/GameDialogTheme</item>
         <item name="android:colorAccent">#356859</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:statusBarColor">#F5F2E9</item>
         <item name="android:navigationBarColor">#203E36</item>
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:windowBackground">#F5F2E9</item>
+    </style>
+    <style name="GameDialogTheme" parent="android:style/Theme.Material.Light.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/panel_parchment</item>
+        <item name="android:colorBackground">#F2E6C7</item>
+        <item name="android:colorAccent">#356859</item>
+        <item name="android:textColorPrimary">#203E36</item>
+        <item name="android:textColorSecondary">#52665B</item>
+        <item name="android:windowMinWidthMajor">85%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+        <item name="android:buttonBarPositiveButtonStyle">@style/GameDialogAction</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/GameDialogAction</item>
+        <item name="android:buttonBarNeutralButtonStyle">@style/GameDialogAction</item>
+    </style>
+    <style name="GameDialogAction" parent="android:style/Widget.Material.Light.Button.Borderless">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">#203E36</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
     </style>
     <style name="AppTheme" parent="BaseAppTheme" />
 </resources>

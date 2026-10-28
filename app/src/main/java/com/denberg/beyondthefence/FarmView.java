@@ -11,6 +11,8 @@ import java.util.function.Supplier;
 final class FarmView extends View {
   // Counts actual scene rendering, excluding window/ripple draws using the cached layer.
   long renderedFrames;
+  private final HomesteadArt homestead = new HomesteadArt();
+  private final FantasyArt fantasy = new FantasyArt();
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final RectF rect = new RectF();
   private final Path woods = new Path(), courtyard = new Path();
@@ -39,11 +41,11 @@ final class FarmView extends View {
     Game g = model.get(); float d = geometry.density;
     if (g == null || d == 0 || getHeight() == 0) return;
     // Every frame starts opaque; weather cannot leak alpha into subsequent backgrounds.
-    color(g.night ? 0xff213e32 : 0xff4b793a);
+    color(World.ground(g.world, g.night));
     c.drawRect(0, 0, getWidth(), getHeight(), p);
     // Distant woodland, worn approach tracks, rock outcrops and abandoned camp debris.
     for (int band = 0; band < 3; band++) {
-      color(g.night ? 0xff182f2c + band * 0x00050502 : 0xff385a38 + band * 0x00070702);
+      color(g.ashenWorld() ? (g.night ? 0xff211f29 : 0xff423d39) + band * 0x00040403 : g.night ? 0xff182f2c + band * 0x00050502 : 0xff385a38 + band * 0x00070702);
       woods.reset(); woods.moveTo(0, 0);
       for (int tree = 0; tree <= 20; tree++) {
         float tx = tree * getWidth() / 20f;
@@ -54,7 +56,7 @@ final class FarmView extends View {
       woods.lineTo(getWidth(), 0); woods.close(); c.drawPath(woods, p);
     }
     float road = geometry.worldX(.50f);
-    line(c, road - 5 * d, getHeight(), road + 16 * d, geometry.fortBottom, g.night ? 0xff4c5140 : 0xffa39b70, 27 * d);
+    line(c, road - 5 * d, getHeight(), road + 16 * d, geometry.fortBottom, g.ashenWorld() ? 0xff8c7660 : g.night ? 0xff4c5140 : 0xffa39b70, 27 * d);
     for (int stone = 0; stone < 12; stone++) {
       float sx = stone % 2 == 0 ? 10 * d : getWidth() - 14 * d;
       float sy = (50 + stone * 47) * d % getHeight();
@@ -69,16 +71,26 @@ final class FarmView extends View {
       if (x > l - 12 * d && x < r + 12 * d && y > t - 12 * d && y < b + 12 * d) continue;
       if (i % 3 == 0) {
         circle(c, x + d, y + 3 * d, 10 * d, 0x44312c20);
-        circle(c, x, y, 9 * d, g.night ? 0xff294d35 : 0xff37632e);
-        circle(c, x - 2 * d, y - 2 * d, 5 * d, g.night ? 0xff365b3c : 0xff668e43);
+        circle(c, x, y, 9 * d, g.ashenWorld() ? 0xff3e3939 : g.night ? 0xff294d35 : 0xff37632e);
+        circle(c, x - 2 * d, y - 2 * d, 5 * d, g.ashenWorld() ? 0xff706051 : g.night ? 0xff365b3c : 0xff668e43);
       } else box(c, x, y, 3 * d, 2 * d, d, i % 2 == 0 ? 0xff8a9a59 : 0xff335b32);
+    }
+    if (g.ashenWorld()) {
+      // Charred trunks and ruined kiln pillars frame the playable courtyard.
+      for (int ruin = 0; ruin < 6; ruin++) {
+        float rx = ruin % 2 == 0 ? 14 * d : getWidth() - 24 * d;
+        float ry = (70 + ruin * 63) * d % getHeight();
+        box(c, rx, ry, 10 * d, 18 * d, d, g.night ? 0xff49414a : 0xff534b47);
+        line(c, rx + 2 * d, ry + 7 * d, rx + 8 * d, ry + 4 * d, 0xffb77343, 2 * d);
+        line(c, rx + 5 * d, ry, rx - 3 * d, ry - 9 * d, 0xff332c2b, 3 * d);
+      }
     }
     courtyard.reset();
     for (int step = 0; step <= 80; step++) {
       float px = geometry.worldX(g.ringXAt(step / 20f, 0)), py = geometry.worldY(g.ringYAt(step / 20f, 0));
       if (step == 0) courtyard.moveTo(px, py); else courtyard.lineTo(px, py);
     }
-    courtyard.close(); color(g.night ? 0xff486444 : g.settlementStyle() == 2 ? 0xff8e9c7e : 0xff8eb45a); c.drawPath(courtyard, p);
+    courtyard.close(); color(g.ashenWorld() ? g.night ? 0xff5b514b : 0xffa38d68 : g.night ? 0xff486444 : g.settlementStyle() == 2 ? 0xff8e9c7e : 0xff8eb45a); c.drawPath(courtyard, p);
     if (g.settlementStyle() > 0) {
       for (int paving = 0; paving < 18; paving++) {
         float px = l + (r - l) * (.14f + paving % 3 * .35f), py = t + (b - t) * (.12f + paving / 3 * .14f);
@@ -98,11 +110,8 @@ final class FarmView extends View {
     for (int i = 0; i < 9; i++) {
       BoardGeometry.Box tile = geometry.plots[i];
       boolean open = i < g.plots();
-      box(c, tile.left, tile.top, tile.width(), tile.height(), 3 * d, g.scorched[i] ? 0xff44372c : open ? 0xff755132 : 0xff668e48);
+      homestead.plot(c, tile, open, g.scorched[i], d);
       if (!open) continue;
-      for (int row = 0; row < 4; row++)
-        line(c, tile.left + 7 * d, tile.top + tile.height() * (.15f + row * .18f),
-            tile.right - 7 * d, tile.top + tile.height() * (.15f + row * .18f), 0xff997044, 2 * d);
       if (g.scorched[i]) {
         line(c, tile.left + 10 * d, tile.top + 8 * d, tile.right - 10 * d, tile.top + 20 * d, 0xffb56a46, 3 * d);
         line(c, tile.left + 10 * d, tile.top + 20 * d, tile.right - 10 * d, tile.top + 8 * d, 0xff694733, 3 * d);
@@ -145,14 +154,19 @@ final class FarmView extends View {
         line(c, x, y, tx, ty, 0xcced8257, 2 * d);
       }
       boolean attacking = !paused.get() && !g.reducedMotion && (enemy.breached ? enemy.advance >= 1 && enemy.attackClock > 1
-          : enemy.x <= (enemy.type == 3 ? .26f : 0));
+          : enemy.x <= (Bestiary.ranged(enemy.type) ? .26f : 0));
       zombie(c, x, y, size, enemy.type, g.reducedMotion ? 0 : g.elapsed * (enemy.type == 1 ? 10 : 6) + enemy.offset * 7, attacking);
+      if (g.ashenWorld() && (Bestiary.heavy(enemy.type) || enemy.type == Campaign.BOSS)) {
+        line(c, x - 4 * size, y - 6 * size, x + 3 * size, y + 2 * size, 0xffe5a35a, 2 * size);
+        circle(c, x + 4 * size, y - 7 * size, 2 * size, 0xffffcc7d);
+      }
       box(c, x - 8 * d, y - 22 * d, 16 * d, 2 * d, 0, 0xff172e26);
       box(c, x - 8 * d, y - 22 * d, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
     }
     Game.Enemy boss = g.boss();
     if (boss != null) {
       float width = Math.min(getWidth() - 24 * d, 240 * d), bx = (getWidth() - width) / 2;
+      color(0xfff5e5c4); p.setTextSize(10 * d); p.setTypeface(Typeface.DEFAULT_BOLD); c.drawText(g.bossName(), bx, 12 * d, p);
       box(c, bx, 16 * d, width, 5 * d, 2 * d, 0xff291e2b);
       box(c, bx, 16 * d, width * boss.hp / boss.maxHp, 5 * d, 2 * d, 0xffce6b87);
     }
@@ -180,22 +194,23 @@ final class FarmView extends View {
         float y = (i * 53 * d + (g.reducedMotion || paused.get() ? 0 : SystemClock.uptimeMillis() / 14)) % getHeight();
         line(c, x, y, x - 3 * d, y + 8 * d, 0x449fced8, d);
       }
-    if (g.weather == 2) box(c, 0, 0, getWidth(), getHeight() * .3f, 0, 0x22e5eadb);
+    if (g.weather == 2) {
+      box(c, 0, 0, getWidth(), getHeight() * .3f, 0, g.ashenWorld() ? 0x228e7f7c : 0x22e5eadb);
+      if (g.ashenWorld()) for (int ash = 0; ash < 28; ash++) {
+        float ax = (ash * 97 * d + (g.reducedMotion ? 0 : g.elapsed * 6 * d)) % getWidth();
+        float ay = (ash * 59 * d + (g.reducedMotion ? 0 : g.elapsed * 12 * d)) % getHeight();
+        circle(c, ax, ay, d, ash % 5 == 0 ? 0xffe4b16c : 0x779b918d);
+      }
+    }
   }
   private void fenceSide(Canvas c, Game g, int side, float d) {
     int tier = g.wallHealth[side] > 0 ? g.walls[side] : 0;
-    int tone = tier == 0 ? 0x669b8a56 : tier == 1 ? 0xff9d683b : tier == 2 ? 0xff87939c : 0xffb5c4cb;
     float ratio = g.wallRatio(side);
     for (int part = 0; part < 20; part++) {
       float at = part / 20f, next = (part + 1) / 20f;
       float x = geometry.worldX(g.ringXAt(side + at, 0)), y = geometry.worldY(g.ringYAt(side + at, 0));
       float xx = geometry.worldX(g.ringXAt(side + next, 0)), yy = geometry.worldY(g.ringYAt(side + next, 0));
-      line(c, x, y, xx, yy, 0x44302d25, 12 * d);
-      if (tier > 0 || part % 2 == 0) line(c, x, y, xx, yy, tone, (tier == 0 ? 4 : 8) * d);
-      if (tier > 0 && part % 2 == 0) {
-        box(c, x - 3 * d, y - 4 * d, 6 * d, 8 * d, tier == 1 ? 0 : d, tier == 1 ? 0xffd1a265 : 0xffc6d0c7);
-        if (g.settlementStyle() == 2) box(c, x - 3 * d, y - 7 * d, 6 * d, 4 * d, d, 0xff879b98);
-      }
+      homestead.wall(c, x, y, xx, yy, d, tier, part, g.settlementStyle());
       if (g.walls[side] > 0) {
         line(c, x, y, xx, yy, 0xff6e3b2f, 3 * d);
         float fill = Math.max(0, Math.min(1, (ratio - at) * 20));
@@ -208,6 +223,11 @@ final class FarmView extends View {
   }
 
   private void zombie(Canvas c, float x, float y, float d, int type, float phase, boolean attacking) {
+    if (type >= Bestiary.KOBOLD) {
+      float heading = (float)Math.toDegrees(Math.atan2((geometry.fortTop + geometry.fortBottom) / 2 - y,
+          (geometry.fortLeft + geometry.fortRight) / 2 - x));
+      fantasy.enemy(c, type, x, y, d, phase, attacking, heading); return;
+    }
     c.save(); c.translate(x, y); c.scale(d, d);
     float gait = (float) Math.sin(phase), bulk = type == Campaign.BOSS ? 11 : type == 2 ? 10 : type == 1 ? 5 : type == 3 ? 8 : 7;
     int skin = type == Campaign.BOSS ? 0xffc4a9b2 : type == 6 ? 0xff9fd3ca : type == 2 ? 0xff91a286 : type == 3 ? 0xffbdc768 : 0xffa8bd82;

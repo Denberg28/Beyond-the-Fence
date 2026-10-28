@@ -44,8 +44,8 @@ public class GuardDefenseTest {
       assertTrue(g.buildWall(1)); assertEquals(material, g.walls[1]);
       assertEquals(1, g.wallRatio(1), 0);
     }
-    assertEquals("Wood", Game.FENCE_MATERIALS[1]); assertEquals("Stone", Game.FENCE_MATERIALS[2]);
-    assertEquals("Steel", Game.FENCE_MATERIALS[3]); assertEquals(160, g.maxWallHealth(1), 0);
+    assertEquals("Palisade", Game.FENCE_MATERIALS[1]); assertEquals("Stone wall", Game.FENCE_MATERIALS[2]);
+    assertEquals("Ironbound", Game.FENCE_MATERIALS[3]); assertEquals(160, g.maxWallHealth(1), 0);
     g.wallHealth[1] = 80; assertEquals(.5f, g.wallRatio(1), 0);
     assertTrue(g.repairWall(1)); assertEquals(130f / 160, g.wallRatio(1), .0001f);
     g.wallHealth[1] = 0; assertEquals(0, g.wallRatio(1), 0);

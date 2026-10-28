@@ -1,3 +1,39 @@
+# 0.14.0-rc.2 shared-boundary pixel test correction
+
+Run40688122165 passed source gates and the extended roster, then its new Village wall check failed. The original HP-pixel helper sampled from the rectangular fortLeft/fortRight extents. In a tapered Village the fully healthy adjacent east wall falls inside that rectangle, so its green pixels remain when the north wall is breached. Derive the sample from the north ring's interior progress0.08–0.72 (y at0.4), excluding corners/adjacent walls. Keep the exact full>half>breached==0 assertions. Add this check plus native plot/target checks on all three settlement templates at200% font, and capture their medieval forms. No rendering/HP/price behavior changes; repeat the complete source/native gates. The process-crash output was the main-thread instrumentation AssertionError; its stack is in both retained crash logs.
+
+# 0.14.0-rc.2 native roster correction
+
+Run40686876099 passed106 cases per variant, builds/lint/package gates, then both emulators found a four-entry array in the original materials-scene test indexing a new ID8. Expand only its observation array; still assert each original family0–3, and add coexisting Kobold/Wolf coverage. Inspection also found the initial new scout ordering could omit the Spitter on Day4. Lead with every unlocked legacy family, then add new species; rotate new species deterministically when the ten-scout cap has fewer slots than the full roster. Weighted raid reinforcements, quotas and boss scheduling do not change. Strengthen BestiaryTest to require every legacy family's scout entry across all100 days. Repeat final-source gates; retain the failed evidence.
+
+# 0.14.0-rc.2 verification plan — medieval frontier
+
+Baseline:0.14.0-rc.1 source31a7c9a, run40682262919,100 cases per variant and1659 installed checks per API26/35 passed. Source treea0527d7 is the reviewed baseline. Schema9 fixture `app/src/test/resources/schema9.b64` was generated with that prior compiled Game/SaveCodec before edits; it contains a damaged World2 farm, crop, relic, assignments and a live two-enemy raid.
+
+Local JDK17/JUnit:106 cases PASS. Six BestiaryTest cases cover every day's unlock/weighted roster without bosses, scout→real enemy promotion, full real reinforcement quota including all species, ranged hexer/fast wolf/heavy orc, literal schema9 migration with deterministic live continuation, and valid-CRC wrong-schema/out-of-range/boss-scout rejection. Existing100 cases remain; the four-variant observation array now accommodates new IDs while retaining all four original assertions. Defense label assertions now expect Palisade / Stone wall / Ironbound; all price/HP/repair assertions remain. An initial new test tried to serialize test-injected zero-HP enemies; it was corrected to capture the live boss before zeroing enemies, preserving save validation.
+
+Required Android gates: both unit variants, builds/test APK, both lint targets, versionCode19/0.14.0-rc.2 API/permission/audio/size audits and native API26/35 regression. Native adds real Bestiary routing, medieval crop/material layout, all four new scout types in a live saved raid, and actual Fight/Pause/Retreat for each champion with farm clocks/HP frozen. Seven new screenshots per emulator: medieval-homestead, bestiary, fantasy-horde, arena-champion0–3. Preserve all earlier gates including HP-bar pixel checks, paused rendering, focus, font/rotation, arena/rift and persistence. Record run-specific final evidence in PR1.
+
+Self-review is not independent review. Phone listening/endurance/TalkBack/performance and human balance are NOT TESTED; HIL N/A. Signed release/upgrade gates remain separate before candidate publication. Keep prior APK and pre-update schema9 export for rollback; older code rejects schema10.
+
+# 0.14 emulator infrastructure retry
+
+Run40681367751 rebuilt corrected source9c25f47 successfully (100 cases in each variant, builds, lint and package audits), but failed before the arena. API26's failure screenshot/window dump shows **Messages has stopped**, and its AndroidRuntime log identifies com.google.android.apps.messaging:rcs. API35's capture shows **Pixel Launcher isn't responding** over the game welcome; last-anr.txt identifies com.google.android.apps.nexuslauncher. No game crash was recorded. Preserve this evidence and retry on fresh runners with game code, emulator configuration, assertions and deadlines unchanged. The retry's documentation commit only corrects README action routing and records this diagnosis; it does not alter runtime or tests.
+
+# 0.14 animated-dialog regression correction
+
+First PR run40680136637 passed all build/unit/lint/package gates, then both native suites failed at the first arena Fight action. There was no app crash/ANR; the failure screenshot showed a live battle seven seconds in. The generic dialog helper required an idle main queue after every click, including continuous animation. Retain the10s liveness deadline, but synchronize animated dialogs on a new rendered arena frame (using the same approach already used for live farms). Paused dialogs still must become idle. Add an explicit400ms paused-arena clock/render stability assertion. Stop invalidating the frozen farm behind an active arena; only the arena needs drawing. Rerun final-source build and both native suites, retaining the failed run evidence.
+
+# 0.14 validation plan — 28 October 2026
+
+Baseline main d4bd381 / released0.13.0-rc.2: local JDK17 + JUnit4.13.2,93 cases PASS. New source:100 JVM cases PASS, including seven WorldTest cases covering all100 days,20 once-only bosses, schema9 bounds/continuation, real ashfall movement/wall damage, relaxed mode, weather fronts, recovery, portal carry/reset and chapter boundaries.
+
+Required source gates: debug/release unit tests, APK/test APK builds, both lint targets, versionCode18 /0.14.0-rc.1 package identity, zero permissions, six unchanged original WAVs and <=5MiB audit. Required integration: full exact-APK API26/35 native suites; focus-tab order and action classification; actual purchase/assignment transactions; market dependency link; pause, rotation and200% font; portal→paused Ashen arrival; new biome ground/geometry and Cinder Regent spawn. Screenshots add supplies, Ashen arrival, daytime world and boss to the existing scenes. Review every new UI scene before candidate promotion.
+
+Signing certificate/schema9 remain unchanged. Source-only CI cannot publish: the retained0.13 signed payload points at older source and fails the exact-source publish condition. A future signed candidate must pass the existing exact compiled-content, pinned-certificate and installed upgrade gates. No local emulator/KVM or physical phone is available. Record final Android/CI results in the implementation PR; a pending check is not PASS. Physical-phone validation remains NOT TESTED; HIL N/A because this is an offline game.
+
+Acceptance mapping: F1–F3 use native pointer/navigation/layout/screenshots; W1–W3 use WorldTest plus installed portal/arrival/raid checks; W4 is an explicit scope limitation in README/known issues. Self-review is not independent review. Rollback retains the prior release and pre-update export.
+
 # Published0.13.0-rc.2 verification — 28 October 2026
 
 Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.13.0-rc.2

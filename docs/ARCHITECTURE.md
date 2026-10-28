@@ -1,3 +1,17 @@
+# Medieval art and schema10
+
+`HomesteadArt` paints raised beds and wall segments from existing BoardGeometry boxes / shared ring coordinates. It does not change hitboxes or combat geometry; FarmView retains the HP overlay at its original coordinates. `FantasyArt` paints the new species; wolf orientation points toward the courtyard. Existing enemy0–7 rendering remains. `BestiaryView` is a static illustration plate with adjacent native descriptive text.
+
+`Bestiary` owns stable new IDs, unlocks, weighted selection, scout composition and role predicates. `Campaign.enemyKinds` continues to describe the legacy roster. Game makes one random draw per ordinary reinforcement using the expanded roster; boss selection remains separate. Existing live enemy state is never remapped on import. Schema10 uses the same byte layout as9 but allows new IDs and explicitly excludes daytime bosses; older versions still enforce their original limits.
+
+ArenaView now renders an original medieval duel stage and separate champion silhouettes with a uniform aspect-preserving transform. Armor/headgear, attack clocks, remaining enhancer time and reduced-motion settings determine art only. No wall clock, artwork RNG, downloaded assets or runtime dependency is added.
+
+# 0.14 world and panel design
+
+`World` derives biome identity, chapter, settlement offset, weather front and palette from the existing persisted world/day. No new save fields or random draws are introduced. Worlds>=2 reuse the authored Ashen March biome. Enemy IDs stay stable; the Cinder Regent uses boss7, with HP below schema9's2200 ceiling. Existing mid-raid world2 imports retain saved enemy HP/weather rather than rewriting live state; future dawn/recovery applies the new weather front.
+
+`MainActivity` retains page IDs0 Fence,1 Mill,2 Farm,3 Crew,4 Equipment and adds5 Supplies. The visible two-row order is0/2/1 then3/5/4. Rebuilding detaches old controls, clears references/hints and resets scroll. Map buildings still route to their retained IDs. Sections provide a stable construction→upgrade→orders sequence; Supplies provides the market dependency link. Parchment drawable is shared by overlay cards and the inherited native alert theme. Canvas biome decoration shares the existing geometry, with no hitbox changes.
+
 # Fantasy extension (0.13)
 
 Game remains the deterministic Android-independent simulation. Equipment describes a finite45-item collection with9 fixed stat slots and5 rarities; Game applies aggregate caps and an independently saved loot RNG. SaveCodec9 appends validated collection/gear/director/arena/world data to the existing layout, retaining schemas1–8. No timers use wall time.

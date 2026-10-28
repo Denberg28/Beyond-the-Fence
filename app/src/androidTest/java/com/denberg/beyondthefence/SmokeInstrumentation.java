@@ -57,9 +57,11 @@ public final class SmokeInstrumentation extends Instrumentation {
   private void settle(MainActivity a) {
     if (!onUi(() -> !a.paused)) { awaitIdle(); return; }
     long[] before = new long[1];
-    runOnMainSync(() -> before[0] = ((GameBoard) control(a, "field")).artwork.renderedFrames);
-    awaitUi(() -> ((GameBoard) control(a, "field")).artwork.renderedFrames > before[0],
-        "Running game renders another frame within10 seconds");
+    runOnMainSync(() -> before[0] = a.game.arenaActive ? a.arenaView.renderedFrames
+        : ((GameBoard) control(a, "field")).artwork.renderedFrames);
+    awaitUi(() -> (a.game.arenaActive ? a.arenaView.renderedFrames
+        : ((GameBoard) control(a, "field")).artwork.renderedFrames) > before[0],
+        "Running game or arena renders another frame within10 seconds");
   }
 
   private void awaitAndroidFrame() {
@@ -129,7 +131,10 @@ public final class SmokeInstrumentation extends Instrumentation {
       AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
       if (root != null) for (AccessibilityNodeInfo node : root.findAccessibilityNodeInfosByText(text)) {
         if (node.getText() != null && text.equalsIgnoreCase(node.getText().toString()) && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
-          check(true, "Dialog action: " + text); awaitIdle(); return;
+          check(true, "Dialog action: " + text);
+          MainActivity current = ((FarmApp)getTargetContext().getApplicationContext()).observer;
+          if (current == null) awaitIdle(); else settle(current);
+          return;
         }
       }
       SystemClock.sleep(100);
@@ -375,7 +380,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(onUi(() -> a.game.buildings[0] && a.game.coins == 58 && a.game.wood == 18), "Construct the interior timber mill");
       farmCycle(a);
       touch(a, "building2");
-      check(((android.widget.TextView) control(a, "panelTitle")).getText().toString().equals("BARRACKS")
+      check(((android.widget.TextView) control(a, "panelTitle")).getText().toString().equals("CREW")
           && control(a, "hire").isShown() && control(a, "upgrade0") != null,
           "Camp opens construction, recruitment and mercenary upgrades");
       touch(a, "construct2"); touch(a, "closeBuild");
@@ -519,7 +524,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       touch(reopened, "harvest");
       check(onUi(() -> threatened.coins == 100 && threatened.wood == 2 && threatened.harvested == 1),
           "Surviving ripe crop funds repairs through normal harvest");
-      touch(reopened, "build"); touch(reopened, "buildTab0"); touch(reopened, "buyTimber");
+      touch(reopened, "build"); touch(reopened, "buildTab1"); touch(reopened, "buyTimber"); touch(reopened, "buildTab0");
       check(onUi(() -> threatened.coins == 88 && threatened.wood == 12), "Harvest coins buy a timber bundle atomically");
       touch(reopened, "constructWall0");
       check(onUi(() -> threatened.wallHealth[0] == 50 && threatened.coins == 80 && threatened.wood == 12
@@ -549,9 +554,10 @@ public final class SmokeInstrumentation extends Instrumentation {
         threatened.night = false; threatened.enemies.clear(); threatened.roamers.clear();
         threatened.day = 4; threatened.xp = 150; threatened.elapsed = 0; threatened.populateRoamers(); reopened.refresh();
       });
-      boolean[] variants = new boolean[4];
+      boolean[] variants = new boolean[Game.FOES.length];
       for (Game.Roamer roamer : threatened.roamers) variants[roamer.type] = true;
-      for (boolean visible : variants) check(visible, "Redesigned zombie variant is present in the materials scene");
+      for (int type = 0; type < 4; type++) check(variants[type], "Original zombie family is present in the materials scene: " + Game.FOES[type]);
+      check(variants[Bestiary.KOBOLD] && variants[Bestiary.WOLF], "Unlocked fantasy scouts coexist with all four original families");
       screenshot("smoke-materials.png");
       runOnMainSync(() -> { threatened.coins = 2000; threatened.wood = 200; reopened.refresh(); });
       touch(reopened, "squad"); touch(reopened, "hire"); touch(reopened, "hire");
@@ -626,7 +632,7 @@ public final class SmokeInstrumentation extends Instrumentation {
           "Unaffordable mercenary upgrade shows its price inside the button");
       runOnMainSync(() -> { compact.coins = 200; compact.wood = 100; compact.plant(0, 0); compact.growth[0] = 1; reopened.refresh(); });
       touch(reopened, "building1");
-      check(((android.widget.TextView) control(reopened, "panelTitle")).getText().toString().equals("SHOP")
+      check(((android.widget.TextView) control(reopened, "panelTitle")).getText().toString().equals("FARM")
           && control(reopened, "shopHarvest").isShown() && control(reopened, "upgrade2") != null,
           "Shop opens crop sales and farm upgrades");
       touch(reopened, "construct1"); touch(reopened, "shopHarvest");
@@ -645,7 +651,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       screenshot("smoke-barracks.png"); touch(reopened, "closeBuild");
       touch(reopened, "building0"); touch(reopened, "construct0"); touch(reopened, "advanced0");
       check(onUi(() -> compact.millLevel == 1 && compact.millYield() == 6 && compact.millPeriod() == 11), "Mill popup buys a working production upgrade");
-      touch(reopened, "closeBuild"); touch(reopened, "building1"); touch(reopened, "buyItem0"); touch(reopened, "buyItem1");
+      touch(reopened, "closeBuild"); touch(reopened, "building1"); touch(reopened, "buildTab5"); touch(reopened, "buyItem0"); touch(reopened, "buyItem1");
       check(onUi(() -> compact.elixirs == 1 && compact.enhancers == 1), "Shop stocks both side-slot consumables");
       screenshot("smoke-items.png"); touch(reopened, "closeBuild"); touch(reopened, "itemSlot0");
       check(onUi(() -> compact.elixirs == 0 && compact.health == 75 && compact.mercenaries.get(0).health == 90), "Left elixir slot heals surviving actors exactly once");
@@ -660,12 +666,12 @@ public final class SmokeInstrumentation extends Instrumentation {
       }
       // Reproduce the old stale-scroll/mismatched-building tab transition on the real panel.
       touch(reopened, "building2");
-      for (int page : new int[] {1, 2, 3, 0, 3, 2, 1}) {
+      for (int page : new int[] {1, 2, 3, 0, 5, 4, 3, 2, 1}) {
         runOnMainSync(() -> ((android.widget.ScrollView) control(reopened, "panelScroll")).fullScroll(View.FOCUS_DOWN));
         awaitIdle(); touch(reopened, "buildTab" + page);
         check(onUi(() -> ((android.widget.ScrollView) control(reopened, "panelScroll")).getScrollY() == 0),
             "Changed tab starts at top instead of inheriting old scroll");
-        String title = new String[] {"FENCE", "MILL", "SHOP", "BARRACKS"}[page];
+        String title = new String[] {"FENCE", "MILL", "FARM", "CREW", "EQUIPMENT", "SUPPLIES"}[page];
         check(onUi(() -> ((android.widget.TextView)control(reopened, "panelTitle")).getText().toString().equals(title)
             && control(reopened, "buildTab" + page).isSelected()), "Title and selected tab match actual page");
         check(onUi(() -> {
@@ -673,12 +679,23 @@ public final class SmokeInstrumentation extends Instrumentation {
           return tab.getLineCount() == 1 && tab.getPaint().measureText(tab.getText().toString())
               <= tab.getWidth() - tab.getPaddingLeft() - tab.getPaddingRight();
         }), "Building tab label fits as a complete word at200 percent font");
-        check(onUi(() -> page == 0 ? control(reopened, "constructWall0") != null && control(reopened, "buyHero") == null
+        check(onUi(() -> page == 0 ? control(reopened, "constructWall0") != null && control(reopened, "upgrade1") != null
+                && control(reopened, "buyTimber") == null && control(reopened, "buyHero") == null
+            : page == 4 ? control(reopened, "gear8") != null && control(reopened, "buyItem0") == null
+            : page == 5 ? control(reopened, "buyItem0") != null && control(reopened, "assignButtons") != null && control(reopened, "shopPlant") == null
             : control(reopened, "construct" + (page - 1)) != null
-                && (page != 1 || control(reopened, "buyItem0") == null)
-                && (page != 2 || control(reopened, "hire") == null)
-                && (page != 3 || control(reopened, "buyTimber") == null)), "New tab contains only its building actions");
+                && (page != 1 || control(reopened, "buyItem0") == null && control(reopened, "upgrade1") == null)
+                && (page != 2 || control(reopened, "hire") == null && control(reopened, "buyItem0") == null)
+                && (page != 3 || control(reopened, "buyTimber") == null)), "New tab contains only its task's actions");
       }
+      runOnMainSync(() -> {
+        int[] order = {0, 2, 1, 3, 5, 4};
+        for (int i = 0; i < order.length; i++) {
+          View tab = control(reopened, "buildTab" + order[i]);
+          check(tab.getHeight() >= Math.round(48 * reopened.getResources().getDisplayMetrics().density), "Focus tabs keep48dp targets");
+          if (i % 3 > 0) check(tab.getLeft() > control(reopened, "buildTab" + order[i - 1]).getLeft(), "Task tabs read left to right in sequence");
+        }
+      });
       screenshot("smoke-tabs.png"); touch(reopened, "closeBuild"); checkDock(reopened);
       Game century = new Game(); century.day = 100; century.coins=10000; century.wood=1000;
       century.weapon=20; century.fence=20; century.drill=20; century.heroLevel=20; century.millLevel=10; century.irrigation=10;
@@ -689,7 +706,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       check(century.boss()!=null && century.bossSpawned, "Day100 scheduled spawn creates the Grave Warden");
       century.boss().x=.01f; for(Game.Enemy enemy:century.enemies) if(enemy!=century.boss())enemy.x=.95f;
       runOnMainSync(() -> {reopened.game=century;reopened.paused=true;reopened.refresh();});
-      touch(reopened,"building1");touch(reopened,"buyItem2");touch(reopened,"buyItem3");
+      touch(reopened,"building1");touch(reopened,"buildTab5");touch(reopened,"buyItem2");touch(reopened,"buyItem3");
       check(onUi(() -> century.bolts==1 && century.blasts==1),"Shop sells both single-target and area magic potions");
       screenshot("smoke-potions.png");touch(reopened,"closeBuild");
       float bossBefore=century.boss().hp;touch(reopened,"itemSlot2");
@@ -705,6 +722,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       runOnMainSync(() -> {century.enemies.clear();century.night=false;century.bossSpawned=false;century.roamers.clear();century.populateRoamers();reopened.refresh();});
       screenshot("smoke-century.png");
       testFantasy(reopened);
+      testMedieval(reopened);
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
@@ -732,7 +750,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     touch(a, "gear0"); dialogAction("Unequip");
     check(onUi(() -> fantasy.gear[0] == -1), "Equipment selector can unequip a relic");
     touch(a, "equipBest"); screenshot("smoke-equipment.png");
-    touch(a, "assignButtons"); dialogAction("Button 1 · Elixir"); dialogAction("Starfall · 0 owned");
+    touch(a, "buildTab5"); touch(a, "assignButtons"); dialogAction("Button 1 · Elixir"); dialogAction("Starfall · 0 owned");
     check(onUi(() -> fantasy.equipped[0] == 3), "Visible assignment flow interchanges potion and magic without spending stock");
     touch(a, "closeBuild");
     runOnMainSync(() -> { fantasy.arenaOfferDay = 10; a.refresh(); }); awaitIdle();
@@ -746,6 +764,10 @@ public final class SmokeInstrumentation extends Instrumentation {
     shell("cmd statusbar collapse"); awaitIdle();
     dialogAction("Fight"); awaitUi(() -> !a.paused, "Arena requires explicit resume after overlay interruption");
     dialogAction("Pause");
+    float arenaTime = fantasy.arenaElapsed; long arenaFrames = a.arenaView.renderedFrames;
+    SystemClock.sleep(400);
+    check(onUi(() -> a.paused && fantasy.arenaElapsed == arenaTime && a.arenaView.renderedFrames == arenaFrames),
+        "Paused arena stops simulation and rendering");
     check(onUi(() -> fantasy.health == 100 && fantasy.elapsed == 0 && fantasy.day == 11), "Arena combat leaves farm health and clock unchanged");
     screenshot("smoke-arena.png"); dialogAction("Retreat"); dialogAction("Return to haven");
     check(onUi(() -> !fantasy.arenaActive && fantasy.arenaResult == 3 && !fantasy.acceptArena()), "Retreat completes one attempt without repeat rewards");
@@ -755,6 +777,61 @@ public final class SmokeInstrumentation extends Instrumentation {
     checkDialogActions("Cross the rift", "Stay here");
     screenshot("smoke-rift.png"); dialogAction("Cross the rift");
     check(onUi(() -> a.game.world == 2 && a.game.day == 1 && a.game.gear[0] == 4 && a.game.coins == 80), "Day100 portal retains relics in a new-world farm");
+    checkDialogActions("Build a haven"); screenshot("smoke-ashen-arrival.png"); dialogAction("Build a haven");
+    check(onUi(() -> a.paused && a.game.ashenWorld() && a.game.settlementStyle() == 1), "Ashen arrival stays paused and uses its own settlement");
+    checkBoard(a); checkDock(a); screenshot("smoke-ashen-world.png");
+    touch(a, "build"); touch(a, "buildTab5");
+    check(onUi(() -> control(a, "suppliesMarket") != null && !control(a, "buyItem0").isEnabled()), "Supplies explains the missing market and disables purchases");
+    touch(a, "suppliesMarket");
+    check(onUi(() -> control(a, "buildTab2").isSelected() && control(a, "construct1") != null), "Missing-market link routes to farm construction");
+    touch(a, "buildTab5"); screenshot("smoke-supplies.png"); touch(a, "closeBuild");
+    runOnMainSync(() -> {
+      a.game.day = 5; a.game.weather = 2; a.game.coins = 2000; a.game.wood = 500;
+      a.game.startNight(); a.game.spawned = a.game.quota() / 2; a.game.spawnClock = 0; a.game.tick(.1f); a.refresh();
+    });
+    check(onUi(() -> a.game.boss() != null && a.game.bossName().equals("Cinder Regent") && a.game.ashfall()), "Ashfall raid spawns the Cinder Regent through real simulation");
+    screenshot("smoke-ashen-boss.png");
+  }
+
+  private void testMedieval(MainActivity a) throws IOException {
+    Game farm = new Game(); farm.day = 20; farm.world = 2; farm.tutorialDone = true; farm.land = 1;
+    farm.coins = 5000; farm.wood = 1000;
+    for (int kind = 0; kind < 3; kind++) { farm.buildings[kind] = true; farm.buildingHealth[kind] = Game.BUILDING_HEALTH; }
+    for (int side = 0; side < 4; side++) { farm.walls[side] = side == 3 ? 0 : side + 1; farm.wallHealth[side] = farm.maxWallHealth(side); }
+    for (int plot = 0; plot < 9; plot++) { farm.crop[plot] = plot % 3; farm.cropHealth[plot] = Game.CROP_HEALTH; farm.growth[plot] = .35f + plot % 3 * .3f; }
+    farm.roamers.clear(); farm.populateRoamers();
+    runOnMainSync(() -> { a.game = farm; a.paused = true; a.refresh(); }); awaitIdle();
+    checkBoard(a); checkDock(a); checkFenceHealthPixels(a);
+    screenshot("smoke-medieval-homestead.png");
+    for (int day : new int[] {25, 30}) {
+      runOnMainSync(() -> { farm.day = day; a.refresh(); }); awaitIdle();
+      checkBoard(a); checkFenceHealthPixels(a);
+      screenshot(day == 25 ? "smoke-medieval-castle.png" : "smoke-medieval-farm.png");
+    }
+    runOnMainSync(() -> { farm.day = 20; a.refresh(); }); awaitIdle();
+    touch(a, "build"); touch(a, "buildTab3"); touch(a, "bestiary");
+    check(onUi(() -> a.paused && a.game == farm), "Illustrated bestiary preserves the paused farm");
+    screenshot("smoke-bestiary.png"); dialogAction("Ready"); touch(a, "closeBuild");
+    runOnMainSync(() -> { farm.startNight(); farm.tick(.1f); a.refresh(); }); awaitIdle();
+    for (int type = Bestiary.KOBOLD; type <= Bestiary.LAST; type++) {
+      final int expected = type;
+      check(onUi(() -> farm.enemies.stream().anyMatch(e -> e.type == expected && e.hp > 0)), "New fantasy scout joins the actual night raid: " + Game.FOES[type]);
+    }
+    Game restored = SaveCodec.decode(SaveCodec.encode(farm));
+    check(restored.enemies.stream().anyMatch(e -> e.type == Bestiary.HEXER) && restored.world == 2,
+        "Schema10 retains new enemy IDs in an active Ashen raid");
+    screenshot("smoke-fantasy-horde.png");
+    for (int champion = 0; champion < 4; champion++) {
+      Game duel = new Game(); duel.day = 21; duel.tutorialDone = true; duel.arenaOfferDay = 20;
+      if (champion % 2 == 0) { duel.collected[4] = true; duel.equipGear(0, 4); }
+      duel.acceptArena(); duel.arenaChampion = champion; duel.arenaEnemyHealth = duel.arenaMaxEnemyHealth();
+      runOnMainSync(() -> { a.game = duel; a.paused = true; a.refresh(); }); awaitIdle();
+      dialogAction("Fight"); awaitUi(() -> duel.arenaElapsed > .1f, "Redesigned champion art accompanies live combat");
+      dialogAction("Pause"); screenshot("smoke-arena-champion-" + champion + ".png");
+      check(onUi(() -> a.paused && duel.arenaActive && duel.health == 100 && duel.elapsed == 0),
+          "Every champion keeps farm simulation isolated");
+      dialogAction("Retreat"); dialogAction("Return to haven");
+    }
   }
 
   private void checkDock(MainActivity a) {
@@ -777,7 +854,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       Bitmap image = Bitmap.createBitmap(terrain.getWidth(), terrain.getHeight(), Bitmap.Config.ARGB_8888);
       try {
         terrain.draw(new Canvas(image));
-        check(image.getPixel(0, terrain.getHeight()-1) == (a.game.night ? 0xff213e32 : 0xff4b793a),
+        check(image.getPixel(0, terrain.getHeight()-1) == (World.ground(a.game.world, a.game.night)),
             "Scenery extends beneath transparent bottom padding");
       } finally { image.recycle(); }
       check(control(a, "commands").getBackground() == null && control(a, "actions").getBackground() == null,
@@ -793,11 +870,13 @@ public final class SmokeInstrumentation extends Instrumentation {
       int[] filled = new int[3];
       try {
         float d = map.geometry.density;
-        float y = map.geometry.fortTop;
+        float y = map.geometry.worldY(a.game.ringYAt(.4f, 0));
+        int fromX = (int)Math.ceil(map.geometry.worldX(a.game.ringXAt(.08f, 0)));
+        int toX = (int)Math.floor(map.geometry.worldX(a.game.ringXAt(.72f, 0)));
         for (int phase = 0; phase < 3; phase++) {
           a.game.wallHealth[0] = a.game.maxWallHealth(0) * (1 - phase * .5f);
           map.artwork.draw(new Canvas(bitmap));
-          for (int px = (int) (map.geometry.fortLeft + 10 * d); px < (int) (map.geometry.fortRight - 10 * d); px++)
+          for (int px = fromX; px < toX; px++)
             for (int py = (int) (y - d); py < (int) (y + d); py++)
               if (bitmap.getPixel(px, py) == 0xffb4d176) filled[phase]++;
         }

@@ -1,25 +1,13 @@
-# TAG: Zombie Survival Fantasy 0.13.0-rc.2
+# TAG: Zombie Survival Fantasy0.14.0-rc.2
 
-Android8.0+ preview, versionCode17. Renamed from Beyond the Fence; package com.denberg.beyondthefence and pinned signing identity are retained for upgrades.
+Medieval kitchen gardens replace flat planting beds. Palisade stakes, stone battlements and iron-bound masonry show defense progression with the same independent HP, prices and touch geometry.
 
-- Reincarnation welcome replaces startup instructions. Optional How to play remains in Options.
-- Visible Assign buttons chooses potion or magic independently in every quick slot.
-- Equipment tab: nine slots, five rarities, Equip best and a bounded45-relic collection. Scarce ordinary/boss drops; optional capped survival bonuses.
-- Optional arena after every tenth completed boss night: accept/decline, four random champions, automatic combat, manual Strike, real shared consumables, pause/retreat,45s timeout and a55% equipment reward chance on victory. No farm damage or duplicate attempt rewards.
-- Offline adaptive director varies future reinforcement spacing within narrow bounds and can be disabled. Enemy statistics, quotas, boss schedule and loot remain fixed.
-- Day100 opens a portal to a fresh-world farm with relics and assignments retained. Later worlds reuse the same campaign.
-- Schema9 reads1–8; equipment/loot RNG, arena continuation, director state and worlds are saved with strict validation. Export before updating; schema9 exports cannot downgrade to0.12.
+Four original fantasy species join the undead: Kobold skirmishers (Day2), Dire wolves (Day3), Orc raiders (Day6) and Goblin hexers (Day12). The roster remains bounded by the existing quota. Wolves rush, Orcs break walls, and Hexers attack from outside intact defenses. Crew/Options Bestiary explains the new foes with illustrations. Boss timing, salvage and relic odds remain; Ashfall also strengthens Orc damage20%.
 
-Arena and portal prompts use scrollable text with fixed action buttons, including system-bar clearance at large fonts. Deferring the welcome story does not block later invitations.
+Arena combat gains an armored/caped vanguard, distinct Hollow Knight / Grave Huntress / Bone Colossus / Ash Witch, weapons and magic, and a heraldic stone stage. Attack effects use battle clocks and obey reduced motion; the arena still preserves farm clocks/HP.
 
-Validation passed: 93 unit tests in each build variant; builds, lint, package/audio audits; pinned signing certificate and exact compiled-content comparison; full installed-app suites on API26 and35; actual non-debuggable release installation and checkpoint retention.
+Includes the focused Fence→Farm→Mill→Crew→Supplies→Equipment menus and first Ashen March world slice from rc.1. Equipment/settings still cross the Day100 rift; later worlds currently reuse Ashen March.
 
-Install Release.apk on Android8.0 or newer. Export a save backup before updating. The retained signing identity supports same-key updates; older disposable-key previews require one-time save transfer.
+Schema10 reads prior1–9 saves and preserves active enemies/assets/equipment. Earlier apps cannot read new exports. Export before updating and keep the prior APK/save for rollback. Package/certificate pin, zero permissions and offline operation remain. This is development/prerelease work; signed release/install-r and physical-phone/human-balance gates remain separate.
 
-Prerelease: physical-phone endurance, accessibility, audio/performance and human balance playtesting remain pending.
-
-Evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40630736666
-
-
-Release APK SHA-256: `0a0df3e9c249954e43581934be14726902788b4367002ea313fe59abc81ac759`.
-Verified source: `9c4e00d80a0646413c06c2ff5dbeeebbd7145c1c`; delivery/tag commit: `245a91a62c8e8a0600c0c19fe24ad8b988dc962a`.
+Required candidate checks: both unit variants, builds/lint/package audits, full installed API26/35 regression and visual review of plots/materials/species/all four champions. No stable promotion is implied.
