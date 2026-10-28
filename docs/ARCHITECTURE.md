@@ -1,8 +1,8 @@
-# 0.15floating garden and fishing additions
+# 0.15 floating garden and fishing additions
 
 Game owns crop/season eligibility, atomic plantSelected, bottom-row dual usage, daily fishingCatches and independent fishingState. Fishing is a pure transient timing state machine (IDLE/WAITING/RIPPLE/MISSED/CAUGHT); MainActivity ticks only this session while the farm is paused, stops the dialog clock on focus loss and discards it on background/rotation. FishingView renders the model's exact catch range; reduced motion replaces the expanding ripple with static rings and a progress bar plus a polite text cue. All three bottom spaces keep their positions in BoardGeometry; FarmView draws water under floating beds, and native overlays own taps/long-presses. No new dependency or permission.
 
-SaveCodec11appends two integers after schema10fields. It accepts old schemas1–10and strictly validates new quota0–3and crop IDs0–8. It preserves nine legacy crop slots intact. Floating access depends on permanent expansion, today's quota, or a living crop in that slot; dawn never evicts crops. Fishing can never change combat/loot RNG, spend seed costs, stack equipment, or award practice rewards. Daily cap resets only in dawn; transients are never serialized.
+SaveCodec 11 appends two integers after schema 10 fields. It accepts old schemas 1–10 and strictly validates new quota 0–3 and crop IDs 0–8. It preserves nine legacy crop slots intact. Floating access depends on permanent expansion, today's quota, or a living crop in that slot; dawn never evicts crops. Fishing can never change combat/loot RNG, spend seed costs, stack equipment, or award practice rewards. Daily cap resets only in dawn; transients are never serialized.
 
 ---
 

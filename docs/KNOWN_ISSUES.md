@@ -1,10 +1,10 @@
 # 0.15.0-rc.1 development limits
 
-- Fishing/planting source and simulation checks are recorded in TESTING.md. Android builds/lint, new installed API26/35flows and screenshot review are pending CI. No release or handset validation is implied.
-- Existing expansion is now permanent floating access; without it, quota unlock lasts until dawn. Planted floating crops always remain; empty spaces become fishable water. Existing9-bed farms retain all nine plants and their paid expansion.
+- Fishing/planting source and simulation checks are recorded in TESTING.md. Android builds/lint, new installed API 26/35 flows and screenshot review are pending CI. No release or handset validation is implied.
+- Existing expansion is now permanent floating access; without it, quota unlock lasts until dawn. Planted floating crops always remain; empty spaces become fishable water. Existing 9-bed farms retain all nine plants and their paid expansion.
 - Seasons use game days, not the real calendar. Rare crops need current season/weather only at planting. Later worlds use their local weather names.
-- Fishing rewards stop after three catches/day. Practice is always available by holding a bottom bed during daytime; raids must finish first. No real-time/offline rewards. Equipment is Common/Uncommon only from day10, duplicates do not pay or stack.
-- Physical phone endurance, measured performance, audio comfort, TalkBack and player balance remain unvalidated; stable blocked. Schema11exports cannot downgrade; keep the old APK/export.
+- Fishing rewards stop after three catches/day. Practice is always available by holding a bottom bed during daytime; raids must finish first. No real-time/offline rewards. Equipment is Common/Uncommon only from day 10, duplicates do not pay or stack.
+- Physical phone endurance, measured performance, audio comfort, TalkBack and player balance remain unvalidated; stable blocked. Schema 11 exports cannot downgrade; keep the old APK/export.
 
 ---
 

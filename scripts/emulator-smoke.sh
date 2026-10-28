@@ -34,7 +34,7 @@ adb shell pm clear com.denberg.beyondthefence
 timeout 420s adb shell am instrument -w com.denberg.beyondthefence.test/com.denberg.beyondthefence.SmokeInstrumentation | tee evidence/instrumentation.txt
 grep -Eq '^OK \([0-9]+ checks\)' evidence/instrumentation.txt
 if grep -q 'FAILURES!!!' evidence/instrumentation.txt; then exit 1; fi
-for scene in welcome roaming farm night landscape upgrades-landscape large-font breach rebuilt materials survival shop compact barracks items village castle tabs boss potions century equipment arena-offer arena rift ashen-arrival ashen-world supplies ashen-boss medieval-homestead medieval-castle medieval-farm bestiary fantasy-horde arena-champion-0 arena-champion-1 arena-champion-2 arena-champion-3 fishing floating-garden; do
+for scene in welcome roaming farm night landscape upgrades-landscape large-font breach rebuilt materials survival shop compact barracks items village castle tabs boss potions century equipment arena-offer arena rift ashen-arrival ashen-world supplies ashen-boss medieval-homestead medieval-castle medieval-farm bestiary fantasy-horde arena-champion-0 arena-champion-1 arena-champion-2 arena-champion-3 fishing planting floating-garden; do
   adb exec-out run-as com.denberg.beyondthefence cat "files/smoke-$scene.png" > "evidence/$scene.png"
 done
 if [ -f artifacts/TAG-Zombie-Survival-Fantasy-0.15.0-rc.1-Release.apk ]; then

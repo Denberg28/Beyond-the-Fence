@@ -260,7 +260,7 @@ public final class MainActivity extends Activity {
       if (storageBlocked || ioBusy || buildOpen) return;
       if (game.defeated) { game.recover(); changed(); }
       paused = !paused;
-      if (paused) gentle("Take a breather. Your haven can wait.");
+      if (paused) gentle("Take a breather.");
       lastFrame = SystemClock.elapsedRealtime();
       refresh();
     });
@@ -303,7 +303,7 @@ public final class MainActivity extends Activity {
         if (game.fishingSpace(plot)) { showFishing(); return; }
         if (plot >= game.plots()) { showBuild(2); return; }
         if (game.crop[plot] < 0) {
-          if (game.plant(plot, selectedCrop)) gentle("One seed at a time. " + Game.CROPS[selectedCrop] + " planted.");
+          if (game.plant(plot, selectedCrop)) gentle("Seed planted.");
           else gentle(game.canPlantCrop(selectedCrop) ? game.notice : Game.CROPS[selectedCrop] + " needs " + game.plantingCondition(selectedCrop));
         }
         else if (!game.harvest(plot)) game.notice = "Still growing · " + game.harvestSeconds(plot) + "s to harvest.";
@@ -346,7 +346,7 @@ public final class MainActivity extends Activity {
     seedsToggle.setTag("seeds");
     build = button("Build", () -> { selectedBuilding = -1; showBuild(); });
     build.setTag("build");
-    harvest = button("Harvest", () -> { if (canAct() && !buildOpen) { game.harvestAll(); gentle("Harvest gathered. A tidy garden, a fresh start."); changed(); } });
+    harvest = button("Harvest", () -> { if (canAct() && !buildOpen) { game.harvestAll(); gentle("Harvest gathered."); changed(); } });
     harvest.setTag("harvest");
     phase = button("Night", () -> {
       if (storageBlocked || ioBusy || buildOpen) return;
@@ -415,14 +415,15 @@ public final class MainActivity extends Activity {
   @android.annotation.SuppressLint("SetTextI18n") // English-only candidate; dynamic transaction totals.
   private void showPlanting() {
     if (!canAct() || buildOpen) return;
+    if (gentleToast != null) gentleToast.cancel();
     paused = true; clearHint(); refresh();
     if (!game.canPlantCrop(selectedCrop)) {
-      gentle(Game.CROPS[selectedCrop] + " needs " + game.plantingCondition(selectedCrop) + ". Choose another seed.");
+      gentle(Game.CROPS[selectedCrop] + " needs " + game.plantingCondition(selectedCrop) + ".");
       seedTray.setVisibility(View.VISIBLE); return;
     }
     java.util.ArrayList<Integer> empty = new java.util.ArrayList<>();
     for (int i = 0; i < game.plots(); i++) if (game.farmPlot(i) && game.crop[i] < 0) empty.add(i);
-    if (empty.isEmpty()) { gentle("The beds are planted. Let them grow; take a breather."); return; }
+    if (empty.isEmpty()) { gentle("Beds are growing. Rest."); return; }
     String[] choices = new String[empty.size()]; boolean[] selected = new boolean[empty.size()];
     for (int i = 0; i < choices.length; i++) choices[i] = "Bed " + (empty.get(i) + 1) + " · " + Game.SEED[selectedCrop] + " coins";
     AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Plant " + Game.CROPS[selectedCrop])
@@ -437,11 +438,11 @@ public final class MainActivity extends Activity {
           int count = 0; for (boolean pick : selected) if (pick) count++;
           int[] beds = new int[count]; int at = 0;
           for (int i = 0; i < selected.length; i++) if (selected[i]) beds[at++] = empty.get(i);
-          if (game.plantSelected(selectedCrop, beds) > 0) gentle(game.notice);
+          if (game.plantSelected(selectedCrop, beds) > 0) gentle("Beds planted.");
           changed();
         })
         .setNeutralButton("Plant all · " + game.plantablePlots(selectedCrop), (d, which) -> {
-          if (game.plantAll(selectedCrop) > 0) gentle("Beds planted. A little order, a little room to breathe."); changed();
+          if (game.plantAll(selectedCrop) > 0) gentle("Beds planted. Breathe."); changed();
         }).setNegativeButton("Close", null).create();
     dialog.setOnShowListener(d -> {
       for (int which : new int[] {AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL})
@@ -454,6 +455,7 @@ public final class MainActivity extends Activity {
 
   private void showFishing() {
     if (!canAct() || buildOpen || game.night || game.arenaActive || game.arenaOfferDay > 0 || game.worldComplete || fishingDialog != null) return;
+    if (gentleToast != null) gentleToast.cancel();
     paused = true; game.fishing.cancel(); refresh();
     LinearLayout content = column(); content.setPadding(dp(16), dp(8), dp(16), dp(8));
     FishingView water = new FishingView(this, game.fishing, () -> game.reducedMotion);
@@ -491,7 +493,7 @@ public final class MainActivity extends Activity {
       dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTag("fishingClose");
       dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
         if (game.fishing.state == Fishing.WAITING || game.fishing.state == Fishing.RIPPLE) {
-          if (game.reelFish()) { gentle(game.notice); changed(); }
+          if (game.reelFish()) changed();
         } else game.castLine();
         handler.removeCallbacks(update); handler.post(update);
       });

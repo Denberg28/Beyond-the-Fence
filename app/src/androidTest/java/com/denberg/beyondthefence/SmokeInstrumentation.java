@@ -851,6 +851,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     }
     touch(a, "plant");
     dialogAction("Bed 1 · 4 coins"); dialogAction("Bed 2 · 4 coins");
+    checkDialogActions("Plant 2 · 8c", "Plant all · 6", "Close"); screenshot("smoke-planting.png");
     dialogAction("Plant 2 · 8c");
     check(onUi(() -> garden.crop[0] == 0 && garden.crop[1] == 0 && garden.coins == 992 && a.paused),
         "Plant shortcut fills exactly selected beds with one debit and pauses the farm");
@@ -880,16 +881,20 @@ public final class SmokeInstrumentation extends Instrumentation {
     }
     touch(a, "plot6"); touch(a, "plant"); dialogAction("Plant all · 2");
     check(onUi(() -> garden.crop[6] == 0 && garden.crop[7] == 0 && garden.crop[8] == 0), "Single and bulk planting both use floating beds");
+    runOnMainSync(() -> { garden.growth[6] = 1; a.refresh(); }); touch(a, "plot6");
+    touch(a, "seeds"); touch(a, "seed8"); touch(a, "plot6");
+    check(onUi(() -> garden.crop[6] == 8), "Scrolling seed tray selects a seasonal Rain lily for a real floating bed");
+    SystemClock.sleep(2500); // Let the optional short toast finish before visual inspection.
     screenshot("smoke-floating-garden.png");
     Game saved = SaveCodec.decode(SaveCodec.encode(garden));
-    check(saved.fishingCatches == 3 && saved.crop[8] == 0, "Floating crops and reward quota survive a checkpoint");
+    check(saved.fishingCatches == 3 && saved.crop[6] == 8 && saved.crop[8] == 0, "Floating crops and reward quota survive a checkpoint");
     runOnMainSync(() -> control(a, "plot7").performLongClick()); awaitIdle();
     int coins = garden.coins;
     dialogAction("Cast"); awaitUi(() -> garden.fishing.catchWindow(), "Practice fishing is still available after quota"); dialogAction("Reel");
     check(onUi(() -> garden.coins == coins && garden.fishingCatches == 3), "Catch and release cannot inflate coins");
     dialogAction("Back to haven");
     runOnMainSync(() -> { garden.night = true; garden.spawned = garden.quota(); garden.enemies.clear(); garden.tick(.1f); a.refresh(); });
-    check(onUi(() -> garden.fishingCatches == 0 && garden.crop[6] == 0 && garden.crop[8] == 0), "Dawn resets catches without evicting floating crops");
+    check(onUi(() -> garden.fishingCatches == 0 && garden.crop[6] == 8 && garden.crop[8] == 0), "Dawn resets catches without evicting floating crops");
     // Keep actual pointer/layout checks for Plant and pond at the active200% font configuration.
     checkBoard(a); checkDock(a);
   }
