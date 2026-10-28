@@ -167,10 +167,20 @@ jobs:
             exit 0
           fi
           printf 'PASS: unit tests, debug/release builds, lint, package audit, APK signature\nPASS: native tile touch, orientation/font, lifecycle/checkpoint tests on API 26 and 35 emulators; actual signed release install-r upgrade\nBLOCKED: physical handset endurance, TalkBack/font/device performance, physical-phone playtesting\nEvidence: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > artifacts/VERIFICATION.txt
+          python3 - <<'PYCODE'
+          import os, pathlib
+          text=pathlib.Path('docs/RELEASE-NOTES.md').read_text().split('\nRequired candidate checks:')[0]
+          text+='\nArena and portal prompts use scrollable text with fixed action buttons, including system-bar clearance at large fonts. Deferring the welcome story does not block later invitations.\n'
+          text+='\nValidation passed: 93 unit tests in each build variant; builds, lint, package/audio audits; pinned signing certificate and exact compiled-content comparison; full installed-app suites on API26 and35; actual non-debuggable release installation and checkpoint retention.\n'
+          text+='\nInstall Release.apk on Android8.0 or newer. Export a save backup before updating. The retained signing identity supports same-key updates; older disposable-key previews require one-time save transfer.\n'
+          text+='\nPrerelease: physical-phone endurance, accessibility, audio/performance and human balance playtesting remain pending.\n'
+          text+='\nEvidence: '+os.environ['GITHUB_SERVER_URL']+'/'+os.environ['GITHUB_REPOSITORY']+'/actions/runs/'+os.environ['GITHUB_RUN_ID']+'\n'
+          pathlib.Path('artifacts/RELEASE-NOTES.md').write_text(text)
+          PYCODE
           rm -f artifacts/Upgrade-Baseline.apk artifacts/apksigner.jar
           zip -r artifacts/TAG-Zombie-Survival-Fantasy-0.13.0-rc.2-Emulator-Evidence.zip evidence
           cd artifacts
           rm SHA256SUMS.txt
           sha256sum ./* > SHA256SUMS.txt
           cd ..
-          gh release create v0.13.0-rc.2 artifacts/* --target '${{ github.sha }}'  --prerelease --title 'TAG: Zombie Survival Fantasy 0.13.0-rc.2 — Fantasy survival preview' --notes-file docs/RELEASE-NOTES.md
+          gh release create v0.13.0-rc.2 artifacts/* --target '${{ github.sha }}'  --prerelease --title 'TAG: Zombie Survival Fantasy 0.13.0-rc.2 — Fantasy survival preview' --notes-file artifacts/RELEASE-NOTES.md
