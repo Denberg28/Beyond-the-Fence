@@ -1,15 +1,17 @@
 {
-  "source_sha": "3d1e94c2bed1a01cd3efeccff61004770f62991c",
-  "source_run_id": 40593532994,
+  "source_sha": "9c4e00d80a0646413c06c2ff5dbeeebbd7145c1c",
+  "source_run_id": 40603504318,
   "signer_sha256": "b209ae0dfa9385838a4bc2bf3254a25c3d5a45dc9124379edc53caf4c4e3fd91",
-  "version": "0.12.0-rc.1",
-  "version_code": 15,
-  "payload_ref": "delivery/0.12.0-rc.1",
-  "apk_blob": "c955d008de7750c196d15465ac2cbcf1230a68c7",
-  "apk_sha256": "a9e6f9561d71daa1d789b57a5270617f84e79ae9c518250b8eafbc8e548fbc45",
-  "tests_blob": "9d0da99aaf2b76d8f0c06e214945917f61039ac4",
-  "tests_sha256": "5e0a840196ea7c2649da48aa03d96540cecf3182c66e71ef2fb7fb9f75c4b42a",
+  "version": "0.13.0-rc.2",
+  "version_code": 17,
+  "payload_ref": "delivery/0.13.0-rc.2",
+  "apk_blob": "d2d4516474cb921065c3a7e5191343adcf23707e",
+  "apk_sha256": "59a44bd3c43d0ff058c81784724b82feeccbbfaa8661642a810fd116195ffd08",
+  "tests_blob": "8db8f2651824efe3c391ab5cae32934489847db9",
+  "tests_sha256": "7fd6c8a9cfa6c17ec65401e0be14a6c62c6f90d5a1815da2fd61f511b3292a1d",
+  "release_blob": "e8d38dfd6b10e4363daf1eebaf6a4d86064644be",
+  "release_sha256": "0a0df3e9c249954e43581934be14726902788b4367002ea313fe59abc81ac759",
   "baseline_blob": "b6be9af17151e314707001ea2ca5a9bed529e7c7",
   "baseline_sha256": "8bb18bc0c84869ff918d2ac54a67c1cd2c6b2ea2da40f47afc6924e172736b5a",
-  "delivery_notes": "Run40594499942 stopped before publication because same-step outputs were not available for checkout. Checkout is now a separate step. Only delivery manifest/workflow changes may differ from the verified source ancestor; runtime/source changes require a new passing source run."
+  "delivery_notes": "Passed source build/lint/package and93 unit tests in each variant, plus1485 installed-app checks per API26/35. Screenshots reviewed: welcome, equipment, arena/portal with fixed action area and system-bar clearance. Signed compiled contents are unchanged and certificate pinned. Final delivery repeats full native checks and actual non-debuggable release install-r/checkpoint migration before publishing a prerelease. Physical-phone playtesting remains pending."
 }
