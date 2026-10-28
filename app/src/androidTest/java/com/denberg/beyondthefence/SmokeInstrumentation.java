@@ -803,6 +803,12 @@ public final class SmokeInstrumentation extends Instrumentation {
     runOnMainSync(() -> { a.game = farm; a.paused = true; a.refresh(); }); awaitIdle();
     checkBoard(a); checkDock(a); checkFenceHealthPixels(a);
     screenshot("smoke-medieval-homestead.png");
+    for (int day : new int[] {25, 30}) {
+      runOnMainSync(() -> { farm.day = day; a.refresh(); }); awaitIdle();
+      checkBoard(a); checkFenceHealthPixels(a);
+      screenshot(day == 25 ? "smoke-medieval-castle.png" : "smoke-medieval-farm.png");
+    }
+    runOnMainSync(() -> { farm.day = 20; a.refresh(); }); awaitIdle();
     touch(a, "build"); touch(a, "buildTab3"); touch(a, "bestiary");
     check(onUi(() -> a.paused && a.game == farm), "Illustrated bestiary preserves the paused farm");
     screenshot("smoke-bestiary.png"); dialogAction("Ready"); touch(a, "closeBuild");
@@ -864,11 +870,13 @@ public final class SmokeInstrumentation extends Instrumentation {
       int[] filled = new int[3];
       try {
         float d = map.geometry.density;
-        float y = map.geometry.fortTop;
+        float y = map.geometry.worldY(a.game.ringYAt(.4f, 0));
+        int fromX = (int)Math.ceil(map.geometry.worldX(a.game.ringXAt(.08f, 0)));
+        int toX = (int)Math.floor(map.geometry.worldX(a.game.ringXAt(.72f, 0)));
         for (int phase = 0; phase < 3; phase++) {
           a.game.wallHealth[0] = a.game.maxWallHealth(0) * (1 - phase * .5f);
           map.artwork.draw(new Canvas(bitmap));
-          for (int px = (int) (map.geometry.fortLeft + 10 * d); px < (int) (map.geometry.fortRight - 10 * d); px++)
+          for (int px = fromX; px < toX; px++)
             for (int py = (int) (y - d); py < (int) (y + d); py++)
               if (bitmap.getPixel(px, py) == 0xffb4d176) filled[phase]++;
         }
