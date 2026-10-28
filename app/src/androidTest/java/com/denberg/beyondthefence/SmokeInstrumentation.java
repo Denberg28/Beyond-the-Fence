@@ -721,6 +721,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       runOnMainSync(() -> {century.enemies.clear();century.night=false;century.bossSpawned=false;century.roamers.clear();century.populateRoamers();reopened.refresh();});
       screenshot("smoke-century.png");
       testFantasy(reopened);
+      testMedieval(reopened);
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
@@ -789,6 +790,41 @@ public final class SmokeInstrumentation extends Instrumentation {
     });
     check(onUi(() -> a.game.boss() != null && a.game.bossName().equals("Cinder Regent") && a.game.ashfall()), "Ashfall raid spawns the Cinder Regent through real simulation");
     screenshot("smoke-ashen-boss.png");
+  }
+
+  private void testMedieval(MainActivity a) throws IOException {
+    Game farm = new Game(); farm.day = 20; farm.world = 2; farm.tutorialDone = true; farm.land = 1;
+    farm.coins = 5000; farm.wood = 1000;
+    for (int kind = 0; kind < 3; kind++) { farm.buildings[kind] = true; farm.buildingHealth[kind] = Game.BUILDING_HEALTH; }
+    for (int side = 0; side < 4; side++) { farm.walls[side] = side == 3 ? 0 : side + 1; farm.wallHealth[side] = farm.maxWallHealth(side); }
+    for (int plot = 0; plot < 9; plot++) { farm.crop[plot] = plot % 3; farm.cropHealth[plot] = Game.CROP_HEALTH; farm.growth[plot] = .35f + plot % 3 * .3f; }
+    farm.roamers.clear(); farm.populateRoamers();
+    runOnMainSync(() -> { a.game = farm; a.paused = true; a.refresh(); }); awaitIdle();
+    checkBoard(a); checkDock(a); checkFenceHealthPixels(a);
+    screenshot("smoke-medieval-homestead.png");
+    touch(a, "build"); touch(a, "buildTab3"); touch(a, "bestiary");
+    check(onUi(() -> a.paused && a.game == farm), "Illustrated bestiary preserves the paused farm");
+    screenshot("smoke-bestiary.png"); dialogAction("Ready"); touch(a, "closeBuild");
+    runOnMainSync(() -> { farm.startNight(); farm.tick(.1f); a.refresh(); }); awaitIdle();
+    for (int type = Bestiary.KOBOLD; type <= Bestiary.LAST; type++) {
+      final int expected = type;
+      check(onUi(() -> farm.enemies.stream().anyMatch(e -> e.type == expected && e.hp > 0)), "New fantasy scout joins the actual night raid: " + Game.FOES[type]);
+    }
+    Game restored = SaveCodec.decode(SaveCodec.encode(farm));
+    check(restored.enemies.stream().anyMatch(e -> e.type == Bestiary.HEXER) && restored.world == 2,
+        "Schema10 retains new enemy IDs in an active Ashen raid");
+    screenshot("smoke-fantasy-horde.png");
+    for (int champion = 0; champion < 4; champion++) {
+      Game duel = new Game(); duel.day = 21; duel.tutorialDone = true; duel.arenaOfferDay = 20;
+      if (champion % 2 == 0) { duel.collected[4] = true; duel.equipGear(0, 4); }
+      duel.acceptArena(); duel.arenaChampion = champion; duel.arenaEnemyHealth = duel.arenaMaxEnemyHealth();
+      runOnMainSync(() -> { a.game = duel; a.paused = true; a.refresh(); }); awaitIdle();
+      dialogAction("Fight"); awaitUi(() -> duel.arenaElapsed > .1f, "Redesigned champion art accompanies live combat");
+      dialogAction("Pause"); screenshot("smoke-arena-champion-" + champion + ".png");
+      check(onUi(() -> a.paused && duel.arenaActive && duel.health == 100 && duel.elapsed == 0),
+          "Every champion keeps farm simulation isolated");
+      dialogAction("Retreat"); dialogAction("Return to haven");
+    }
   }
 
   private void checkDock(MainActivity a) {

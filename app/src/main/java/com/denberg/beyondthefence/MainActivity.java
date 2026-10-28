@@ -550,7 +550,7 @@ public final class MainActivity extends Activity {
     if (arenaDialog != null && arenaDialog.isShowing()) return;
     adventureDialog = true; paused = true;
     LinearLayout content = column(); content.setPadding(dp(16), dp(8), dp(16), dp(8));
-    arenaView = new ArenaView(this, game); content.addView(arenaView, new LinearLayout.LayoutParams(-1, dp(148)));
+    arenaView = new ArenaView(this, game); content.addView(arenaView, new LinearLayout.LayoutParams(-1, dp(164)));
     arenaStatus = text("", 13, INK); arenaStatus.setTag("arenaStatus"); content.addView(arenaStatus);
     arenaStrike = button("Strike", () -> { if (!paused && game.arenaStrike()) changed(); });
     arenaStrike.setTag("arenaStrike"); content.addView(arenaStrike);
@@ -717,10 +717,12 @@ public final class MainActivity extends Activity {
       heroBuy = button("", () -> { if (canAct()) { if (!game.buyHero()) showPrice(heroBuy, 360, 20); else clearHint(); changed(); } });
       heroBuy.setTag("buyHero"); addBuildAction(heroBuy); addAdvanced(2);
       buildSection("Orders", "Rally to a border or resume the perimeter patrol."); addOrders();
+      GameButton bestiary = button("Bestiary · foes & tactics", this::showBestiary);
+      bestiary.setTag("bestiary"); addBuildAction(bestiary);
     } else if (buildTab == 4) {
       buildSection("Relic loadout", "Worn relics travel with you through the rift."); addEquipment();
     } else if (buildTab == 5) {
-      if (game.ashenWorld()) buildSection(game.worldChapter(), "Ashfall: approaching foes −15% speed; Brutes / Ironhides +20% damage. Fifth-night boss: Cinder Regent.");
+      if (game.ashenWorld()) buildSection(game.worldChapter(), "Ashfall: approaching foes −15% speed; Brutes / Ironhides / Orcs +20% damage. Fifth-night boss: Cinder Regent.");
       buildSection("Potions & magic", "Market required. Purchases add stock; they do not cast.");
       for (int type = 0; type < Game.ITEMS.length; type++) {
         final int item = type;
@@ -917,8 +919,8 @@ public final class MainActivity extends Activity {
       if (wallPurchase[i] != null) {
         label(wallPurchase[i], Game.SIDES[i] + " · " + Game.FENCE_MATERIALS[tier] + " · " + Math.round(game.wallHealth[i]) + "/" + Math.round(game.maxWallHealth(i)) + "HP\n" + (damaged ? "REPAIR · " + Math.round(game.wallHealth[i]) + "/"
             + Math.round(game.maxWallHealth(i)) + "HP\n8 coins · +50 health"
-            : tier == 0 ? "BUILD WOOD FENCE\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber"
-            : tier >= 3 ? "Steel · reinforcement " + game.wallRanks[i] + "/" + game.wallRankCap() + "\n" + (game.borderMaxed(i) ? "MAX" : game.borderCoinCost(i) + " coins · " + game.borderWoodCost(i) + " timber")
+            : tier == 0 ? "BUILD PALISADE\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber"
+            : tier >= 3 ? "Ironbound · reinforcement " + game.wallRanks[i] + "/" + game.wallRankCap() + "\n" + (game.borderMaxed(i) ? "MAX" : game.borderCoinCost(i) + " coins · " + game.borderWoodCost(i) + " timber")
             : "UPGRADE " + Game.FENCE_MATERIALS[tier] + " → " + Game.FENCE_MATERIALS[tier + 1] + "\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber")
             + "\n" + (damaged ? "Closes the breach for new zombies; fight intruders inside" : "Material kits strengthen fences; coins buy supplies and timber frames them"));
         wallPurchase[i].setEnabled(available && (damaged || !game.borderMaxed(i)));
@@ -1034,8 +1036,17 @@ public final class MainActivity extends Activity {
 
   private void howToPlay() {
     new AlertDialog.Builder(this).setTitle("Build. Fight. Survive.")
-        .setMessage("Plant and harvest for coins and timber. Close fence gaps; upgrade defenses. Hire and rally crew in Barracks.\n\nHold any quick slot, or open Assign buttons, to choose a potion or magic. Buy supplies in Shop.\n\nRare relics go to Equipment. Equip Best fits your strongest collection. Bosses come every fifth night; optional champion arenas follow every tenth victory.\n\nThe local director varies the spacing of future reinforcements slightly. Enemy damage, health, quotas and loot odds stay fixed. Disable it in Options for fixed pacing. Export a backup before updating.")
+        .setMessage("Plant and harvest for coins and timber. Close fence gaps; upgrade defenses. Hire and rally crew in Barracks.\n\nHold any quick slot, or open Assign buttons, to choose a potion or magic. Buy potions and magic in Supplies. Timber comes from Mill; fortification belongs to Fence.\n\nRare relics go to Equipment. Equip Best fits your strongest collection. Bosses come every fifth night; optional champion arenas follow every tenth victory.\n\nThe local director varies the spacing of future reinforcements slightly. Enemy damage, health, quotas and loot odds stay fixed. Disable it in Options for fixed pacing. Export a backup before updating.")
         .setPositiveButton("Ready", null).show();
+  }
+
+  private void showBestiary() {
+    paused = true; refresh();
+    LinearLayout content = column(); content.setPadding(dp(16), dp(8), dp(16), dp(12));
+    content.addView(new BestiaryView(this), new LinearLayout.LayoutParams(-1, dp(112)));
+    TextView copy = text(Bestiary.description(), 15, INK); content.addView(copy);
+    ScrollView scroll = new ScrollView(this); scroll.addView(content);
+    new AlertDialog.Builder(this).setTitle("Frontier bestiary").setView(scroll).setPositiveButton("Ready", null).show();
   }
 
   private void options() {
@@ -1044,7 +1055,7 @@ public final class MainActivity extends Activity {
     refresh();
     String[] items = {
       "How to play",
-      game.relaxed ? "Relaxed mode: ON (half zombie damage)" : "Relaxed mode: OFF",
+      game.relaxed ? "Relaxed mode: ON (half enemy damage)" : "Relaxed mode: OFF",
       game.reducedMotion ? "Reduced motion: ON" : "Reduced motion: OFF",
       "Export save backup",
       "Import save backup",
@@ -1053,7 +1064,8 @@ public final class MainActivity extends Activity {
       musicEnabled ? "Background music: ON" : "Background music: OFF",
       effectsEnabled ? "Sound effects: ON" : "Sound effects: OFF",
       game.directorEnabled ? "Adaptive director: ON" : "Adaptive director: OFF",
-      "Equipment & button assignments"
+      "Equipment & button assignments",
+      "Bestiary · foes & tactics"
     };
     new AlertDialog.Builder(this)
         .setTitle("Take a breather")
@@ -1110,6 +1122,7 @@ public final class MainActivity extends Activity {
                 game.directorEnabled = !game.directorEnabled;
                 game.directorPressure = 0; game.calmNights = 0; changed(); options();
               } else if (which == 10) showBuild(4);
+              else if (which == 11) showBestiary();
               else if (!storageBlocked && !ioBusy) {
                 paused = false;
                 lastFrame = SystemClock.elapsedRealtime();

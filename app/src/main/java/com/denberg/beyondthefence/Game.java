@@ -9,10 +9,10 @@ public final class Game {
   public static final int[] SEED = {4, 10, 18}, SALE = {12, 26, 44};
   public static final float[] GROW = {16, 29, 43};
   public static final String[] WEATHER = {"Clear", "Rain", "Fog", "Heat"};
-  public static final String[] FOES = {"Walker", "Runner", "Brute", "Spitter", "Ghoul", "Ironhide", "Wraith", "Grave Warden"};
+  public static final String[] FOES = {"Walker", "Runner", "Brute", "Spitter", "Ghoul", "Ironhide", "Wraith", "Grave Warden", "Kobold skirmisher", "Orc raider", "Dire wolf", "Goblin hexer"};
   public static final String[] UNIFORMS = {"Workwear", "Scout green", "Desert kit", "Urban armor", "Ranger kit", "Black ops"};
-  public static final String[] FENCE_MATERIALS = {"Gap", "Wood", "Stone", "Steel"};
-  private static final float[] FOE_HP = {42, 30, 125, 65, 90, 190, 80, 400}, FOE_SPEED = {.105f, .21f, .065f, .085f, .15f, .055f, .185f, .048f}, FOE_DAMAGE = {10, 7, 25, 13, 18, 32, 16, 38};
+  public static final String[] FENCE_MATERIALS = {"Gap", "Palisade", "Stone wall", "Ironbound"};
+  private static final float[] FOE_HP = {42, 30, 125, 65, 90, 190, 80, 400, 38, 145, 36, 70}, FOE_SPEED = {.105f, .21f, .065f, .085f, .15f, .055f, .185f, .048f, .18f, .063f, .245f, .08f}, FOE_DAMAGE = {10, 7, 25, 13, 18, 32, 16, 38, 8, 24, 8, 12};
   public static final float GUARD_RANGE = .28f;
   public static final float DAY_SECONDS = 75;
   public static final String[] SIDES = {"North", "East", "South", "West"};
@@ -95,7 +95,7 @@ public final class Game {
     int desired = Math.min(MAX_ROAMERS, 3 + day);
     while (roamers.size() < desired) {
       int i = roamers.size();
-      roamers.add(new Roamer(i % Campaign.enemyKinds(day), (i * 2.472f + .23f) % 4, .65f + i % 3 * .1f));
+      roamers.add(new Roamer(Bestiary.scout(day, i), (i * 2.472f + .23f) % 4, .65f + i % 3 * .1f));
     }
   }
 
@@ -282,7 +282,7 @@ public final class Game {
     spawnClock = reinforcementSeconds();
     shotClock = 0;
     focusClock = 0;
-    notice = "Night " + day + " · Survive the horde. Zombies are attacking the fence!";
+    notice = "Night " + day + " · Survive the horde. The horde is attacking the walls!";
   }
 
   public boolean rally(int side) {
@@ -346,7 +346,7 @@ public final class Game {
     }
     spawnClock = Math.max(-.1f, spawnClock - dt);
     if (spawned < quota() && spawnClock <= 0) {
-      int kind = bossDay() && !bossSpawned && spawned >= quota() / 2 ? Campaign.BOSS : random(Campaign.enemyKinds(day));
+      int kind = bossDay() && !bossSpawned && spawned >= quota() / 2 ? Campaign.BOSS : Bestiary.pick(day, random(Bestiary.weight(day)));
       if (kind == Campaign.BOSS) { bossSpawned = true; notice = bossName() + " arrives! Defeat the five-day boss."; }
       float hp = enemyHealth(kind);
       enemies.add(new Enemy(kind, random(4), 1, hp, hp, .12f + random(760) / 1000f));
@@ -356,7 +356,7 @@ public final class Game {
     for (Enemy e : enemies) {
       if (!e.breached) {
         float speed = enemySpeed(e.type) * movementFactor(e);
-        float stop = e.type == 3 && wallHealth[e.lane] > 0 ? .26f : 0;
+        float stop = Bestiary.ranged(e.type) && wallHealth[e.lane] > 0 ? .26f : 0;
         e.x = Math.max(stop, e.x - speed * dt * (weather == 1 || ashfall() ? .85f : 1));
         if (e.x <= stop && wallHealth[e.lane] > 0) {
           float damage = enemyDamage(e.type) * dt * (relaxed ? .5f : 1) * (1 - equipmentBonus(1))
@@ -367,7 +367,7 @@ public final class Game {
         }
         if (wallHealth[e.lane] <= 0 && e.x <= 0) {
           e.breached = true; e.target = assaultTarget(e.lane); e.attackClock = 1.2f;
-          notice = "Zombie inside the farm! Rally guards and protect your harvest.";
+          notice = "Enemy inside the haven! Rally guards and protect your harvest.";
         }
       }
       if (e.breached) {
@@ -831,7 +831,7 @@ public final class Game {
 
   public float enemySpeed(int type) { return FOE_SPEED[type] * (1 + Math.min(Campaign.day(day) - 1, 40) * .015f); }
   public float enemyDamage(int type) {
-    float biome = ashfall() && (type == 2 || type == 5) ? 1.2f : ashenWorld() && type == Campaign.BOSS ? 1.1f : 1;
+    float biome = ashfall() && Bestiary.heavy(type) ? 1.2f : ashenWorld() && type == Campaign.BOSS ? 1.1f : 1;
     return FOE_DAMAGE[type] * (1 + Math.min(day - 1, 30) * .06f + Math.max(0, Campaign.day(day) - 31) * .025f) * biome;
   }
 
@@ -840,7 +840,7 @@ public final class Game {
   }
   public float movementFactor(Enemy e) {
     // Each enemy shuffles on its own cadence; fast types surge while heavy types lumber.
-    float wave = (float)Math.sin(elapsed * (e.type == 1 || e.type == 6 ? 5 : 2.2f) + e.offset * 9 + e.lane);
+    float wave = (float)Math.sin(elapsed * (Bestiary.fast(e.type) ? 5 : 2.2f) + e.offset * 9 + e.lane);
     return .8f + .2f * wave;
   }
 

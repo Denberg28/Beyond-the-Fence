@@ -7,7 +7,7 @@ final class World {
   static String name(int world) { return ashen(world) ? "Ashen March" : "Greenhaven"; }
   static String introduction(int world) {
     return ashen(world)
-        ? "Beyond Greenhaven, a burned kingdom waits. Raise a haven among black pines and ember ruins.\n\nAshfall slows the approaching dead by 15%, but Cinder brutes and Ironhides strike 20% harder. Every fifth night brings ashfall and the Cinder Regent. Rally guards before the walls break."
+        ? "Beyond Greenhaven, a burned kingdom waits. Raise a haven among black pines and ember ruins.\n\nAshfall slows the approaching dead by 15%, but Cinder brutes, Ironhides and Orcs strike 20% harder. Every fifth night brings ashfall and the Cinder Regent. Rally guards before the walls break."
         : "A fence. A seed. A second chance. Survive one hundred nights in Greenhaven to open the rift.";
   }
   static String chapter(int world, int day) {

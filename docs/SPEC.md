@@ -1,3 +1,17 @@
+# Medieval frontier acceptance —0.14.0-rc.2
+
+M1: Garden plots display raised timber frames, cornerstones and furrows, with existing crop stages/health/growth bars. Locked plots remain tappable expansion land. Palisade / Stone wall / Ironbound boundaries show stakes / masonry / iron reinforcement. Draw every material on the shared normalized perimeter; retain independent side HP, repair costs, durability pixels, geometry and native targets across all three settlements, rotations and200% font.
+
+M2: Add IDs8 Kobold (Day2),9 Orc (Day6),10 Dire wolf (Day3),11 Goblin hexer (Day12). IDs0–7 retain their meanings, including boss7. Roster weights give each unlocked legacy type3 shares, each new type2. First three scouts remain legacy; subsequent scouts expose unlocked species. Never select bosses through ordinary roster/scouts. New stats are explicit in Game; wolf is fastest, orc is a slow heavy wall breaker, hexer uses spitter-style ranged wall attacks. Existing quota/rank/economy/loot/boss gates remain. Ashfall's heavy multiplier includes Orcs.
+
+M3: Original fantasy creatures use distinct silhouettes and gear; inspiration is generic Japanese fantasy-adventure novel atmosphere, with no borrowed characters/assets. Existing undead remain. Crew/Options Bestiary provides illustrations, names, unlock days and tactics using native accessible text.
+
+M4: Arena shows a detailed vanguard and distinct Hollow Knight / Grave Huntress / Bone Colossus / Ash Witch, weapons, cape/armor and heraldic stone stage. Equipped helmet changes the vanguard's headgear. Attack poses derive from battle clocks, do not drive combat, and stop under reduced motion; pause freezes all clocks. Preserve aspect ratio. Every champion must pass actual fight/pause/retreat and farm-isolation checks.
+
+M5: Schema10 changes allowed enemy IDs only; record layout remains unchanged. Read schemas1–9, preserving live HP/types/assets/relics/arena/world. Reject new IDs in old schemas, out-of-range IDs and boss scouts. Validate deterministic continuation before/after migration, all100-day schedules and once-only20 bosses. Older apps reject schema10; rollback requires a pre-update export. Package/signing identity and zero permissions remain.
+
+Required verification: existing full suite plus BestiaryTest, debug/release/test builds, lint/package audits, exact-APK native API26/35 suites and screenshot review of medieval garden/materials, illustrated bestiary, mixed horde and all four arena champions. Hardware HIL N/A; physical phone performance/audio/accessibility/endurance and human balance remain separate pending gates.
+
 # 0.14 focus navigation and Ashen March acceptance
 
 Baseline: published0.13.0-rc.2, repository main d4bd381. Scope: reorganize existing build actions, theme all popups, implement the first authored second-world biome. No new permissions/dependencies, signing identity or save schema.

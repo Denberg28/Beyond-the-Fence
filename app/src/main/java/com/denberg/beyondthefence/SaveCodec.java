@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 9;
+  private static final int MAGIC = 0x42544653, VERSION = 10;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -160,7 +160,7 @@ public final class SaveCodec {
     for (int i = 0; i < count; i++) {
       int t = in.readInt(), lane = in.readInt();
       float x = in.readFloat(), hp = in.readFloat(), max = in.readFloat();
-      integer(t, 0, version >= 8 ? Campaign.BOSS : 3);
+      integer(t, 0, version >= 10 ? Bestiary.LAST : version >= 8 ? Campaign.BOSS : 3);
       integer(lane, 0, version == 1 ? 2 : 3);
       number(x, 0, 1);
       number(max, 1, version >= 8 ? 2200 : version >= 6 ? 400 : 200);
@@ -193,7 +193,7 @@ public final class SaveCodec {
       for (int i = 0; i < roamers; i++) {
         int type = in.readInt();
         float progress = in.readFloat(), distance = in.readFloat();
-        integer(type, 0, version >= 8 ? 6 : 3); number(progress, 0, 3.9999998f); number(distance, .55f, .95f);
+        integer(type, 0, version >= 10 ? Bestiary.LAST : version >= 8 ? 6 : 3); range(type != Campaign.BOSS); number(progress, 0, 3.9999998f); number(distance, .55f, .95f);
         g.roamers.add(new Game.Roamer(type, progress, distance));
       }
     } else {

@@ -11,6 +11,8 @@ import java.util.function.Supplier;
 final class FarmView extends View {
   // Counts actual scene rendering, excluding window/ripple draws using the cached layer.
   long renderedFrames;
+  private final HomesteadArt homestead = new HomesteadArt();
+  private final FantasyArt fantasy = new FantasyArt();
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final RectF rect = new RectF();
   private final Path woods = new Path(), courtyard = new Path();
@@ -108,11 +110,8 @@ final class FarmView extends View {
     for (int i = 0; i < 9; i++) {
       BoardGeometry.Box tile = geometry.plots[i];
       boolean open = i < g.plots();
-      box(c, tile.left, tile.top, tile.width(), tile.height(), 3 * d, g.scorched[i] ? 0xff44372c : open ? 0xff755132 : 0xff668e48);
+      homestead.plot(c, tile, open, g.scorched[i], d);
       if (!open) continue;
-      for (int row = 0; row < 4; row++)
-        line(c, tile.left + 7 * d, tile.top + tile.height() * (.15f + row * .18f),
-            tile.right - 7 * d, tile.top + tile.height() * (.15f + row * .18f), 0xff997044, 2 * d);
       if (g.scorched[i]) {
         line(c, tile.left + 10 * d, tile.top + 8 * d, tile.right - 10 * d, tile.top + 20 * d, 0xffb56a46, 3 * d);
         line(c, tile.left + 10 * d, tile.top + 20 * d, tile.right - 10 * d, tile.top + 8 * d, 0xff694733, 3 * d);
@@ -155,9 +154,9 @@ final class FarmView extends View {
         line(c, x, y, tx, ty, 0xcced8257, 2 * d);
       }
       boolean attacking = !paused.get() && !g.reducedMotion && (enemy.breached ? enemy.advance >= 1 && enemy.attackClock > 1
-          : enemy.x <= (enemy.type == 3 ? .26f : 0));
+          : enemy.x <= (Bestiary.ranged(enemy.type) ? .26f : 0));
       zombie(c, x, y, size, enemy.type, g.reducedMotion ? 0 : g.elapsed * (enemy.type == 1 ? 10 : 6) + enemy.offset * 7, attacking);
-      if (g.ashenWorld() && (enemy.type == 2 || enemy.type == 5 || enemy.type == Campaign.BOSS)) {
+      if (g.ashenWorld() && (Bestiary.heavy(enemy.type) || enemy.type == Campaign.BOSS)) {
         line(c, x - 4 * size, y - 6 * size, x + 3 * size, y + 2 * size, 0xffe5a35a, 2 * size);
         circle(c, x + 4 * size, y - 7 * size, 2 * size, 0xffffcc7d);
       }
@@ -206,18 +205,12 @@ final class FarmView extends View {
   }
   private void fenceSide(Canvas c, Game g, int side, float d) {
     int tier = g.wallHealth[side] > 0 ? g.walls[side] : 0;
-    int tone = tier == 0 ? 0x669b8a56 : tier == 1 ? 0xff9d683b : tier == 2 ? 0xff87939c : 0xffb5c4cb;
     float ratio = g.wallRatio(side);
     for (int part = 0; part < 20; part++) {
       float at = part / 20f, next = (part + 1) / 20f;
       float x = geometry.worldX(g.ringXAt(side + at, 0)), y = geometry.worldY(g.ringYAt(side + at, 0));
       float xx = geometry.worldX(g.ringXAt(side + next, 0)), yy = geometry.worldY(g.ringYAt(side + next, 0));
-      line(c, x, y, xx, yy, 0x44302d25, 12 * d);
-      if (tier > 0 || part % 2 == 0) line(c, x, y, xx, yy, tone, (tier == 0 ? 4 : 8) * d);
-      if (tier > 0 && part % 2 == 0) {
-        box(c, x - 3 * d, y - 4 * d, 6 * d, 8 * d, tier == 1 ? 0 : d, tier == 1 ? 0xffd1a265 : 0xffc6d0c7);
-        if (g.settlementStyle() == 2) box(c, x - 3 * d, y - 7 * d, 6 * d, 4 * d, d, 0xff879b98);
-      }
+      homestead.wall(c, x, y, xx, yy, d, tier, part, g.settlementStyle());
       if (g.walls[side] > 0) {
         line(c, x, y, xx, yy, 0xff6e3b2f, 3 * d);
         float fill = Math.max(0, Math.min(1, (ratio - at) * 20));
@@ -230,6 +223,11 @@ final class FarmView extends View {
   }
 
   private void zombie(Canvas c, float x, float y, float d, int type, float phase, boolean attacking) {
+    if (type >= Bestiary.KOBOLD) {
+      float heading = (float)Math.toDegrees(Math.atan2((geometry.fortTop + geometry.fortBottom) / 2 - y,
+          (geometry.fortLeft + geometry.fortRight) / 2 - x));
+      fantasy.enemy(c, type, x, y, d, phase, attacking, heading); return;
+    }
     c.save(); c.translate(x, y); c.scale(d, d);
     float gait = (float) Math.sin(phase), bulk = type == Campaign.BOSS ? 11 : type == 2 ? 10 : type == 1 ? 5 : type == 3 ? 8 : 7;
     int skin = type == Campaign.BOSS ? 0xffc4a9b2 : type == 6 ? 0xff9fd3ca : type == 2 ? 0xff91a286 : type == 3 ? 0xffbdc768 : 0xffa8bd82;
