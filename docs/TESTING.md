@@ -1,3 +1,7 @@
+# 0.14 emulator infrastructure retry
+
+Run40681367751 rebuilt corrected source9c25f47 successfully (100 cases in each variant, builds, lint and package audits), but failed before the arena. API26's failure screenshot/window dump shows **Messages has stopped**, and its AndroidRuntime log identifies com.google.android.apps.messaging:rcs. API35's capture shows **Pixel Launcher isn't responding** over the game welcome; last-anr.txt identifies com.google.android.apps.nexuslauncher. No game crash was recorded. Preserve this evidence and retry on fresh runners with game code, emulator configuration, assertions and deadlines unchanged. The retry's documentation commit only corrects README action routing and records this diagnosis; it does not alter runtime or tests.
+
 # 0.14 animated-dialog regression correction
 
 First PR run40680136637 passed all build/unit/lint/package gates, then both native suites failed at the first arena Fight action. There was no app crash/ANR; the failure screenshot showed a live battle seven seconds in. The generic dialog helper required an idle main queue after every click, including continuous animation. Retain the10s liveness deadline, but synchronize animated dialogs on a new rendered arena frame (using the same approach already used for live farms). Paused dialogs still must become idle. Add an explicit400ms paused-arena clock/render stability assertion. Stop invalidating the frozen farm behind an active arena; only the arena needs drawing. Rerun final-source build and both native suites, retaining the failed run evidence.
