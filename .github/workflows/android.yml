@@ -170,7 +170,7 @@ jobs:
           python3 - <<'PYCODE'
           import os, pathlib
           text=pathlib.Path('docs/RELEASE-NOTES.md').read_text().split('\nRequired candidate checks:')[0]
-          text+='\nMedieval plots and walls, an original fantasy bestiary, illustrated champion arena, and Ashen March.\n'
+          text+='\nPlant selection, seasonal crops, relaxed fishing and three floating garden beds.\n'
           text+='\nValidation passed: unit tests in each build variant; builds, lint, package/audio audits; pinned signing certificate and exact compiled-content comparison; full installed-app suites on API26 and35; actual non-debuggable release installation and checkpoint retention.\n'
           text+='\nInstall Release.apk on Android8.0 or newer. Export a save backup before updating. The retained signing identity supports same-key updates; older disposable-key previews require one-time save transfer.\n'
           text+='\nPrerelease: physical-phone endurance, accessibility, audio/performance and human balance playtesting remain pending.\n'
@@ -183,4 +183,4 @@ jobs:
           rm SHA256SUMS.txt
           sha256sum ./* > SHA256SUMS.txt
           cd ..
-          gh release create v0.15.0-rc.1 artifacts/* --target '${{ github.sha }}'  --prerelease --title 'TAG: Zombie Survival Fantasy 0.15.0-rc.1 — Medieval frontier and fantasy bestiary' --notes-file artifacts/RELEASE-NOTES.md
+          gh release create v0.15.0-rc.1 artifacts/* --target '${{ github.sha }}'  --prerelease --title 'TAG: Zombie Survival Fantasy 0.15.0-rc.1 — Quiet water and floating gardens' --notes-file artifacts/RELEASE-NOTES.md
