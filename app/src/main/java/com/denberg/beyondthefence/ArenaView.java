@@ -8,6 +8,7 @@ import android.view.View;
 /** Small original champion stage; all timings derive from the saved battle simulation. */
 @android.annotation.SuppressLint("ViewConstructor")
 final class ArenaView extends View {
+  long renderedFrames;
   private static final int[] ROBES = {0xff657783, 0xff6b705d, 0xff9c8778, 0xff856494};
   private final Game game;
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -17,7 +18,7 @@ final class ArenaView extends View {
     setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
   @Override protected void onDraw(Canvas c) {
-    super.onDraw(c); c.save(); c.scale(getWidth() / 300f, getHeight() / 148f);
+    super.onDraw(c); renderedFrames++; c.save(); c.scale(getWidth() / 300f, getHeight() / 148f);
     p.setColor(0xff1c2930); c.drawRoundRect(0, 0, 300, 148, 12, 12, p);
     p.setColor(0xff635963); c.drawOval(22, 104, 278, 140, p);
     fighter(c, 75, 62, false); fighter(c, 221, 55, true);

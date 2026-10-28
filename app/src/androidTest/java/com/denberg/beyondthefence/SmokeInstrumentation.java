@@ -57,9 +57,11 @@ public final class SmokeInstrumentation extends Instrumentation {
   private void settle(MainActivity a) {
     if (!onUi(() -> !a.paused)) { awaitIdle(); return; }
     long[] before = new long[1];
-    runOnMainSync(() -> before[0] = ((GameBoard) control(a, "field")).artwork.renderedFrames);
-    awaitUi(() -> ((GameBoard) control(a, "field")).artwork.renderedFrames > before[0],
-        "Running game renders another frame within10 seconds");
+    runOnMainSync(() -> before[0] = a.game.arenaActive ? a.arenaView.renderedFrames
+        : ((GameBoard) control(a, "field")).artwork.renderedFrames);
+    awaitUi(() -> (a.game.arenaActive ? a.arenaView.renderedFrames
+        : ((GameBoard) control(a, "field")).artwork.renderedFrames) > before[0],
+        "Running game or arena renders another frame within10 seconds");
   }
 
   private void awaitAndroidFrame() {
@@ -129,7 +131,10 @@ public final class SmokeInstrumentation extends Instrumentation {
       AccessibilityNodeInfo root = getUiAutomation().getRootInActiveWindow();
       if (root != null) for (AccessibilityNodeInfo node : root.findAccessibilityNodeInfosByText(text)) {
         if (node.getText() != null && text.equalsIgnoreCase(node.getText().toString()) && node.performAction(AccessibilityNodeInfo.ACTION_CLICK)) {
-          check(true, "Dialog action: " + text); awaitIdle(); return;
+          check(true, "Dialog action: " + text);
+          MainActivity current = ((FarmApp)getTargetContext().getApplicationContext()).observer;
+          if (current == null) awaitIdle(); else settle(current);
+          return;
         }
       }
       SystemClock.sleep(100);
@@ -757,6 +762,10 @@ public final class SmokeInstrumentation extends Instrumentation {
     shell("cmd statusbar collapse"); awaitIdle();
     dialogAction("Fight"); awaitUi(() -> !a.paused, "Arena requires explicit resume after overlay interruption");
     dialogAction("Pause");
+    float arenaTime = fantasy.arenaElapsed; long arenaFrames = a.arenaView.renderedFrames;
+    SystemClock.sleep(400);
+    check(onUi(() -> a.paused && fantasy.arenaElapsed == arenaTime && a.arenaView.renderedFrames == arenaFrames),
+        "Paused arena stops simulation and rendering");
     check(onUi(() -> fantasy.health == 100 && fantasy.elapsed == 0 && fantasy.day == 11), "Arena combat leaves farm health and clock unchanged");
     screenshot("smoke-arena.png"); dialogAction("Retreat"); dialogAction("Return to haven");
     check(onUi(() -> !fantasy.arenaActive && fantasy.arenaResult == 3 && !fantasy.acceptArena()), "Retreat completes one attempt without repeat rewards");

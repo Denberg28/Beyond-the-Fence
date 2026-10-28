@@ -51,7 +51,7 @@ public final class MainActivity extends Activity {
   private int panelRevision;
   private AlertDialog arenaDialog;
   private TextView arenaStatus;
-  private ArenaView arenaView;
+  ArenaView arenaView;
   private GameButton arenaStrike, arenaPause;
   private final GameButton[] arenaItems = new GameButton[3];
   private boolean adventureDialog, eventQueued, portalShown;
@@ -86,7 +86,7 @@ public final class MainActivity extends Activity {
           }
           // Paused screens are static. Actions and save callbacks update their own controls;
           // repeatedly rebuilding text/layout here starves input on older Android devices.
-          if (running) scene.invalidate();
+          if (running && !game.arenaActive) scene.invalidate();
           handler.postDelayed(this, !running || game.reducedMotion ? 100 : 33);
         }
       };
@@ -1014,7 +1014,7 @@ public final class MainActivity extends Activity {
     terrain.phase(game.night, game.ashenWorld());
     board.refreshSettlement();
     updateAudio(0);
-    scene.invalidate();
+    if (!game.arenaActive) scene.invalidate();
     refreshArena();
     scheduleAdventure();
   }

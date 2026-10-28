@@ -1,3 +1,7 @@
+# 0.14 animated-dialog regression correction
+
+First PR run40680136637 passed all build/unit/lint/package gates, then both native suites failed at the first arena Fight action. There was no app crash/ANR; the failure screenshot showed a live battle seven seconds in. The generic dialog helper required an idle main queue after every click, including continuous animation. Retain the10s liveness deadline, but synchronize animated dialogs on a new rendered arena frame (using the same approach already used for live farms). Paused dialogs still must become idle. Add an explicit400ms paused-arena clock/render stability assertion. Stop invalidating the frozen farm behind an active arena; only the arena needs drawing. Rerun final-source build and both native suites, retaining the failed run evidence.
+
 # 0.14 validation plan — 28 October 2026
 
 Baseline main d4bd381 / released0.13.0-rc.2: local JDK17 + JUnit4.13.2,93 cases PASS. New source:100 JVM cases PASS, including seven WorldTest cases covering all100 days,20 once-only bosses, schema9 bounds/continuation, real ashfall movement/wall damage, relaxed mode, weather fronts, recovery, portal carry/reset and chapter boundaries.
