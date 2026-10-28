@@ -1,3 +1,13 @@
+# 0.16 UI and save changes
+
+Plant delegates directly to Game.plantAll, the same model transaction used by the Farm panel, without changing pause state. SwipeDismissLayout wraps only transient surfaces, intercepts a >=48dp downward drag (vertical dominance1.5x), cancels the child press through Android dispatch, and dismisses on release. Content scroll and horizontal gestures take priority. Dismissed command controls retain a native >=48dp Show controls button. Ordinary platform dialogs retain their buttons; mandatory choices are excluded.
+
+BoardGeometry owns a thirteenth native action, the >=48dp pond outside the south fence. FarmView draws water only there; GameBoard shares the same pond box for rendering and touch. Fishing never changes plots/capacity. Six normal plots and the existing paid expansion remain; schema11 earned/occupied floating gardens migrate once to permanent expanded soil under schema12. Binary fields and independent fishing RNG/reward caps are retained.
+
+FantasyArt keeps the side-view wolf upright, mirrors it toward the rendered path/target heading and articulates diagonal trot pairs using simulation phase. Roaming headings follow the ring tangent; breached enemies face their actual target. Reduced motion uses the neutral gait and pause freezes simulation phase.
+
+---
+
 # 0.15 floating garden and fishing additions
 
 Game owns crop/season eligibility, atomic plantSelected, bottom-row dual usage, daily fishingCatches and independent fishingState. Fishing is a pure transient timing state machine (IDLE/WAITING/RIPPLE/MISSED/CAUGHT); MainActivity ticks only this session while the farm is paused, stops the dialog clock on focus loss and discards it on background/rotation. FishingView renders the model's exact catch range; reduced motion replaces the expanding ripple with static rings and a progress bar plus a polite text cue. All three bottom spaces keep their positions in BoardGeometry; FarmView draws water under floating beds, and native overlays own taps/long-presses. No new dependency or permission.

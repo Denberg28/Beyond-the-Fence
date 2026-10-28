@@ -1,3 +1,17 @@
+# 0.16 candidate scope and acceptance — 29 October 2026 (Asia/Manila)
+
+Baseline: published 0.15.0-rc.1, main b534102. Scope: noninterrupting bulk Plant, swipe dismissal, upright wolf gait, separate map pond and ordinary expanded soil. No dependencies, combat stats, prices or fishing reward changes. Required gates remain the existing full build/JVM/lint/package, API26/API35 installed-app and same-signature upgrade suites. Physical-phone endurance/accessibility/performance/playtesting are NOT TESTED; external HIL is N/A for an offline game.
+
+Acceptance: Plant fills all affordable empty unlocked beds and leaves occupied beds and running/paused state unchanged. Locked/unaffordable/season-invalid action is disabled. Real pointers verify running bulk Plant, one harvested bed, partial budget, all nine expanded positions; Seeds/commands/panels/dialog swipes cancel pressed actions and preserve pause; Show controls restores the dock. Scrollable content has priority until its top, and horizontal swipes must not dismiss. Fishing is accessible only through the separate >=48dp map pond, whose geometry must fit outside the fence in portrait/landscape, every density/font/layout. Miss, cancel, daily cap, catch/release, save/reload and dawn remain tested. Software render assertions require northbound wolves to stay upright and different gait phases to change the leg pose; an eight-pose strip is captured for visual self-review.
+
+JVM regressions cover independent pond quota versus paid soil expansion, all crop types on all nine expanded beds, and schema11 floating-crop/quota migration to permanent soil without losses. Schema12 keeps the existing binary field layout and makes this migration one-time; new catches must not unlock land on reload. Existing economy/100-day progression/combat/save corruption and lifecycle tests stay required.
+
+Observed local results on code source `a910a0f`: PASS117 JVM tests in each debug/release variant; debug/test/release APKs build; lintDebug/lintRelease with zero issues; package/version/API/zero-permission/size/audio audits; same retained private certificate; signed payloads match every original compiled entry. Full Gradle command completed124 tasks in2m46s using JDK17.0.21, Gradle8.9, AGP8.7.3 and SDK/build-tools35.0.0. The complete main source and instrumentation also compile against API35.
+
+BLOCKED: API26/API35 installed-app/emulator suites and actual install-r upgrade retention. This local environment has no /dev/kvm. Public GitHub push was rejected by automatic approval review twice; the second review considered retrieved standing instructions insufficient without direct end-user confirmation. No branch/PR/release was published. The signed APK is a local review build, not an emulator-validated or published release. Physical-phone and human visual/balance checks are NOT TESTED. Release artifacts may only be published after every required candidate gate passes. Reuse the retained private certificate and pre-update backup/previous APK for rollback; older apps reject schema12 exports.
+
+---
+
 # Published 0.15.0-rc.1 verification — 29 October 2026 (Asia/Manila)
 
 Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.15.0-rc.1

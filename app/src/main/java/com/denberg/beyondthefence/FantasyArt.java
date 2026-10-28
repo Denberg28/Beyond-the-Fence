@@ -27,7 +27,10 @@ final class FantasyArt {
     c.save();c.translate(x,y);c.scale(scale,scale);
     float gait=(float)Math.sin(phase);
     if(type==Bestiary.WOLF) {
-      c.rotate(heading); wolf(c,gait,attack);
+      // A side-view animal must stay upright; rotating it through 360 degrees inverted its legs.
+      // Mirror toward travel/target, with diagonal trot pairs and grounded paws.
+      if (Math.cos(Math.toRadians(heading)) < 0) c.scale(-1,1);
+      wolf(c,gait,attack);
     } else {
       oval(c,0,10,type==Bestiary.ORC?13:10,4,0x55302221);
       if(type==Bestiary.KOBOLD) kobold(c,gait,attack);
@@ -70,8 +73,14 @@ final class FantasyArt {
     oval(c,-1,4,20,6,0x55302221);
     line(c,-12,-1,-24,-8,5,0xff525a62);triangle(c,-24,-8,-29,-11,-25,-2,0xffabb0ad);
     for(int i=0;i<4;i++) {
-      float x=i<2?-10:9, y=i%2==0?-3:5, step=(i%2==0?1:-1)*gait*3;
-      line(c,x,y,x+step,y+8,3.5f,0xff626c73);line(c,x+step,y+8,x+step+4,y+8,2,0xffc5c9bf);
+      boolean far = i % 2 == 0;
+      float x=i<2?-10:9, y=far?-2:4;
+      float step=((i==0 || i==3)?1:-1)*gait*4;
+      float lift=Math.max(0, step)*.5f;
+      int fur=far?0xff48545f:0xff78848c;
+      line(c,x,y,x+step*.5f,y+5-lift,3.5f,fur);
+      line(c,x+step*.5f,y+5-lift,x+step,y+10-lift,3,fur);
+      line(c,x+step,y+10-lift,x+step+3,y+10-lift,2,0xffc5c9bf);
     }
     oval(c,-1,0,17,8,0xff717b83);oval(c,2,-2,12,5,0xff9ca5a6);
     triangle(c,4,-5,8,-13,12,-5,0xffd5d7ca);triangle(c,8,-5,12,-12,16,-4,0xff8c969a);

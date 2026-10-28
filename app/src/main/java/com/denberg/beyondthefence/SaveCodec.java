@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 11;
+  private static final int MAGIC = 0x42544653, VERSION = 12;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -300,6 +300,9 @@ public final class SaveCodec {
         g.mercenaries.remove(i);
       }
     }
+    // Preserve access earned in 0.15: former floating crops/catch quota become ordinary land.
+    if (version == 11 && (g.fishingCatches >= Game.DAILY_CATCHES
+        || g.crop[6] >= 0 || g.crop[7] >= 0 || g.crop[8] >= 0)) g.land = 1;
     g.notice = version == 1 ? "Farm upgraded to fortress format. Existing crops and upgrades kept."
         : "Fortress restored. Resume when ready.";
     return g;

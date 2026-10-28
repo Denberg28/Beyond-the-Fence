@@ -9,7 +9,7 @@ public final class Game {
   public static final int[] CROP_DAY = {1, 2, 3, 6, 12, 20, 30, 45, 60};
   public static final int[] CROP_COLOR = {0xffdec9d7, 0xfff4d05d, 0xffe5923e, 0xffeea24d, 0xffa8ca77, 0xffd86b78, 0xffbdb0e4, 0xffedba59, 0xff8dcdd5};
   public static final String[] SEASONS = {"Spring", "Summer", "Autumn", "Winter"};
-  public static final int POND = 7, FLOATING_START = 6, DAILY_CATCHES = 3;
+  public static final int DAILY_CATCHES = 3;
   public int fishingCatches, fishingState = 91873;
   public final Fishing fishing = new Fishing();
   public static final int[] SEED = {4, 10, 18, 8, 14, 22, 24, 28, 30}, SALE = {12, 26, 44, 22, 36, 54, 60, 70, 76};
@@ -107,8 +107,9 @@ public final class Game {
   }
 
   public int plots() {
-    if (land > 0 || fishingCatches >= DAILY_CATCHES) return 9;
-    for (int i = FLOATING_START; i < 9; i++) if (crop[i] >= 0) return 9;
+    if (land > 0) return 9;
+    // A saved former floating garden keeps its investment and all planted crops.
+    for (int i = 6; i < 9; i++) if (crop[i] >= 0) return 9;
     return 6;
   }
 
@@ -118,10 +119,8 @@ public final class Game {
     return count;
   }
 
-  public boolean floatingBedsOpen() { return land > 0 || fishingCatches >= DAILY_CATCHES; }
-  public boolean fishingSpace(int plot) { return plot >= FLOATING_START && plot < 9 && crop[plot] < 0 && !floatingBedsOpen(); }
-  public boolean farmPlot(int plot) { return plot >= 0 && plot < 9 && (plot < FLOATING_START || floatingBedsOpen() || crop[plot] >= 0); }
-  public int farmCapacity() { return floatingBedsOpen() ? 9 : 6; }
+  public boolean farmPlot(int plot) { return plot >= 0 && plot < plots(); }
+  public int farmCapacity() { return plots(); }
   public int season() { return ((day - 1) / 10) % SEASONS.length; }
   public String seasonName() { return SEASONS[season()]; }
   public boolean plantingSeason(int type) {
@@ -314,7 +313,7 @@ public final class Game {
               "Uniform upgraded. Better aim, armor and faster fire for all three guards.",
               "Fence reinforced. +50 strength.",
               "Irrigation upgraded. Crops grow 20% faster.",
-              "Permanent floating beds unlocked. Plant the water row before the fishing quota, too."
+              "Farmland expanded. Three more soil beds are ready to plant."
             }
             [kind];
     return true;

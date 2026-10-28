@@ -12,6 +12,7 @@ final class GameBoard extends FrameLayout {
   final BoardGeometry geometry = new BoardGeometry();
   final FarmView artwork;
   private final Supplier<Game> model;
+  private View pond;
   private int lastStyle = -1;
   private final View[] plots = new View[9], buildings = new View[3];
 
@@ -32,6 +33,7 @@ final class GameBoard extends FrameLayout {
 
   void refreshSettlement() { if (model.get().settlementStyle() != lastStyle) requestLayout(); }
 
+  void pond(View control) { pond = control; addView(control); }
   void plot(int index, View control) { plots[index] = control; addView(control); }
   void building(int index, View control) { buildings[index] = control; addView(control); }
 
@@ -45,6 +47,7 @@ final class GameBoard extends FrameLayout {
     lastStyle = model.get().settlementStyle();
     artwork.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
         MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+    measureTile(pond, geometry.pond);
     for (int i = 0; i < 9; i++) measureTile(plots[i], geometry.plots[i]);
     for (int i = 0; i < 3; i++) measureTile(buildings[i], geometry.buildings[i]);
   }
@@ -57,6 +60,7 @@ final class GameBoard extends FrameLayout {
   @Override
   protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
     artwork.layout(0, 0, getWidth(), getHeight());
+    place(pond, geometry.pond);
     for (int i = 0; i < 9; i++) place(plots[i], geometry.plots[i]);
     for (int i = 0; i < 3; i++) place(buildings[i], geometry.buildings[i]);
   }
