@@ -1,3 +1,11 @@
+# 0.15 floating garden and fishing additions
+
+Game owns crop/season eligibility, atomic plantSelected, bottom-row dual usage, daily fishingCatches and independent fishingState. Fishing is a pure transient timing state machine (IDLE/WAITING/RIPPLE/MISSED/CAUGHT); MainActivity ticks only this session while the farm is paused, stops the dialog clock on focus loss and discards it on background/rotation. FishingView renders the model's exact catch range; reduced motion replaces the expanding ripple with static rings and a progress bar plus a polite text cue. All three bottom spaces keep their positions in BoardGeometry; FarmView draws water under floating beds, and native overlays own taps/long-presses. No new dependency or permission.
+
+SaveCodec 11 appends two integers after schema 10 fields. It accepts old schemas 1–10 and strictly validates new quota 0–3 and crop IDs 0–8. It preserves nine legacy crop slots intact. Floating access depends on permanent expansion, today's quota, or a living crop in that slot; dawn never evicts crops. Fishing can never change combat/loot RNG, spend seed costs, stack equipment, or award practice rewards. Daily cap resets only in dawn; transients are never serialized.
+
+---
+
 # Medieval art and schema10
 
 `HomesteadArt` paints raised beds and wall segments from existing BoardGeometry boxes / shared ring coordinates. It does not change hitboxes or combat geometry; FarmView retains the HP overlay at its original coordinates. `FantasyArt` paints the new species; wolf orientation points toward the courtyard. Existing enemy0–7 rendering remains. `BestiaryView` is a static illustration plate with adjacent native descriptive text.

@@ -5,7 +5,7 @@ import java.util.zip.CRC32;
 
 /** Versioned, bounded save format with corruption detection. CRC is not authentication. */
 public final class SaveCodec {
-  private static final int MAGIC = 0x42544653, VERSION = 10;
+  private static final int MAGIC = 0x42544653, VERSION = 11;
   public static final int MAX_BYTES = 16384;
 
   private SaveCodec() {}
@@ -88,6 +88,7 @@ public final class SaveCodec {
     d.writeBoolean(g.worldComplete); d.writeBoolean(g.directorEnabled); d.writeBoolean(g.arenaActive);
     for (float value : new float[] {g.raidStrain, g.arenaHealth, g.arenaEnemyHealth, g.arenaElapsed,
         g.arenaAttackClock, g.arenaEnemyClock, g.strikeClock}) d.writeFloat(value);
+    d.writeInt(g.fishingCatches); d.writeInt(g.fishingState);
     d.flush();
     CRC32 crc = new CRC32();
     crc.update(body.toByteArray());
@@ -151,9 +152,9 @@ public final class SaveCodec {
     for (int i = 0; i < 9; i++) {
       g.crop[i] = in.readInt();
       g.growth[i] = in.readFloat();
-      integer(g.crop[i], -1, 2);
+      integer(g.crop[i], -1, version >= 11 ? Game.CROPS.length - 1 : 2);
       number(g.growth[i], 0, 1);
-      if (i >= g.plots()) range(g.crop[i] == -1);
+      if (version < 11 && i >= (g.land == 0 ? 6 : 9)) range(g.crop[i] == -1);
     }
     int count = in.readInt();
     integer(count, 0, version >= 8 ? Campaign.MAX_ENEMIES : 45);
@@ -206,7 +207,7 @@ public final class SaveCodec {
         g.cropHealth[i] = in.readFloat(); g.scorched[i] = in.readBoolean();
         number(g.cropHealth[i], 0, Game.CROP_HEALTH);
         range(g.crop[i] >= 0 ? g.cropHealth[i] > 0 && !g.scorched[i] : g.cropHealth[i] == 0);
-        if (i >= g.plots()) range(!g.scorched[i]);
+        if (version < 11 && i >= (g.land == 0 ? 6 : 9)) range(!g.scorched[i]);
       }
       for (int i = 0; i < 3; i++) {
         g.buildingHealth[i] = in.readFloat(); g.buildingRuins[i] = in.readBoolean();
@@ -276,6 +277,10 @@ public final class SaveCodec {
       number(g.arenaEnemyHealth, 0, g.arenaMaxEnemyHealth()); number(g.arenaElapsed, 0, 45);
       number(g.arenaAttackClock, 0, 1); number(g.arenaEnemyClock, 0, 2.4f); number(g.strikeClock, 0, 2.4f);
       range(!g.arenaActive || g.arenaHealth > 0 && g.arenaEnemyHealth > 0 && g.arenaElapsed < 45);
+    }
+    if (version >= 11) {
+      g.fishingCatches = in.readInt(); g.fishingState = in.readInt();
+      integer(g.fishingCatches, 0, Game.DAILY_CATCHES);
     }
     for (int side = 0; side < 4; side++) number(g.wallHealth[side], 0, g.maxWallHealth(side));
     for (Game.Mercenary merc : g.mercenaries) number(merc.health, Float.MIN_VALUE, g.guardMaxHealth());

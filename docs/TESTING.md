@@ -1,3 +1,25 @@
+# 0.15 first Android pass and visual correction — 29 October 2026
+
+Runtime bd20e2d / PR merge7204e94 passed https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40745646209 :116 tests in each variant, all APK builds/lint/package audits, and2202 installed checks on each API26/35. Downloaded candidate and both emulator evidence archives match GitHub SHA256 digests; all53Java/resource/fixture files match the local runtime. Source ZIP records the PR merge commit. The CI preview uses a disposable debug certificate, not the retained production certificate; no install-over update or stable release is claimed.
+
+Visual self-review found the long optional Toast overlapped fishing actions at200% font on API26 and truncated on API35. Shorten optional messages and cancel them when either activity opens; fishing already shows full catch details in its accessible caption. Add native planting-chooser bounds/screenshots and actual horizontal seed-tray selection of seasonal Rain lily into a floating bed. Let the short floating-garden toast expire before its screenshot. Repeat affected build/installed gates with the original timeouts and assertions retained. Final evidence below will supersede this intermediate visual result.
+
+# 0.15.0-rc.1 development verification — 29 October 2026 (Asia/Manila)
+
+Baseline: main 9031288, published 0.14.0-rc.2. Scope: Plant shortcut, selection transaction,9 crop varieties/season+environment gates, three water/floating spaces, loss-free fishing, bounded rewards and schema 11. Preserve all prior combat/save/damage/economy/API/font/lifecycle gates. Intentional acceptance changes: Merc↑ routes to Plant, uniforms purchased in Crew, crop availability expands after day 6, bottom-row geometry stays fixed, and expansion gives permanent floating access. Original first-six crop economics, upgrade prices, quotas, enemy RNG and loot odds remain.
+
+PASS — reviewed/JVM simulated:116 JUnit cases including all 106 baseline cases and 10 GardenFishingTest cases. New tests cover exact selection rollback, unlock+weather+season gates in both worlds, yield ceilings, all three floating spaces/every crop, dawn retention/reload, cancelled/missed/duplicate catches, saved cap/recovery/practice RNG isolation,10,000 reward observations and low-tier-only equipment, legacy 10 full-garden migration and strict new fields, lower-row geometry in all layouts. Same schema 9 fixture migration now expects schema 11. Tests run with downloaded Corretto 17.0.21/JUnit 4.13.2.
+
+PASS — source compile: all main and instrumentation Java compile against Android 35 android.jar using a temporary resource-ID stub outside the repository. This verifies Java/API references only; it is not an Android APK build or resource/lint check.
+
+BLOCKED locally — full Gradle Android build: dependency requests in the Gradle daemon cannot reach the environment's HTTP proxy (Connection refused / Network unreachable); pinned Gradle 8.9 distribution and SDK 35/build-tools 35 downloaded successfully. CI must build both unit variants/APKs and run lint and package/version/API/permission/audio/size audits before candidate release. Local emulator/KVM and the retained private signing key are unavailable here. Do not treat source compile as APK validation or substitute a new signing identity.
+
+New installed acceptance: actual Plant selection/single/all pointer flows; early/no-cost miss; actual dialog-clock catch window; three reward catches with farm clocks/growth frozen; automatic three-bed conversion; single/bulk floating planting; saved crop/quota; catch-and-release with no reward; dawn retains floating crops; original dock/layout checks at 200%font. Capture fishing and floating-garden scenes and review both API 26/35 screenshots. Existing uniform purchase checks now use Crew without removing price/health assertions.
+
+Required before release: CI source/build, API 26/35 installed and screenshot review, exact-APK signing/upgrade validation. Physical-phone endurance/audio/TalkBack/performance and human balance are NOT TESTED; stable remains blocked. HIL N/A: no external hardware. Rollback uses prior APK plus pre-update backup because older apps reject schema 11.
+
+---
+
 # Published0.14.0-rc.2 verification — 29 October2026 (Asia/Manila)
 
 Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.14.0-rc.2

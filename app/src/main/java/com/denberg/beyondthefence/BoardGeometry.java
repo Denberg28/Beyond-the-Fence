@@ -52,9 +52,7 @@ final class BoardGeometry {
       Box[] old = new Box[3];
       for (int i = 0; i < 3; i++) { old[i] = new Box(); old[i].set(buildings[i].left, buildings[i].top, buildings[i].width(), buildings[i].height()); }
       for (int i = 0; i < 3; i++) { Box b = old[(i + style) % 3]; buildings[i].set(b.left, b.top, b.width(), b.height()); }
-      Box[] soil = new Box[9];
-      for (int i = 0; i < 9; i++) { soil[i] = new Box(); soil[i].set(plots[i].left, plots[i].top, plots[i].width(), plots[i].height()); }
-      for (int i = 0; i < 9; i++) { Box b = soil[style == 1 ? i / 3 * 3 + 2 - i % 3 : (i + 3) % 9]; plots[i].set(b.left, b.top, b.width(), b.height()); }
+      // Garden coordinates stay stable: the entire lower row is the pond / floating garden.
     }
   }
   float worldX(float x) {
