@@ -173,9 +173,9 @@ final class FarmView extends View {
           targetX = geometry.worldX(g.ringXAt(enemy.lane + enemy.offset, 0));
           targetY = geometry.worldY(g.ringYAt(enemy.lane + enemy.offset, 0));
         }
-        bosses.effect(c, BossRoster.element(kind), x, y, targetX, targetY, d, effect);
         bosses.draw(c, kind, x, y, size, g.reducedMotion ? 0 : g.elapsed * 4,
             !g.reducedMotion && effect >= 0, heading);
+        bosses.attack(c, kind, x, y, targetX, targetY, d, size, heading, effect);
       } else {
         zombie(c, x, y, size, enemy.type, g.reducedMotion ? 0 : g.elapsed * (enemy.type == 1 ? 10 : 6) + enemy.offset * 7, attacking, heading);
       }
@@ -183,8 +183,9 @@ final class FarmView extends View {
         line(c, x - 4 * size, y - 6 * size, x + 3 * size, y + 2 * size, 0xffe5a35a, 2 * size);
         circle(c, x + 4 * size, y - 7 * size, 2 * size, 0xffffcc7d);
       }
-      box(c, x - 8 * d, y - 22 * d, 16 * d, 2 * d, 0, 0xff172e26);
-      box(c, x - 8 * d, y - 22 * d, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
+      float healthY = y - (enemy.type == Campaign.BOSS ? 65 : 22) * d;
+      box(c, x - 8 * d, healthY, 16 * d, 2 * d, 0, 0xff172e26);
+      box(c, x - 8 * d, healthY, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
     }
     Game.Enemy boss = g.boss();
     if (boss != null) {

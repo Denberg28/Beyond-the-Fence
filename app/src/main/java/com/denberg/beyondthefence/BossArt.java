@@ -98,6 +98,15 @@ final class BossArt {
     }
     c.restore();
   }
+  void attack(Canvas c, int kind, float x, float y, float tx, float ty, float d,
+      float scale, float heading, float progress) {
+    float facing = Math.cos(Math.toRadians(heading)) < 0 ? -1 : 1;
+    float mouthX = kind == BossRoster.DRAGON ? 29*facing : kind == BossRoster.WOLF ? 29*facing
+        : kind == BossRoster.LICH || kind == BossRoster.WARDEN ? 21 : kind == BossRoster.SNAKE ? 0 : 23;
+    float mouthY = kind == BossRoster.DRAGON ? -17 : kind == BossRoster.WOLF ? -3
+        : kind == BossRoster.LICH || kind == BossRoster.WARDEN ? -28 : kind == BossRoster.SNAKE ? -18 : 0;
+    effect(c, BossRoster.element(kind), x+mouthX*scale, y+mouthY*scale, tx, ty, d, progress);
+  }
   /** A short local effect to the actual contact point; never obscures the full screen. */
   void effect(Canvas c, int element, float x, float y, float tx, float ty, float d, float progress) {
     if(progress<0 || progress>1 || d<=0)return;
