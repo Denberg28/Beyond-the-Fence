@@ -1,17 +1,18 @@
 {
-  "source_sha": "faa360b02f7a4dc438806076260169ee4439658b",
-  "source_run_id": 40793921006,
+  "source_sha": "9387092786d4ec52450cb2f4a7a445758a45f93b",
+  "source_run_id": 40813734581,
   "signer_sha256": "b209ae0dfa9385838a4bc2bf3254a25c3d5a45dc9124379edc53caf4c4e3fd91",
-  "version": "0.16.1-rc.1",
-  "version_code": 22,
-  "payload_ref": "delivery/0.16.1-rc.1",
-  "apk_blob": "238610b1f690b57e3582cc2e494c9ccaf0f49e9d",
-  "apk_sha256": "b6e653edb172f75275b04c27faeb51c516e5ee7048863211067153ca341cb69b",
-  "tests_blob": "89630c49a48b3352fb659edbdc8e89be4544cfd9",
-  "tests_sha256": "91dbb86f422b08f1462c04d589a728f3293ad91758c0d707e799eb61adb7cfc1",
-  "release_blob": "ec778c7c8033bcf92b17be27600da51599a2e34a",
-  "release_sha256": "4ceeecd89ddaf6ab43f39dd404d245fe55048f4d3fddac60e261809236416bb8",
+  "version": "0.17.0-rc.1",
+  "version_code": 23,
+  "payload_ref": "delivery/0.17.0-rc.1",
+  "apk_blob": "262f4945f32ff3f83edd0b5732804d670c76cd47",
+  "apk_sha256": "f6c60d72ecad6a9cd1edbb56ebb83b342fdfb4272c01059ad4e9ec4b5718df13",
+  "tests_blob": "863ce5df0116d6c47d1e993e5162725f16d76625",
+  "tests_sha256": "ed98dd05dd34a3ca3038aa8a4cec929f5d5ee6ce069e372774bfd05fae32a33c",
+  "release_blob": "3d712e8e131d28605772cf2986eee374b3b53d36",
+  "release_sha256": "516a412477244b7b39a205044e3feb0026efe7f16e2a8163b0c73321a5be4f1e",
   "baseline_blob": "b6be9af17151e314707001ea2ca5a9bed529e7c7",
   "baseline_sha256": "8bb18bc0c84869ff918d2ac54a67c1cd2c6b2ea2da40f47afc6924e172736b5a",
-  "delivery_notes": "Pond-only runtime patch: right-aligned pond,16dp south-fence baseline clearance,>=12dp above Plant and full48dp target. Passed117 JVM tests per variant, builds/lint/package/audio audits and2313 native checks on each API26/35. Candidate/source/emulator archive digests verified; every source file matches reviewed commit. Pond screenshots self-reviewed on both APIs at200% font. Retained-key payloads preserve every compiled entry. Delivery must repeat fresh-source comparison, signed native suites and actual release install-r/checkpoint retention before prerelease publication. Physical-phone validation remains pending."
+  "delivery_notes": "Boss art/effects source9387092:120 JVM tests per variant, builds/lint/package/audio checks and2360 installed-app checks on each API26/35 PASS (run40813734581). Eight silhouettes, attack poses, all three effects, paused/reduced-motion frame identity and rendering checkpoint purity passed. Candidate/source and both emulator ZIP digests verified. Complete source archive matches the reviewed commit. Boss procession/contact screenshots self-reviewed on both APIs. Fixed-key payloads retain every compiled entry and pinned certificate. Delivery must repeat fresh-source comparison, signed native suites and actual non-debuggable install-r/checkpoint retention before publication. Physical-phone validation pending."
 }
+
