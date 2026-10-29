@@ -1,16 +1,6 @@
-# 0.16.0-rc.1 — Quick planting and a separate pond
+# 0.16.1-rc.1 — Right-side pond spacing
 
-Plant now behaves like Harvest: one tap fills all affordable empty unlocked beds with the selected seed, without a chooser, toast or pause. It preserves growing/ripe crops and debits only planted seeds. Individual beds still support planting and harvesting. Seasonal/day requirements and the six-bed starting farm plus 200-coin expansion remain unchanged.
-
-Swipe down to hide Seeds, the bottom command buttons, construction/equipment panels and ordinary popups. Show controls restores the command dock. Horizontal seed scrolling and vertical content scrolling retain priority; scroll a panel to the top before pulling it down. Buttons and Close/Back remain available. Required recovery/progression choices and arena combat retain their explicit actions.
-
-Fishing now lives in a separate visible pond below the south fence. All nine farm positions draw ordinary soil; the bottom three open through normal Farm expansion. The three-catch daily reward cap, timed reel, separate randomness and equipment odds are unchanged. Swiping the fishing popup closes it, cancels the cast and keeps the farm paused.
-
-Wolves stay upright rather than rotating a side-view drawing through 360 degrees. They mirror toward travel/targets, and diagonal pairs of articulated legs animate a trot. Pause and Reduced motion retain static poses. No enemy stats or damage change.
-
-Save schema 12 reads schemas 1–11. A schema11 farm that has crops in former floating beds, or has earned its three-catch quota, retains those beds as permanent ordinary farmland on upgrade. Crop positions, growth, health, resources, equipment and progression remain intact. New fishing catches never unlock farmland. Older apps reject schema12 exports: export before updating and keep the previous APK and pre-update backup for rollback.
-
-Published checks: 117 JVM cases per build variant; builds, lint and package/audio/signature audits; 2,305 installed-app checks on each API26/35; visual wolf/pond self-review; same-key preview and non-debuggable release upgrades with checkpoint retention. Physical-phone performance, accessibility, endurance and human balance validation remain pending. This is a prerelease.
+The fishing pond now sits at the right end below the south fence, with 16dp fence clearance and at least 12dp above Plant when visible. The same 56×48dp artwork and native touch target move together. This patch only changes pond placement; fishing rules, planting, combat, economy and save schema 12 stay the same.
 
 ---
 
@@ -18,9 +8,9 @@ Published checks: 117 JVM cases per build variant; builds, lint and package/audi
 
 A small farm, a warm home, and something moving past the fence. An offline Android farming and survival game with original vector artwork, quick sessions, and no accounts, ads, purchases or internet permission.
 
-**Published 0.16.0-rc.1** adds instant Plant, swipe-down transient controls, an upright wolf trot and a separate fishing pond with ordinary farm soil. All automated prerelease and signed-upgrade gates passed; physical-phone and human balance validation remain pending.
+**0.16.1-rc.1** is a pond-placement patch based on published 0.16.0-rc.1. Automated build, native layout/fishing and signed-upgrade checks are required before publication; physical-phone validation remains pending.
 
-**Current GitHub prerelease: [0.16.0-rc.1](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.0-rc.1).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
+**Target GitHub prerelease: [0.16.1-rc.1](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.1-rc.1).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
 
 ## Play · farm fortress
 
@@ -58,7 +48,7 @@ The optional offline **adaptive director** measures raid strain and recent clean
 
 ## Install / upgrade / rollback
 
-Download **[Release.apk](https://github.com/Denberg28/Beyond-the-Fence/releases/download/v0.16.0-rc.1/TAG-Zombie-Survival-Fantasy-0.16.0-rc.1-Release.apk)** from [GitHub Releases](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.0-rc.1). Preview.apk is for debugging/testing; both APKs use the same retained certificate. Android8.0+; no permissions, accounts, ads or network access. Unsigned.apk is future production-signing output and is not installable directly.
+Download **[Release.apk](https://github.com/Denberg28/Beyond-the-Fence/releases/download/v0.16.1-rc.1/TAG-Zombie-Survival-Fantasy-0.16.1-rc.1-Release.apk)** from [GitHub Releases](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.1-rc.1). Preview.apk is for debugging/testing; both APKs use the same retained certificate. Android8.0+; no permissions, accounts, ads or network access. Unsigned.apk is future production-signing output and is not installable directly.
 
 Published TAG builds use one privately retained key, introduced in the0.12 development line, with its public fingerprint pinned in docs/signing-certificate.sha256. Future higher-version APKs signed with that same key install over the app and retain its local checkpoints. Private keys are never committed, cached in public CI or included in releases. Earlier disposable preview keys were not retained; the existing0.11.1 APK cannot be updated by this new key. A one-time export/import is required when moving from those older builds. Do not uninstall until you have exported and kept the backup. **Export your current `.btfs` save before upgrading or uninstalling.** A signing conflict requires export→uninstall→install→import. Uninstall removes local data. Store publication is not configured.
 

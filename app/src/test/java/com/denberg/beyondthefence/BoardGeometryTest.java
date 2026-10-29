@@ -21,7 +21,9 @@ public class BoardGeometryTest {
             System.arraycopy(g.plots, 0, boxes, 0, 9);
             System.arraycopy(g.buildings, 0, boxes, 9, 3);
             boxes[12] = g.pond;
-            assertTrue("Pond outside the south fence", g.pond.top > g.fortBottom);
+            assertTrue("Pond has 16dp south-fence clearance", g.pond.top - g.fortBottom >= 16 * density - .5f);
+            assertTrue("Pond aligned on the right", Math.abs(g.pond.right - g.fortRight) <= .5f
+                && g.pond.left > width / 2f);
             for (int i = 0; i < boxes.length; i++) {
               BoardGeometry.Box b = boxes[i];
               assertTrue(b.left >= 0 && b.top >= 0 && b.right <= width && b.bottom <= height + extra);

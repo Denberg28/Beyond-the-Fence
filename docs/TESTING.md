@@ -1,3 +1,11 @@
+# 0.16.1-rc.1 pond-only patch — 29 October 2026 (Asia/Manila)
+
+Baseline: published 0.16.0-rc.1, main 307d78c. Acceptance: pond aligns with the right fence, is separated by 16dp below the south-fence baseline, retains its >=48dp touch area inside the board, and has >=12dp clearance above Plant whenever visible. Landscape minimum board height grows by 8dp to fit the new gap; crop/building layout rules, commands, fishing logic, combat, economy and schema12 remain unchanged. Extend existing geometry and native pointer checks; add no new dependencies.
+
+Required: debug/release JVM suites, APK/test builds, lint and package/audio audits; full API26/35 native suites including portrait/landscape, 200% font and all three settlement styles; actual pond taps with full visibility and Plant clearance; screenshot self-review; exact-source/retained-certificate and installed release upgrade checks. Physical-phone validation remains NOT TESTED; external HIL N/A (offline game). Candidate publication awaits these gates. Keep the previous APK and a pre-update export for rollback.
+
+---
+
 # Published 0.16.0-rc.1 verification — 29 October 2026 (Asia/Manila)
 
 Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.0-rc.1

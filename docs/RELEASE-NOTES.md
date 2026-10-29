@@ -1,15 +1,11 @@
-# 0.16.0-rc.1 — Quick planting and a separate pond
+# 0.16.1-rc.1 — Right-side pond spacing
 
-Published 29 October 2026: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.0-rc.1 . All automated candidate and signed-upgrade gates passed.
+29 October 2026 (Asia/Manila). Based on published 0.16.0-rc.1, commit 307d78c.
 
-Plant now behaves like Harvest: one tap fills all affordable empty unlocked beds with the selected seed, without a chooser, toast or pause. It preserves growing/ripe crops and debits only planted seeds. Individual beds still support planting and harvesting. Seasonal/day requirements and the six-bed starting farm plus 200-coin expansion remain unchanged.
+Move the fishing pond to the right end below the south fence. Leave 16dp from the fence baseline and at least 12dp above the Plant button when the pond is visible. Artwork and the 56×48dp native touch target share the same position. Landscape reserves 8dp more minimum board height so the pond keeps its full touch target and fence gap in short windows. Command positions and farm layout rules are retained.
 
-Swipe down to hide Seeds, the bottom command buttons, construction/equipment panels and ordinary popups. Show controls restores the command dock. Horizontal seed scrolling and vertical content scrolling retain priority; scroll a panel to the top before pulling it down. Buttons and Close/Back remain available. Required recovery/progression choices and arena combat retain their explicit actions.
+Only pond placement changes. Fishing timing, catch rewards/cap, planting, enemies, economy and save schema 12 remain unchanged. VersionCode 22 and the retained signing identity support install-over updates from 0.12+ same-key builds.
 
-Fishing now lives in a separate visible pond below the south fence. All nine farm positions draw ordinary soil; the bottom three open through normal Farm expansion. The three-catch daily reward cap, timed reel, separate randomness and equipment odds are unchanged. Swiping the fishing popup closes it, cancels the cast and keeps the farm paused.
+Export a `.btfs` backup before updating. Install Release.apk on Android 8.0+. Keep the previous APK and pre-update backup for rollback; older disposable-key builds require save transfer.
 
-Wolves stay upright rather than rotating a side-view drawing through 360 degrees. They mirror toward travel/targets, and diagonal pairs of articulated legs animate a trot. Pause and Reduced motion retain static poses. No enemy stats or damage change.
-
-Save schema 12 reads schemas 1–11. A schema11 farm that has crops in former floating beds, or has earned its three-catch quota, retains those beds as permanent ordinary farmland on upgrade. Crop positions, growth, health, resources, equipment and progression remain intact. New fishing catches never unlock farmland. Older apps reject schema12 exports: export before updating and keep the previous APK and pre-update backup for rollback.
-
-Published checks: 117 JVM cases per build variant; builds, lint and package/audio/signature audits; 2,305 installed-app checks on each API26/35; visual wolf/pond self-review; same-key preview and non-debuggable release upgrades with checkpoint retention. Physical-phone performance, accessibility, endurance and human balance validation remain pending. This is a prerelease.
+Required candidate checks: both JVM variants, Android builds/lint/package/audio audits, API26/35 native portrait/landscape/200% font and all settlement layouts, actual pond touch/fishing, visible pond-to-Plant spacing, retained certificate/exact compiled-content verification and install-over checkpoint retention. Results are recorded in docs/TESTING.md and release evidence. Physical-phone endurance, accessibility and human playtesting remain NOT TESTED; this is a prerelease.

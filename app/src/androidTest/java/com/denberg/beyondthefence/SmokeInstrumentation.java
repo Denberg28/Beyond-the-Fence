@@ -195,6 +195,13 @@ public final class SmokeInstrumentation extends Instrumentation {
       View v = control(a, tag);
       Rect visible = new Rect();
       if (!v.getLocalVisibleRect(visible) || visible.isEmpty()) throw new AssertionError("Not visible " + tag);
+      if (tag.equals("pond")) {
+        int[] pondAt = new int[2], plantAt = new int[2];
+        v.getLocationOnScreen(pondAt); control(a, "plant").getLocationOnScreen(plantAt);
+        check(plantAt[1] - (pondAt[1] + v.getHeight()) >= 12 * a.getResources().getDisplayMetrics().density - 1,
+            "Visible pond has at least12dp clearance above Plant");
+        check(visible.height() == v.getHeight(), "Full pond target is visible before fishing");
+      }
       v.getLocationOnScreen(xy);
       xy[0] += visible.centerX(); xy[1] += visible.centerY();
       android.util.Log.i("BTFSmoke", tag + " at " + xy[0] + "," + xy[1] + " focus=" + a.hasWindowFocus());
@@ -232,8 +239,10 @@ public final class SmokeInstrumentation extends Instrumentation {
       }
       View pond = control(a, "pond");
       check(pond.getParent() == field && pond.getWidth() >= min && pond.getHeight() >= min
-          && pond.getTop() > map.geometry.fortBottom && pond.getBottom() <= field.getHeight(),
-          "Separate accessible pond fits outside the south fence");
+          && pond.getTop() - map.geometry.fortBottom >= 16 * map.geometry.density - 1
+          && Math.abs(pond.getRight() - map.geometry.fortRight) <= 1
+          && pond.getLeft() > field.getWidth() / 2 && pond.getBottom() <= field.getHeight(),
+          "Right-aligned accessible pond fits with 16dp south-fence clearance");
       View cross = control(a, "fenceCross");
       View n = control(a, "wall0"), e = control(a, "wall1"), s = control(a, "wall2"), w = control(a, "wall3");
       for (View command : new View[] {n, e, s, w}) {

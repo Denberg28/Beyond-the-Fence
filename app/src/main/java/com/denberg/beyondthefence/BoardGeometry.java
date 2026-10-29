@@ -21,7 +21,7 @@ final class BoardGeometry {
   }
   static int minimumHeight(float density, float fontScale, boolean wide) {
     float cell = Math.max(48, 28 * fontScale + 12);
-    return (int) Math.ceil(density * (wide ? 3 * cell + 184 : 4 * cell + 198));
+    return (int) Math.ceil(density * (wide ? 3 * cell + 192 : 4 * cell + 198));
   }
   void layout(int width, int height, float density, boolean wide, float fontScale) { layout(width, height, density, wide, fontScale, 0); }
   void layout(int width, int height, float density, boolean wide, float fontScale, int style) {
@@ -49,8 +49,9 @@ final class BoardGeometry {
     }
     float cw = (cropRight - left - gap * 2) / 3, ch = (bottom - cropTop - gap * 2) / 3;
     for (int i = 0; i < 9; i++) plots[i].set(left + (i % 3) * (cw + gap), cropTop + (i / 3) * (ch + gap), cw, ch);
-    // Separate 56dp pond in the approach terrain below the south fence. Never covers crops.
-    pond.set(width / 2f - 28 * density, fortBottom + 12 * density, 56 * density, 48 * density);
+    // Align with the right fence; leave 16dp below the south fence and keep the
+    // full 48dp target inside the board, above the separately padded command dock.
+    pond.set(fortRight - 56 * density, fortBottom + 16 * density, 56 * density, 48 * density);
     if (style > 0) {
       Box[] old = new Box[3];
       for (int i = 0; i < 3; i++) { old[i] = new Box(); old[i].set(buildings[i].left, buildings[i].top, buildings[i].width(), buildings[i].height()); }
