@@ -1,3 +1,9 @@
+# 0.17 candidate limitations
+
+Physical-phone frame timing, endurance, TalkBack, audio comfort and boss readability/playtesting are NOT TESTED. Boss variants currently share the existing scheduled-boss combat stats/AI; elemental effects illustrate contact damage and add no elemental status effects. No new arena champions are added. These are presentation choices, not undisclosed combat changes. Candidate gates and observed results are in TESTING.md/CI evidence.
+
+---
+
 # 0.16 verification limits
 
 - Physical-phone touch/gesture navigation, TalkBack, endurance, audio comfort, frame timing and human balance are not yet validated.

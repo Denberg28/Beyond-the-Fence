@@ -1,6 +1,8 @@
-# 0.16.1-rc.1 — Right-side pond spacing
+# 0.17.0-rc.1 — Boss procession and elemental effects
 
-The fishing pond now sits at the right end below the south fence, with 16dp fence clearance and at least 12dp above Plant when visible. The same 56×48dp artwork and native touch target move together. This patch only changes pond placement; fishing rules, planting, combat, economy and save schema 12 stay the same.
+Seven original boss designs join the Grave Warden: Ember dragon, two-headed ogre, great frost wolf, mountain yeti, ancient serpent, storm lich and giant zombie. Each fifth-night event advances the eight-boss procession; later worlds shift its starting point. Dragon/serpent attacks show fire, ogre/yeti/zombie attacks throw rock debris, and wolf/lich/Warden attacks show lightning. Effects are short, local illustrations of existing contact damage, with no extra attack range, damage or rewards.
+
+Bosses retain their saved type7 identity. Appearance derives from the current day/world, so existing active raids, restart and world travel need no migration or new RNG draws. Existing boss health/damage, Ashen modifiers, quotas, drop odds, economy and save schema12 are retained. Reduced motion freezes poses and removes elemental effects. The scrollable Bestiary illustrates all eight bosses. The right-side pond-spacing patch is included.
 
 ---
 
@@ -8,9 +10,9 @@ The fishing pond now sits at the right end below the south fence, with 16dp fenc
 
 A small farm, a warm home, and something moving past the fence. An offline Android farming and survival game with original vector artwork, quick sessions, and no accounts, ads, purchases or internet permission.
 
-**0.16.1-rc.1** is a pond-placement patch based on published 0.16.0-rc.1. Automated build, native layout/fishing and signed-upgrade checks are required before publication; physical-phone validation remains pending.
+**0.17.0-rc.1** adds the boss procession and elemental contact effects on top of published 0.16.1-rc.1. Automated build, native layout/fishing and signed-upgrade checks are required before publication; physical-phone validation remains pending.
 
-**Target GitHub prerelease: [0.16.1-rc.1](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.1-rc.1).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
+**Target GitHub prerelease: [0.17.0-rc.1](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.17.0-rc.1).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
 
 ## Play · farm fortress
 
@@ -48,7 +50,7 @@ The optional offline **adaptive director** measures raid strain and recent clean
 
 ## Install / upgrade / rollback
 
-Download **[Release.apk](https://github.com/Denberg28/Beyond-the-Fence/releases/download/v0.16.1-rc.1/TAG-Zombie-Survival-Fantasy-0.16.1-rc.1-Release.apk)** from [GitHub Releases](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.1-rc.1). Preview.apk is for debugging/testing; both APKs use the same retained certificate. Android8.0+; no permissions, accounts, ads or network access. Unsigned.apk is future production-signing output and is not installable directly.
+Download **[Release.apk](https://github.com/Denberg28/Beyond-the-Fence/releases/download/v0.17.0-rc.1/TAG-Zombie-Survival-Fantasy-0.17.0-rc.1-Release.apk)** from [GitHub Releases](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.17.0-rc.1). Preview.apk is for debugging/testing; both APKs use the same retained certificate. Android8.0+; no permissions, accounts, ads or network access. Unsigned.apk is future production-signing output and is not installable directly.
 
 Published TAG builds use one privately retained key, introduced in the0.12 development line, with its public fingerprint pinned in docs/signing-certificate.sha256. Future higher-version APKs signed with that same key install over the app and retain its local checkpoints. Private keys are never committed, cached in public CI or included in releases. Earlier disposable preview keys were not retained; the existing0.11.1 APK cannot be updated by this new key. A one-time export/import is required when moving from those older builds. Do not uninstall until you have exported and kept the backup. **Export your current `.btfs` save before upgrading or uninstalling.** A signing conflict requires export→uninstall→install→import. Uninstall removes local data. Store publication is not configured.
 

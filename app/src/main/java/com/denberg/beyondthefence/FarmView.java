@@ -13,6 +13,7 @@ final class FarmView extends View {
   long renderedFrames;
   private final HomesteadArt homestead = new HomesteadArt();
   private final FantasyArt fantasy = new FantasyArt();
+  private final BossArt bosses = new BossArt();
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final RectF rect = new RectF();
   private final Path woods = new Path(), courtyard = new Path();
@@ -165,7 +166,19 @@ final class FarmView extends View {
         targetX = (target.left + target.right) / 2f; targetY = (target.top + target.bottom) / 2f;
       }
       float heading = (float)Math.toDegrees(Math.atan2(targetY - y, targetX - x));
-      zombie(c, x, y, size, enemy.type, g.reducedMotion ? 0 : g.elapsed * (enemy.type == 1 ? 10 : 6) + enemy.offset * 7, attacking, heading);
+      if (enemy.type == Campaign.BOSS) {
+        int kind = BossRoster.kind(g.day, g.world);
+        float effect = BossRoster.effect(g, enemy);
+        if (!enemy.breached) {
+          targetX = geometry.worldX(g.ringXAt(enemy.lane + enemy.offset, 0));
+          targetY = geometry.worldY(g.ringYAt(enemy.lane + enemy.offset, 0));
+        }
+        bosses.effect(c, BossRoster.element(kind), x, y, targetX, targetY, d, effect);
+        bosses.draw(c, kind, x, y, size, g.reducedMotion ? 0 : g.elapsed * 4,
+            !g.reducedMotion && effect >= 0, heading);
+      } else {
+        zombie(c, x, y, size, enemy.type, g.reducedMotion ? 0 : g.elapsed * (enemy.type == 1 ? 10 : 6) + enemy.offset * 7, attacking, heading);
+      }
       if (g.ashenWorld() && (Bestiary.heavy(enemy.type) || enemy.type == Campaign.BOSS)) {
         line(c, x - 4 * size, y - 6 * size, x + 3 * size, y + 2 * size, 0xffe5a35a, 2 * size);
         circle(c, x + 4 * size, y - 7 * size, 2 * size, 0xffffcc7d);
@@ -176,7 +189,7 @@ final class FarmView extends View {
     Game.Enemy boss = g.boss();
     if (boss != null) {
       float width = Math.min(getWidth() - 24 * d, 240 * d), bx = (getWidth() - width) / 2;
-      color(0xfff5e5c4); p.setTextSize(10 * d); p.setTypeface(Typeface.DEFAULT_BOLD); c.drawText(g.bossName(), bx, 12 * d, p);
+      color(0xfff5e5c4); p.setTextSize(10 * d); p.setTypeface(Typeface.DEFAULT_BOLD); c.drawText(g.bossTitle(), bx, 12 * d, p);
       box(c, bx, 16 * d, width, 5 * d, 2 * d, 0xff291e2b);
       box(c, bx, 16 * d, width * boss.hp / boss.maxHp, 5 * d, 2 * d, 0xffce6b87);
     }

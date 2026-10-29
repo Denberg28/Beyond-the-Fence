@@ -1,3 +1,13 @@
+# 0.17.0-rc.1 — Boss procession and elemental effects
+
+Seven original boss designs join the Grave Warden: Ember dragon, two-headed ogre, great frost wolf, mountain yeti, ancient serpent, storm lich and giant zombie. Each fifth-night event advances the eight-boss procession; later worlds shift its starting point. Dragon/serpent attacks show fire, ogre/yeti/zombie attacks throw rock debris, and wolf/lich/Warden attacks show lightning. Effects are short, local illustrations of existing contact damage, with no extra attack range, damage or rewards.
+
+Bosses retain their saved type7 identity. Appearance derives from the current day/world, so existing active raids, restart and world travel need no migration or new RNG draws. Existing boss health/damage, Ashen modifiers, quotas, drop odds, economy and save schema12 are retained. Reduced motion freezes poses and removes elemental effects. The scrollable Bestiary illustrates all eight bosses. The right-side pond-spacing patch is included.
+
+Implementation: BossRoster derives presentation from day/world; BossArt renders bounded Canvas shapes and three short local effects using simulation clocks. No new persisted fields. Game.bossTitle supplies the visible name; the legacy bossName family remains for compatibility. FarmView and the scrollable Bestiary reuse BossArt.
+
+---
+
 # Medieval frontier acceptance —0.14.0-rc.2
 
 M1: Garden plots display raised timber frames, cornerstones and furrows, with existing crop stages/health/growth bars. Locked plots remain tappable expansion land. Palisade / Stone wall / Ironbound boundaries show stakes / masonry / iron reinforcement. Draw every material on the shared normalized perimeter; retain independent side HP, repair costs, durability pixels, geometry and native targets across all three settlements, rotations and200% font.

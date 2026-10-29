@@ -60,6 +60,7 @@ public final class Game {
   public String settlementName() { return World.settlementName(world, settlementStyle()); }
   public boolean ashfall() { return ashenWorld() && weather == 2; }
   public String bossName() { return ashenWorld() ? "Cinder Regent" : "Grave Warden"; }
+  public String bossTitle() { return (ashenWorld() ? "Cinder · " : "") + BossRoster.name(BossRoster.kind(day, world)); }
   public int settlementStyle() { return World.settlementStyle(world, day); }
   public float ringXAt(float progress, float distance) { return Settlement.x(settlementStyle(), progress, distance); }
   public float ringYAt(float progress, float distance) { return Settlement.y(settlementStyle(), progress, distance); }
@@ -417,7 +418,7 @@ public final class Game {
     spawnClock = Math.max(-.1f, spawnClock - dt);
     if (spawned < quota() && spawnClock <= 0) {
       int kind = bossDay() && !bossSpawned && spawned >= quota() / 2 ? Campaign.BOSS : Bestiary.pick(day, random(Bestiary.weight(day)));
-      if (kind == Campaign.BOSS) { bossSpawned = true; notice = bossName() + " arrives! Defeat the five-day boss."; }
+      if (kind == Campaign.BOSS) { bossSpawned = true; notice = bossTitle() + " arrives! Defeat the five-day boss."; }
       float hp = enemyHealth(kind);
       enemies.add(new Enemy(kind, random(4), 1, hp, hp, .12f + random(760) / 1000f));
       spawned++;

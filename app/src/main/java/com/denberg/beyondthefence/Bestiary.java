@@ -28,7 +28,7 @@ final class Bestiary {
         + "Day 3 · Dire wolf\nLow, four-legged silhouette. Fastest approach; fragile compared with heavy raiders.\n\n"
         + "Day 6 · Orc raider\nBroad tusked warrior with an axe and scrap armor. Slow, durable wall breaker.\n\n"
         + "Day 12 · Goblin hexer\nHooded caster with a violet staff. Attacks an intact wall from outside like a spitter.\n\n"
-        + "Every fifth night · Grave Warden / Cinder Regent\nOne boss replaces a reinforcement. Quotas, salvage and relic odds are unchanged.\n\n"
+        + "Every fifth night · Boss procession\nEmber dragon, two-headed ogre, great frost wolf, mountain yeti, ancient serpent, storm lich, giant zombie and Grave Warden rotate in order. Later worlds shift the procession; Cinder variants keep the Ashen bonus.\n\nFire · Dragon / serpent. Rock · Ogre / yeti / giant zombie. Lightning · Wolf / lich / Warden. Short contact effects illustrate existing attacks; they add no range or damage. Reduced motion removes the effects and moving poses.\n\nOne boss replaces a reinforcement. Health, damage, quotas, salvage and relic odds are unchanged.\n\n"
         + "Ashfall slows approaches 15%, while Brutes, Ironhides and Orcs deal 20% more damage. Rally defenders to threatened borders.";
   }
 }

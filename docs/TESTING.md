@@ -1,3 +1,15 @@
+# 0.17 boss artwork acceptance — 29 October2026 (Asia/Manila)
+
+Baseline: published0.16.1-rc.1, source faa360b / delivery3b4d9e7. Its delivery run40794819391 passed build and API26; attempt1 API35 failed before welcome because a Pixel Launcher ANR dialog obscured the game (failure.png and last-anr.txt). Attempt2 reran only failed/dependent jobs, passed API35 and published the unchanged pond patch. No game assertion was waived.
+
+Scope: seven original boss silhouettes plus retained Warden; deterministic eight-event procession and Ashen world offset, actual event/HUD titles, local lightning/fire/rock contact effects, Reduced motion, illustrated bestiary. Retain saved boss ID7, schema12, all stats/damage/timing/economy/loot and existing pond geometry. No new dependencies or private assets in source.
+
+Acceptance: all eight appear once per eight scheduled events, appearance survives active-raid save/restart without drawing RNG or modifying any checkpoint byte, existing combat simulation continues deterministically. Effects only appear for a live boss touching an intact wall or in its existing interior-strike interval; no effect during approach, daylight, death or Reduced motion. Poses/effects freeze on pause. Native software renders require every silhouette to differ, every attack pose to differ from idle, each element to render, and reduced-motion whole FarmView frames to remain identical as elapsed time changes. Capture boss-procession.png and boss-contact.png for visual self-review. Existing full regression suites remain required on API26/35, as do signature/exact-compiled-content verification and actual non-debuggable install-r/checkpoint checks.
+
+Gates: source/build, behavior, regression, emulator integration and candidate packaging required. External HIL N/A (offline game). Physical handset performance/endurance/TalkBack/audio/human fun testing NOT TESTED; stable promotion pending. Do not claim results until CI evidence is observed. Rollback: keep previous APK and pre-update exported save; schema12 remains compatible with0.16.1.
+
+---
+
 # 0.16.1-rc.1 pond-only patch — 29 October 2026 (Asia/Manila)
 
 Baseline: published 0.16.0-rc.1, main 307d78c. Acceptance: pond aligns with the right fence, is separated by 16dp below the south-fence baseline, retains its >=48dp touch area inside the board, and has >=12dp clearance above Plant whenever visible. Landscape minimum board height grows by 8dp to fit the new gap; crop/building layout rules, commands, fishing logic, combat, economy and schema12 remain unchanged. Extend existing geometry and native pointer checks; add no new dependencies.

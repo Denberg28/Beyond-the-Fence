@@ -742,6 +742,7 @@ public final class SmokeInstrumentation extends Instrumentation {
       testFantasy(reopened);
       testMedieval(reopened);
       testGardenFishing(reopened);
+      testBossArt(reopened);
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
@@ -909,6 +910,60 @@ public final class SmokeInstrumentation extends Instrumentation {
     runOnMainSync(() -> { garden.night = true; garden.spawned = garden.quota(); garden.enemies.clear(); garden.tick(.1f); a.refresh(); });
     check(onUi(() -> garden.fishingCatches == 0 && garden.crop[6] == 8 && garden.crop[8] == 0), "Dawn resets pond catches without affecting soil crops");
     checkBoard(a); checkDock(a); checkWolfArt();
+  }
+
+  private void testBossArt(MainActivity a) throws Exception {
+    BossArt art = new BossArt();
+    Bitmap sheet = Bitmap.createBitmap(960,640,Bitmap.Config.ARGB_8888);
+    Canvas plate = new Canvas(sheet); plate.drawColor(0xff293d40);
+    android.graphics.Paint label = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+    label.setColor(0xfff4e3be); label.setTextSize(18); label.setTextAlign(android.graphics.Paint.Align.CENTER);
+    Bitmap[] portraits = new Bitmap[BossRoster.COUNT];
+    try {
+      for(int kind=0;kind<BossRoster.COUNT;kind++) {
+        portraits[kind]=Bitmap.createBitmap(192,192,Bitmap.Config.ARGB_8888);
+        art.draw(new Canvas(portraits[kind]),kind,96,112,2,0,false,0);
+        for(int other=0;other<kind;other++) check(!portraits[kind].sameAs(portraits[other]), "Boss silhouette differs: "+BossRoster.name(kind));
+        Bitmap attack=Bitmap.createBitmap(192,192,Bitmap.Config.ARGB_8888);
+        try {
+          art.draw(new Canvas(attack),kind,96,112,2,1,true,0);
+          check(!portraits[kind].sameAs(attack), "Boss has a distinct attack pose: "+BossRoster.name(kind));
+        } finally {attack.recycle();}
+        float x=120+(kind%4)*240,y=120+(kind/4)*220;
+        art.effect(plate,BossRoster.element(kind),x+30,y,x+90,y+30,2,.4f);
+        art.draw(plate,kind,x,y,2.2f,1,true,0);plate.drawText(BossRoster.name(kind),x,y+64,label);
+      }
+      for(int element=0;element<3;element++) {
+        Bitmap quiet=Bitmap.createBitmap(192,192,Bitmap.Config.ARGB_8888), effect=Bitmap.createBitmap(192,192,Bitmap.Config.ARGB_8888);
+        try {
+          art.effect(new Canvas(quiet),element,40,90,140,100,2,-1);
+          art.effect(new Canvas(effect),element,40,90,140,100,2,.4f);
+          check(!quiet.sameAs(effect), "Lightning/fire/rock renders only during an attack: "+element);
+        } finally {quiet.recycle();effect.recycle();}
+      }
+      try(FileOutputStream out=new FileOutputStream(new File(getTargetContext().getFilesDir(),"smoke-boss-procession.png"))) {
+        check(sheet.compress(Bitmap.CompressFormat.PNG,100,out), "Boss artwork evidence saved");
+      }
+    } finally {for(Bitmap bitmap:portraits)if(bitmap!=null)bitmap.recycle();sheet.recycle();}
+    Game farm=new Game();farm.day=5;farm.tutorialDone=true;farm.mercenaries.clear();farm.roamers.clear();farm.night=true;
+    farm.spawned=farm.quota();farm.bossSpawned=true;farm.elapsed=.1f;
+    Game.Enemy boss=new Game.Enemy(Campaign.BOSS,0,0,500,500);farm.enemies.add(boss);
+    runOnMainSync(() -> {a.game=farm;a.paused=true;a.refresh();});awaitIdle();
+    screenshot("smoke-boss-contact.png");
+    byte[] before=SaveCodec.encode(farm);
+    runOnMainSync(() -> {
+      FarmView view=((GameBoard)control(a,"field")).artwork;
+      Bitmap first=Bitmap.createBitmap(view.getWidth(),view.getHeight(),Bitmap.Config.ARGB_8888);
+      Bitmap second=Bitmap.createBitmap(view.getWidth(),view.getHeight(),Bitmap.Config.ARGB_8888);
+      try {
+        view.draw(new Canvas(first));view.draw(new Canvas(second));
+        check(first.sameAs(second), "Paused boss pose and elemental effect stay frozen");
+        farm.reducedMotion=true;view.draw(new Canvas(first));farm.elapsed=2.1f;view.draw(new Canvas(second));
+        check(first.sameAs(second), "Reduced motion freezes boss artwork and removes attack effects");
+      } finally {first.recycle();second.recycle();farm.reducedMotion=false;farm.elapsed=.1f;}
+    });
+    check(java.util.Arrays.equals(before,SaveCodec.encode(farm)), "Boss rendering never changes checkpoint data");
+    Game restored=SaveCodec.decode(before);check(restored.bossTitle().equals(farm.bossTitle()), "Active boss appearance survives restart");
   }
 
   private void swipeDown(MainActivity a, View view) {

@@ -1138,7 +1138,7 @@ public final class MainActivity extends Activity {
   private void showBestiary() {
     paused = true; refresh();
     LinearLayout content = column(); content.setPadding(dp(16), dp(8), dp(16), dp(12));
-    content.addView(new BestiaryView(this), new LinearLayout.LayoutParams(-1, dp(112)));
+    content.addView(new BestiaryView(this), new LinearLayout.LayoutParams(-1, dp(290)));
     TextView copy = text(Bestiary.description(), 15, INK); content.addView(copy);
     ScrollView scroll = new ScrollView(this); scroll.addView(content);
     new SwipeDialogBuilder(this).setTitle("Frontier bestiary").setView(scroll).setPositiveButton("Ready", null).show();

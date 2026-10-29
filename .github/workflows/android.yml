@@ -66,20 +66,20 @@ jobs:
           python3 scripts/check_package.py "$ANDROID_HOME/build-tools/35.0.0/aapt" app/build/outputs/apk/release/app-release-unsigned.apk --release
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs app/build/outputs/apk/debug/app-debug.apk
           if [ '${{ steps.identity.outputs.publish }}' = true ]; then
-            python3 scripts/check_package.py "$ANDROID_HOME/build-tools/35.0.0/aapt" artifacts/TAG-Zombie-Survival-Fantasy-0.16.1-rc.1-Release.apk --release
+            python3 scripts/check_package.py "$ANDROID_HOME/build-tools/35.0.0/aapt" artifacts/TAG-Zombie-Survival-Fantasy-0.17.0-rc.1-Release.apk --release
           fi
           git diff --exit-code
       - name: Package exact source and candidate
         run: |
           mkdir -p artifacts
-          cp app/build/outputs/apk/debug/app-debug.apk artifacts/TAG-Zombie-Survival-Fantasy-0.16.1-rc.1-Preview.apk
-          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk artifacts/TAG-Zombie-Survival-Fantasy-0.16.1-rc.1-Tests.apk
-          cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/TAG-Zombie-Survival-Fantasy-0.16.1-rc.1-Unsigned.apk
-          git archive --format=zip HEAD -o artifacts/TAG-Zombie-Survival-Fantasy-0.16.1-rc.1-Source.zip
+          cp app/build/outputs/apk/debug/app-debug.apk artifacts/TAG-Zombie-Survival-Fantasy-0.17.0-rc.1-Preview.apk
+          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk artifacts/TAG-Zombie-Survival-Fantasy-0.17.0-rc.1-Tests.apk
+          cp app/build/outputs/apk/release/app-release-unsigned.apk artifacts/TAG-Zombie-Survival-Fantasy-0.17.0-rc.1-Unsigned.apk
+          git archive --format=zip HEAD -o artifacts/TAG-Zombie-Survival-Fantasy-0.17.0-rc.1-Source.zip
           cp docs/RELEASE-NOTES.md artifacts/RELEASE-NOTES.md
           cp app/build/test-results/testDebugUnitTest/*.xml artifacts/
           for report in app/build/test-results/testReleaseUnitTest/*.xml; do cp "$report" "artifacts/Release-$(basename "$report")"; done
-          printf 'commit=%s\nversion=0.16.1-rc.1\napplicationId=com.denberg.beyondthefence\nminSdk=26\ntargetSdk=35\nJDK=17\nGradle=8.9\nAGP=8.7.3\nbuildTools=35.0.0\ntier=prerelease\nsigning=see certificate/payload evidence\n' '${{ steps.identity.outputs.source_sha }}' > artifacts/BUILD-INFO.txt
+          printf 'commit=%s\nversion=0.17.0-rc.1\napplicationId=com.denberg.beyondthefence\nminSdk=26\ntargetSdk=35\nJDK=17\nGradle=8.9\nAGP=8.7.3\nbuildTools=35.0.0\ntier=prerelease\nsigning=see certificate/payload evidence\n' '${{ steps.identity.outputs.source_sha }}' > artifacts/BUILD-INFO.txt
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs artifacts/*Preview.apk >> artifacts/BUILD-INFO.txt
           cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" artifacts/apksigner.jar
           cp docs/signing-certificate.sha256 artifacts/signing-certificate.sha256
@@ -162,7 +162,7 @@ jobs:
           cd artifacts
           sha256sum -c SHA256SUMS.txt
           cd ..
-          if gh release view v0.16.1-rc.1 >/dev/null 2>&1; then
+          if gh release view v0.17.0-rc.1 >/dev/null 2>&1; then
             echo 'Version already published; preserving existing release. Bump version to publish changes.'
             exit 0
           fi
@@ -170,7 +170,7 @@ jobs:
           python3 - <<'PYCODE'
           import os, pathlib
           text=pathlib.Path('docs/RELEASE-NOTES.md').read_text().split('\nRequired candidate checks:')[0]
-          text+='\nMove only the map pond to the right, with 16dp south-fence clearance and space above Plant.\n'
+          text+='\nSeven new boss silhouettes join the Warden with lightning, fire and rock contact effects; combat balance and saves are preserved.\n'
           text+='\nValidation passed: unit tests in each build variant; builds, lint, package/audio audits; pinned signing certificate and exact compiled-content comparison; full installed-app suites on API26 and35; actual non-debuggable release installation and checkpoint retention.\n'
           text+='\nInstall Release.apk on Android8.0 or newer. Export a save backup before updating. The retained signing identity supports same-key updates; older disposable-key previews require one-time save transfer.\n'
           text+='\nPrerelease: physical-phone endurance, accessibility, audio/performance and human balance playtesting remain pending.\n'
@@ -178,9 +178,9 @@ jobs:
           pathlib.Path('artifacts/RELEASE-NOTES.md').write_text(text)
           PYCODE
           rm -f artifacts/Upgrade-Baseline.apk artifacts/apksigner.jar
-          zip -r artifacts/TAG-Zombie-Survival-Fantasy-0.16.1-rc.1-Emulator-Evidence.zip evidence
+          zip -r artifacts/TAG-Zombie-Survival-Fantasy-0.17.0-rc.1-Emulator-Evidence.zip evidence
           cd artifacts
           rm SHA256SUMS.txt
           sha256sum ./* > SHA256SUMS.txt
           cd ..
-          gh release create v0.16.1-rc.1 artifacts/* --target '${{ github.sha }}'  --prerelease --title 'TAG: Zombie Survival Fantasy 0.16.1-rc.1 — Right-side pond spacing' --notes-file artifacts/RELEASE-NOTES.md
+          gh release create v0.17.0-rc.1 artifacts/* --target '${{ github.sha }}'  --prerelease --title 'TAG: Zombie Survival Fantasy 0.17.0-rc.1 — Boss procession and elemental effects' --notes-file artifacts/RELEASE-NOTES.md
