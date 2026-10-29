@@ -8,4 +8,6 @@ Bosses retain their saved type7 identity. Appearance derives from the current da
 
 Export a `.btfs` backup before updating, then install Release.apk over a same-key0.12+ build. Keep the previous APK and pre-update backup for rollback. Old disposable-key previews require backup transfer. Save schema12 is unchanged.
 
-Required candidate checks: both JVM variants, Android builds/lint/package/audio audits, complete API26/35 native suites including all boss portraits/attack poses, contact/reduced-motion/save-purity assertions, pond touch/layout and signed release install-over retention. Publication remains gated on observed passing results. Physical-phone endurance, accessibility, performance and human playtesting remain NOT TESTED; this is a prerelease.
+Validation PASS:120 JVM tests per variant, builds/lint/package/audio audits, exact source/pinned certificate,2360 native checks on each API26/35 including boss presentation and pond, plus actual signed release install-over/checkpoint retention. Physical-phone endurance/accessibility/performance/human playtesting remain NOT TESTED. Published prerelease, not stable.
+
+Evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40814635318

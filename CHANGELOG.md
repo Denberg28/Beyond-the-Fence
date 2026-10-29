@@ -4,7 +4,7 @@ Seven original boss designs join the Grave Warden: Ember dragon, two-headed ogre
 
 Bosses retain their saved type7 identity. Appearance derives from the current day/world, so existing active raids, restart and world travel need no migration or new RNG draws. Existing boss health/damage, Ashen modifiers, quotas, drop odds, economy and save schema12 are retained. Reduced motion freezes poses and removes elemental effects. The scrollable Bestiary illustrates all eight bosses. The right-side pond-spacing patch is included.
 
-29 October 2026 (Asia/Manila). VersionCode23; same retained signing identity and package. Required candidate gates: both JVM variants, builds/lint/package/audio audits, API26/35 installed-app suites, boss artwork/motion/effect checks and signed install-over retention. Physical-phone validation remains pending.
+29 October 2026 (Asia/Manila). VersionCode23; same retained signing identity and package. Published after120 JVM tests per variant, full builds/lint/package/audio audits,2360 installed-app checks on each API26/35, boss artwork/motion/effect checks and signed install-over retention passed (delivery run40814635318). Physical-phone validation remains pending.
 
 ---
 

@@ -10,9 +10,9 @@ Bosses retain their saved type7 identity. Appearance derives from the current da
 
 A small farm, a warm home, and something moving past the fence. An offline Android farming and survival game with original vector artwork, quick sessions, and no accounts, ads, purchases or internet permission.
 
-**0.17.0-rc.1** adds the boss procession and elemental contact effects on top of published 0.16.1-rc.1. Automated build, native layout/fishing and signed-upgrade checks are required before publication; physical-phone validation remains pending.
+**0.17.0-rc.1** adds the boss procession and elemental contact effects on top of published 0.16.1-rc.1. Published after120 JVM tests per variant,2360 native checks per API26/35, source/signature checks and actual signed release update-retention checks passed. Physical-phone validation remains pending.
 
-**Target GitHub prerelease: [0.17.0-rc.1](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.17.0-rc.1).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
+**Published GitHub prerelease: [0.17.0-rc.1](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.17.0-rc.1).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
 
 ## Play · farm fortress
 

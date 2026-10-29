@@ -1,3 +1,27 @@
+# Published0.17.0-rc.1 verification — 29 October2026 (Asia/Manila)
+
+Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.17.0-rc.1
+Reviewed source9387092786d4ec52450cb2f4a7a445758a45f93b; delivery/tag target1015d1d16f65c1f39eb49624461ccc8805516898. Source run40813734581 and signed delivery run40814635318 both PASS. Earlier source61ca67c was superseded to improve cast origins and boss health-bar clearance; its cancelled emulator runs are not counted as verification.
+
+| Gate | Observed result |
+| --- | --- |
+| Source/build | PASS:120 JVM tests per debug/release variant; debug/test/release builds; both lint and package/audio audits |
+| Signing/provenance | PASS: retained pinned certificate, every signed compiled entry equals a fresh build, versionCode23/API26–35/zero permissions |
+| Installed behavior/regression | PASS:2360 checks on each API26/35 source candidate, repeated on retained-key signed APKs; all prior game/pond/lifecycle/save checks retained |
+| Boss presentation | PASS: eight distinct silhouettes/attack poses, lightning/fire/rock, contact gating, paused and reduced-motion frame identity, no rendering mutation of saved game, active boss reload |
+| Upgrade retention | PASS:4 legacy-fixture→preview and4 preview→non-debuggable-release checks on each API26/35 |
+| Visual self-review | PASS: procession and actual-contact screenshots on both APIs, including200% font; all seven requested designs plus Warden and visible elemental effects |
+| Physical handset | NOT TESTED: endurance/performance/TalkBack/audio comfort/human playtesting; stable promotion pending |
+| External HIL | N/A: offline game controls no equipment |
+
+Release APK3159105 bytes; SHA256516a412477244b7b39a205044e3feb0026efe7f16e2a8163b0c73321a5be4f1e. Certificate SHA256b209ae0dfa9385838a4bc2bf3254a25c3d5a45dc9124379edc53caf4c4e3fd91. Published Preview/Tests/Release asset digests match the verified signed payloads. Complete source archive matches reviewed9387092. Source candidate ZIP digest a3b58ebf3bdf7b84f382af91db1e9a90406018433b504721ef70d7dab3db62da; signed delivery candidate ZIP digest c15daa98365c11745c15618a1a1d20766747deb234b66d512a74cc0346fa9fcd. Public source/payloads and evidence are retained; private signing material is excluded.
+
+Install Release.apk over a same-key build to retain progress; export a backup first. Schema12 and all combat/economy rules remain unchanged. Keep0.16.1 and a pre-update export for rollback. Original disposable-key previews require backup transfer. This published record supersedes pending candidate statuses below.
+
+Evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40814635318
+
+---
+
 # 0.17 boss artwork acceptance — 29 October2026 (Asia/Manila)
 
 Baseline: published0.16.1-rc.1, source faa360b / delivery3b4d9e7. Its delivery run40794819391 passed build and API26; attempt1 API35 failed before welcome because a Pixel Launcher ANR dialog obscured the game (failure.png and last-anr.txt). Attempt2 reran only failed/dependent jobs, passed API35 and published the unchanged pond patch. No game assertion was waived.
