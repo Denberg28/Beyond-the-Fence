@@ -1,3 +1,26 @@
+# Published 0.16.0-rc.1 verification — 29 October 2026 (Asia/Manila)
+
+Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.0-rc.1
+Reviewed source: `7a71c41601190643ebc8dd0219da035e57712fad`; delivery/tag target: `ed8f99135ef1d5a58d16378e26769dfb9cdd8a05`. Source run 40789687988 and signed delivery run 40790765706 both passed on their first attempt. PR #3 is merged. The earlier public-push approval block was resolved by direct user approval; publication is complete.
+
+| Gate | Observed result |
+| --- | --- |
+| Source/build | PASS: 117 JVM tests per debug/release variant; debug/test/release APK builds; lintDebug/lintRelease with zero issues |
+| Packaging/signing | PASS: versionCode 21; API26–35; zero permissions; size/audio audits; retained pinned certificate; every signed compiled entry matches a fresh build |
+| Installed behavior/regression | PASS: 2305 checks on each API26/35, repeated on retained-key signed payloads; real-pointer instant Plant, budget and nine expanded beds, swipe cancellation/reopen, separate pond, reward caps, seasonal soil, lifecycle and save recovery |
+| Upgrade retention | PASS: four legacy-fixture→preview and four preview→non-debuggable-release checks on each API26/35 |
+| Visual self-review | PASS: API 26/35 planting, pond, fishing and wolf phase-strip screenshots, including 200% font; wolves stay upright, lower plots are soil, pond is separate and fishing actions fit |
+| Physical phone | NOT TESTED: endurance, performance, TalkBack, audio comfort and human balance; stable promotion remains pending |
+| External HIL | N/A: offline game controls no external equipment |
+
+Release APK: 3,155,009 bytes; SHA256 `60aa4cee058eb37e7743221b579788a32efd393ab02047d79a2dc2780c89cd5e`. Certificate SHA256 `b209ae0dfa9385838a4bc2bf3254a25c3d5a45dc9124379edc53caf4c4e3fd91`. Published APK digests match the verified payloads. Source artifact digest `bf8c91181b6324af170266f954ab23a00ca45e5a89f197c1a5af07777c512692`; delivery artifact digest `d5d3de435164d2562a03825548d61c475c34156219dad2949ed95e4a6be48abc`. All 80 archived source files match the reviewed tree. Signed payloads and public source are retained; private signing material is excluded.
+
+Install Release.apk as a same-key update on Android8.0+. Export a backup first. Schema12 reads schemas1–11 and preserves occupied/earned old floating gardens as normal land; older apps reject schema12 exports. Retain the previous APK and pre-update export for rollback. The re-signed0.11.1 fixture validates migration in emulators only; original disposable-key phone builds still require backup transfer.
+
+Evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/40790765706 . This published prerelease record supersedes earlier local pending/block statuses below.
+
+---
+
 # 0.16 candidate scope and acceptance — 29 October 2026 (Asia/Manila)
 
 Baseline: published 0.15.0-rc.1, main b534102. Scope: noninterrupting bulk Plant, swipe dismissal, upright wolf gait, separate map pond and ordinary expanded soil. No dependencies, combat stats, prices or fishing reward changes. Required gates remain the existing full build/JVM/lint/package, API26/API35 installed-app and same-signature upgrade suites. Physical-phone endurance/accessibility/performance/playtesting are NOT TESTED; external HIL is N/A for an offline game.

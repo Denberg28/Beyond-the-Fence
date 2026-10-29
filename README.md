@@ -10,7 +10,7 @@ Wolves stay upright rather than rotating a side-view drawing through 360 degrees
 
 Save schema 12 reads schemas 1–11. A schema11 farm that has crops in former floating beds, or has earned its three-catch quota, retains those beds as permanent ordinary farmland on upgrade. Crop positions, growth, health, resources, equipment and progression remain intact. New fishing catches never unlock farmland. Older apps reject schema12 exports: export before updating and keep the previous APK and pre-update backup for rollback.
 
-Required candidate checks: debug/release JVM suite, Android builds/lint, package/audio/signature audits, installed-app regression and new real-pointer planting/swipe/pond checks on API26 and35, visual wolf/pond review, and same-key release upgrade retention. Physical-phone performance, accessibility, endurance and human balance validation remain pending. This is a prerelease, not a stable promotion.
+Published checks: 117 JVM cases per build variant; builds, lint and package/audio/signature audits; 2,305 installed-app checks on each API26/35; visual wolf/pond self-review; same-key preview and non-debuggable release upgrades with checkpoint retention. Physical-phone performance, accessibility, endurance and human balance validation remain pending. This is a prerelease.
 
 ---
 
@@ -18,9 +18,9 @@ Required candidate checks: debug/release JVM suite, Android builds/lint, package
 
 A small farm, a warm home, and something moving past the fence. An offline Android farming and survival game with original vector artwork, quick sessions, and no accounts, ads, purchases or internet permission.
 
-**Published baseline 0.15.0-rc.1** adds the Plant chooser, seasonal crops, quiet fishing and three floating garden beds, on top of the medieval frontier, fantasy bestiary, illustrated arena and Ashen March. All automated prerelease and signed-upgrade gates passed; physical-phone and human balance validation remain pending.
+**Published 0.16.0-rc.1** adds instant Plant, swipe-down transient controls, an upright wolf trot and a separate fishing pond with ordinary farm soil. All automated prerelease and signed-upgrade gates passed; physical-phone and human balance validation remain pending.
 
-**Current GitHub prerelease: [0.15.0-rc.1](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.15.0-rc.1).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
+**Current GitHub prerelease: [0.16.0-rc.1](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.0-rc.1).** Install the signed Release.apk; Preview.apk is the debuggable test build. Android 8.0+ (API 26), phones and tablets. Native Java/Canvas; no runtime dependencies. Builds on the verified0.11.1-rc.1 preview;0.12 starts a persistent private signing identity. Baseline rules: [Denberg28/Agents_md v1.1](https://github.com/Denberg28/Agents_md/blob/main/AGENTS.md). The initial rules commit is `1e9f9a0de2f926124d00c8378204c76669db3900`.
 
 ## Play · farm fortress
 
@@ -58,7 +58,7 @@ The optional offline **adaptive director** measures raid strain and recent clean
 
 ## Install / upgrade / rollback
 
-Download **[Release.apk](https://github.com/Denberg28/Beyond-the-Fence/releases/download/v0.15.0-rc.1/TAG-Zombie-Survival-Fantasy-0.15.0-rc.1-Release.apk)** from [GitHub Releases](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.15.0-rc.1). Preview.apk is for debugging/testing; both APKs use the same retained certificate. Android8.0+; no permissions, accounts, ads or network access. Unsigned.apk is future production-signing output and is not installable directly.
+Download **[Release.apk](https://github.com/Denberg28/Beyond-the-Fence/releases/download/v0.16.0-rc.1/TAG-Zombie-Survival-Fantasy-0.16.0-rc.1-Release.apk)** from [GitHub Releases](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.0-rc.1). Preview.apk is for debugging/testing; both APKs use the same retained certificate. Android8.0+; no permissions, accounts, ads or network access. Unsigned.apk is future production-signing output and is not installable directly.
 
 Published TAG builds use one privately retained key, introduced in the0.12 development line, with its public fingerprint pinned in docs/signing-certificate.sha256. Future higher-version APKs signed with that same key install over the app and retain its local checkpoints. Private keys are never committed, cached in public CI or included in releases. Earlier disposable preview keys were not retained; the existing0.11.1 APK cannot be updated by this new key. A one-time export/import is required when moving from those older builds. Do not uninstall until you have exported and kept the backup. **Export your current `.btfs` save before upgrading or uninstalling.** A signing conflict requires export→uninstall→install→import. Uninstall removes local data. Store publication is not configured.
 

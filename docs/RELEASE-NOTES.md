@@ -1,5 +1,7 @@
 # 0.16.0-rc.1 — Quick planting and a separate pond
 
+Published 29 October 2026: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.16.0-rc.1 . All automated candidate and signed-upgrade gates passed.
+
 Plant now behaves like Harvest: one tap fills all affordable empty unlocked beds with the selected seed, without a chooser, toast or pause. It preserves growing/ripe crops and debits only planted seeds. Individual beds still support planting and harvesting. Seasonal/day requirements and the six-bed starting farm plus 200-coin expansion remain unchanged.
 
 Swipe down to hide Seeds, the bottom command buttons, construction/equipment panels and ordinary popups. Show controls restores the command dock. Horizontal seed scrolling and vertical content scrolling retain priority; scroll a panel to the top before pulling it down. Buttons and Close/Back remain available. Required recovery/progression choices and arena combat retain their explicit actions.
@@ -10,4 +12,4 @@ Wolves stay upright rather than rotating a side-view drawing through 360 degrees
 
 Save schema 12 reads schemas 1–11. A schema11 farm that has crops in former floating beds, or has earned its three-catch quota, retains those beds as permanent ordinary farmland on upgrade. Crop positions, growth, health, resources, equipment and progression remain intact. New fishing catches never unlock farmland. Older apps reject schema12 exports: export before updating and keep the previous APK and pre-update backup for rollback.
 
-Required candidate checks: debug/release JVM suite, Android builds/lint, package/audio/signature audits, installed-app regression and new real-pointer planting/swipe/pond checks on API26 and35, visual wolf/pond review, and same-key release upgrade retention. Physical-phone performance, accessibility, endurance and human balance validation remain pending. This is a prerelease, not a stable promotion.
+Published checks: 117 JVM cases per build variant; builds, lint and package/audio/signature audits; 2,305 installed-app checks on each API26/35; visual wolf/pond self-review; same-key preview and non-debuggable release upgrades with checkpoint retention. Physical-phone performance, accessibility, endurance and human balance validation remain pending. This is a prerelease.
