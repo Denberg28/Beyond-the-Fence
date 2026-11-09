@@ -1,3 +1,9 @@
+# 0.19 source verification follow-up
+
+Source507e5af / run42615653424 passed125 JVM tests per variant, debug/test/release builds, lint and package audits. API35 stopped in checkDock: its legacy exact corner-color assertion assumed the previous flat TerrainBackdrop, while the new edge shading intentionally changes that corner. This is a test contract update for the requested art, not a game crash: the stack is an instrumentation AssertionError. The replacement requires an opaque readable dark corner, nonflat detail across the bottom strip and retains both transparent command/action-container checks, geometry, font, touch and all gameplay checks. Full API26/35 reruns remain blocking. No gate is waived. Original-certificate signed payloads match source compiled entries; signing and install-over checks must repeat on final source.
+
+---
+
 # 0.19.0-rc.1 — Torchlit haven verification
 
 Baseline main 6c09ed5; implementation self-review only until the following checks complete. Required candidate gates: debug/release JVM suites, both APK builds, lint, package/audio/zero-permission audit; full API26/35 native smoke suites (including existing crop, crew, combat, save, touch, orientation and 200% font coverage); four new biome/phase screenshots; repeated paused frames and unchanged checkpoint bytes. Native HUD checks assert actual core HP and average side integrity, including a missing side. Verify signed compiled entries against the passed source artifact and pinned certificate, then run actual signed release install-r/save retention on both emulator APIs.

@@ -1050,8 +1050,14 @@ public final class SmokeInstrumentation extends Instrumentation {
       Bitmap image = Bitmap.createBitmap(terrain.getWidth(), terrain.getHeight(), Bitmap.Config.ARGB_8888);
       try {
         terrain.draw(new Canvas(image));
-        check(image.getPixel(0, terrain.getHeight()-1) == (World.ground(a.game.world, a.game.night)),
-            "Scenery extends beneath transparent bottom padding");
+        int corner=image.getPixel(0,terrain.getHeight()-1);
+        int light=Math.max(Color.red(corner),Math.max(Color.green(corner),Color.blue(corner)));
+        check(Color.alpha(corner)==255 && light>=5 && light<90,
+            "Opaque, readable dark scenery extends through bottom padding");
+        int y=Math.max(0,terrain.getHeight()-Math.round(12*a.getResources().getDisplayMetrics().density));
+        boolean detailed=false;int first=image.getPixel(0,y);
+        for(int x=1;x<terrain.getWidth();x++) if(image.getPixel(x,y)!=first) {detailed=true;break;}
+        check(detailed,"Bottom scenery retains terrain detail rather than an opaque flat control panel");
       } finally { image.recycle(); }
       check(control(a, "commands").getBackground() == null && control(a, "actions").getBackground() == null,
           "Command/action containers have no opaque padding background");
