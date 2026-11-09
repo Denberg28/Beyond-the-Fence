@@ -1,3 +1,9 @@
+# 0.19 candidate limits
+
+Physical-phone contrast, TalkBack, endurance, audio and performance remain NOT TESTED. This blocks stable promotion. Farm HP and fence integrity bars represent existing state; they add no mechanics. Environment is procedural native artwork with no new free placement, camera or direct hero control. Source CI preview is debug-key signed; only a verified retained-certificate Release.apk can upgrade the existing signed game.
+
+---
+
 # 0.18.0-rc.1 — Dark medieval candidate limitations
 
 - Current CI Preview.apk uses a debug key. It does not install over existing

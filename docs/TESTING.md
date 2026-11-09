@@ -1,3 +1,11 @@
+# 0.19.0-rc.1 — Torchlit haven verification
+
+Baseline main 6c09ed5; implementation self-review only until the following checks complete. Required candidate gates: debug/release JVM suites, both APK builds, lint, package/audio/zero-permission audit; full API26/35 native smoke suites (including existing crop, crew, combat, save, touch, orientation and 200% font coverage); four new biome/phase screenshots; repeated paused frames and unchanged checkpoint bytes. Native HUD checks assert actual core HP and average side integrity, including a missing side. Verify signed compiled entries against the passed source artifact and pinned certificate, then run actual signed release install-r/save retention on both emulator APIs.
+
+Physical-phone readability/contrast, TalkBack, audio, endurance and measured performance are NOT TESTED; stable remains blocked. External HIL N/A: offline game with no controlled hardware. Candidate limits are explicit in release notes. Do not count a CI job as PASS before completion; retain exact commit/run/artifact evidence here after verification.
+
+---
+
 # Published0.17.0-rc.1 verification — 29 October2026 (Asia/Manila)
 
 Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.17.0-rc.1

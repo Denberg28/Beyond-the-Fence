@@ -23,7 +23,7 @@ final class GameButton extends Button {
     setPadding(Math.round(6 * d), Math.round(4 * d), Math.round(6 * d), Math.round(4 * d));
     shape.setCornerRadius(2 * d);
     setBackground(new RippleDrawable(ColorStateList.valueOf(0x44ffffff), shape, null));
-    colors(0xff2e3541, 0xffad8d62, 0xffeee4d2);
+    colors(0xff26333e, 0xff8c806c, 0xffeee4d2);
   }
 
   void colors(int fill, int stroke, int text) {

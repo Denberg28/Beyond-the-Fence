@@ -50,6 +50,7 @@ public final class MainActivity extends Activity {
   private GameBoard board;
   private FarmView scene;
   private TerrainBackdrop terrain;
+  private FortressMeters fortressMeters;
   private ScrollView buildScroll;
   private int panelRevision;
   private AlertDialog arenaDialog;
@@ -246,13 +247,17 @@ public final class MainActivity extends Activity {
     LinearLayout hud = column();
     LinearLayout hudActions = row(); hudActions.setTag("hudActions"); hudActions.setPadding(0, dp(8), 0, dp(8));
     LinearLayout resources = column();
+    resources.setBackgroundResource(R.drawable.panel_hud);
+    resources.setPadding(dp(10), dp(8), dp(10), dp(6));
     survived = text("", 16, CREAM); survived.setTag("survived"); survived.setTypeface(null, Typeface.BOLD);
     resources.addView(survived);
-    stats = text("", 12, CREAM);
+    stats = text("", 12, GOLD);
     stats.setTypeface(null, Typeface.BOLD);
-    status = text("", 11, 0xffd0dfc5);
+    status = text("", 11, 0xffbecbd0);
     resources.addView(stats);
     resources.addView(status);
+    fortressMeters = new FortressMeters(this);
+    resources.addView(fortressMeters, new LinearLayout.LayoutParams(-1, -2));
     hud.addView(resources, new LinearLayout.LayoutParams(-1, -2));
     hud.addView(hudActions);
     repair = button("Squad", () -> showBuild(3));
@@ -959,8 +964,11 @@ public final class MainActivity extends Activity {
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
     label(survived, "Survived " + (game.worldComplete ? 100 : game.day - 1) + (game.day == 2 ? " day" : " days") + (game.world > 1 ? " · World " + game.world : ""));
     label(stats, game.coins + " coins · " + game.wood + " timber");
-    label(status, game.worldName() + " · Day " + game.day + " · " + game.settlementName() + " · " + game.weatherName() + " · " + game.seasonName() + " · Farm "
-        + Math.round(game.health) + "/" + game.maxHealth() + (game.boss() != null ? " · " + game.bossName() : game.bossDay() ? " · Boss tonight" : ""));
+    label(status, "Day " + game.day + " · " + (game.night ? "Night raid" : "Daylight") + " · " + game.weatherName() + " · " + game.seasonName());
+    status.setContentDescription(game.worldName() + ", " + game.settlementName() + ", day " + game.day
+        + ", " + (game.night ? "Night raid" : "Daylight") + ", " + game.weatherName() + ", " + game.seasonName()
+        + (game.boss() != null ? ", " + game.bossName() : game.bossDay() ? ", Boss tonight" : ""));
+    fortressMeters.update(game);
     stats.setContentDescription(game.coins + " coins, " + game.wood + " timber");
     label(play, game.defeated ? "Rebuild" : paused ? "Play" : "Pause");
     play.setContentDescription(game.defeated ? "Recover homestead free and resume" : paused ? "Resume game" : "Pause game");

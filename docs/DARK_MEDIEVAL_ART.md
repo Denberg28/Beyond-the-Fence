@@ -22,3 +22,6 @@ biomes. Static art is deterministic; reduced motion has no animated torches.
 
 **Rollback:** retain v0.17.0-rc.1 and export a .btfs backup before testing. Do not
 install a test-key Preview.apk over a fixed-signature Release.apk.
+
+## 0.19 torchlight and terrain pass
+Broken slab clusters replace uniform outdoor masonry. Moss/ash, edge pines and stepped border darkness establish foreground separation; dusk courtyard tones stay readable. Cached radial amber lights replace green circles. All decoration draws before roaming/combat actors. The HUD uses an inset charcoal frame, gold resources and read-only farm/fence bars. Original geometry, pale build surfaces, simulation and save data are preserved.

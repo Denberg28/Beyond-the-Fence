@@ -830,6 +830,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     runOnMainSync(() -> { a.game = farm; a.paused = true; a.refresh(); }); awaitIdle();
     checkBoard(a); checkDock(a); checkFenceHealthPixels(a);
     screenshot("smoke-medieval-homestead.png");
+    testAtmosphere(a, farm);
     for (int day : new int[] {25, 30}) {
       runOnMainSync(() -> { farm.day = day; a.refresh(); }); awaitIdle();
       checkBoard(a); checkFenceHealthPixels(a);
@@ -917,6 +918,31 @@ public final class SmokeInstrumentation extends Instrumentation {
     runOnMainSync(() -> { garden.night = true; garden.spawned = garden.quota(); garden.enemies.clear(); garden.tick(.1f); a.refresh(); });
     check(onUi(() -> garden.fishingCatches == 0 && garden.crop[6] == 8 && garden.crop[8] == 0), "Dawn resets pond catches without affecting soil crops");
     checkBoard(a); checkDock(a); checkWolfArt();
+  }
+
+  private void testAtmosphere(MainActivity a, Game farm) throws IOException {
+    int originalWorld=farm.world;boolean originalNight=farm.night;
+    for(int world=1;world<=2;world++) for(boolean night:new boolean[]{false,true}) {
+      final int biome=world;
+      runOnMainSync(() -> {farm.world=biome;farm.night=night;a.refresh();});awaitIdle();
+      checkBoard(a);checkDock(a);
+      check(onUi(() -> control(a,"fortressMeters").getContentDescription().toString()
+          .equals("Farm health "+Math.round(farm.health)+" of "+farm.maxHealth()+", fence integrity 75 percent")),
+          "HUD exposes actual core and four-side fence health in both phases/biomes");
+      byte[] before=SaveCodec.encode(farm);
+      runOnMainSync(() -> {
+        FarmView view=((GameBoard)control(a,"field")).artwork;
+        Bitmap first=Bitmap.createBitmap(view.getWidth(),view.getHeight(),Bitmap.Config.ARGB_8888);
+        Bitmap second=Bitmap.createBitmap(view.getWidth(),view.getHeight(),Bitmap.Config.ARGB_8888);
+        try {
+          view.draw(new Canvas(first));view.draw(new Canvas(second));
+          check(first.sameAs(second), "Terrain and torchlight are deterministic while paused");
+        } finally {first.recycle();second.recycle();}
+      });
+      check(java.util.Arrays.equals(before,SaveCodec.encode(farm)), "Environment and HUD rendering preserve every save byte");
+      screenshot("smoke-atmosphere-"+world+(night?"-night":"-day")+".png");
+    }
+    runOnMainSync(() -> {farm.world=originalWorld;farm.night=originalNight;a.refresh();});awaitIdle();
   }
 
   private void testBossArt(MainActivity a) throws Exception {

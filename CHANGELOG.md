@@ -1,3 +1,10 @@
+# 0.19.0-rc.1 — Torchlit haven
+
+- Broken stone, moss/ash and pine scenery, separate day/night courtyards and cached warm torchlight; enemies draw above scenery.
+- Compact framed resource/condition HUD with accessible, system-text-scaled farm/fence integrity bars.
+- Retain pale build tabs, distributed crew patrols, touch geometry and schema12 progression.
+- Add native biome/phase, rendering-purity and health-gauge regression evidence; same-key signed candidate and handset gates remain mandatory.
+
 ## 0.18.2-rc.1 — Crew patrol distribution (candidate)
 
 - Hire selects the least-covered fence sector instead of placing all three guards near each other.

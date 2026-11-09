@@ -1,3 +1,13 @@
+# 0.19.0-rc.1 — UI and environment scope
+
+Baseline: main 6c09ed5 (crew patrol and lighter build panel work). Preserve top-down fortress, nine plots, native target geometry, saved progression, schema 12, all mechanics/RNG and package/signing identity. Reference interpretation: dark pixel scenery, isolated warm lamps and compact readable gauges, adapted to the current overhead camera. Native procedural art is cheaper and more reliable than new image dependencies for this renderer.
+
+Acceptance: clear day/night and Greenhaven/Ashen palettes; organic terrain framing and warm lamps behind actors; no fullscreen darkness over threats; read-only farm health and average side integrity in a framed HUD; 100%/200% text sizing, rotated layout and existing touch targets remain usable. No new animation timer, shader allocations during unchanged frames, simulation changes or save fields. Transparent command padding and light build tabs remain.
+
+Required checks and release limits are in TESTING.md. Same-key updates preserve local checkpoints; retain the prior APK and exported save for rollback. Pause/reduced-motion renders must remain deterministic.
+
+---
+
 # 0.17.0-rc.1 — Boss procession and elemental effects
 
 Seven original boss designs join the Grave Warden: Ember dragon, two-headed ogre, great frost wolf, mountain yeti, ancient serpent, storm lich and giant zombie. Each fifth-night event advances the eight-boss procession; later worlds shift its starting point. Dragon/serpent attacks show fire, ogre/yeti/zombie attacks throw rock debris, and wolf/lich/Warden attacks show lightning. Effects are short, local illustrations of existing contact damage, with no extra attack range, damage or rewards.

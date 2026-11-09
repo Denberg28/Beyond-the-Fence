@@ -1,3 +1,7 @@
+## 0.19.0-rc.1 — Torchlit haven candidate
+
+UI/environment update: organic dark stone scenery, moss/ash and pine framing, warm torchlight and a compact accessible farm/fence HUD. Retains the light build tabs, crew patrol fix, touch geometry and schema12 save data. No gameplay or economy changes. Build and check with the existing commands below; observed evidence and handset limits are in docs/TESTING.md. Use only a verified original-certificate Release.apk for an install-over update; export your .btfs backup first.
+
 # 0.17.0-rc.1 — Boss procession and elemental effects
 
 Seven original boss designs join the Grave Warden: Ember dragon, two-headed ogre, great frost wolf, mountain yeti, ancient serpent, storm lich and giant zombie. Each fifth-night event advances the eight-boss procession; later worlds shift its starting point. Dragon/serpent attacks show fire, ogre/yeti/zombie attacks throw rock debris, and wolf/lich/Warden attacks show lightning. Effects are short, local illustrations of existing contact damage, with no extra attack range, damage or rewards.

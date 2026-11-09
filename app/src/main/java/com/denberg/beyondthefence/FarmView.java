@@ -65,10 +65,6 @@ final class FarmView extends View {
       }
     }
     medieval.architecture(c, l, t, r, b, d, g.night);
-    // Courtyard grid and path stay behind every building and soil tile.
-    for (float x = l + 8 * d; x < r; x += 18 * d)
-      for (float y = t + 8 * d; y < b; y += 18 * d)
-        box(c, x, y, 3 * d, 2 * d, 0, 0x2479a353);
     for (int i = 0; i < 9; i++) {
       BoardGeometry.Box tile = geometry.plots[i];
       boolean open = g.farmPlot(i);
@@ -100,6 +96,7 @@ final class FarmView extends View {
     }
     pond(c, geometry.pond, d, g);
     for (int side = 0; side < 4; side++) fenceSide(c, g, side, d);
+    medieval.atmosphere(c, getWidth(), getHeight(), d, g.night, g.ashenWorld());
     for (Game.Roamer roamer : g.roamers) {
       float x = geometry.worldX(g.ringXAt(roamer.progress, roamer.distance));
       float y = geometry.worldY(g.ringYAt(roamer.progress, roamer.distance));
