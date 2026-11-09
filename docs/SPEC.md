@@ -1,3 +1,13 @@
+# 0.20 — Dread at dusk acceptance
+
+Baseline: published0.19.0-rc.1, game source807569e / signed deliverycb1c520; mainfb3a053. User request: review/fix raid and gameplay transitions, unify medieval pixel characters and make approaching attacks feel threatening. Preserve top-down controls, saved progress and combat/economy. Deliberate UI change: raid victory pauses at dawn; Play resumes preparation, Raid starts deliberately. The simulation's timing/reward rules are unchanged.
+
+Acceptance:12-second smooth dusk derived from saved preparation time; continuous colour at automatic night boundary; warned, position-preserving scout promotion; bounded audio mix and single edge growls; immediate UI/checkpoint on night/dawn/arena result/defeat; no stale event pause after reset; static paused rain and reduced motion; original pixel-grid common characters and matching low-resolution boss/arena presentation. No new random draws, save fields, native permissions or third-party dependencies. Keep threats readable, avoid flashes/shake, retain max3 mercenaries and existing hit geometry.
+
+Failure/recovery: pause and focus loss stop both score tracks/effect streams, no queued shots on resume; checkpoint/reload resumes the actual phase without replaying presentation history. Both release variants and API26/35 native suites, actual retained-key install-r and save continuity are mandatory candidate gates. Phone QA remains required for stable promotion. Keep0.19 and pre-update export for rollback.
+
+---
+
 # 0.19.0-rc.1 — UI and environment scope
 
 Baseline: main 6c09ed5 (crew patrol and lighter build panel work). Preserve top-down fortress, nine plots, native target geometry, saved progression, schema 12, all mechanics/RNG and package/signing identity. Reference interpretation: dark pixel scenery, isolated warm lamps and compact readable gauges, adapted to the current overhead camera. Native procedural art is cheaper and more reliable than new image dependencies for this renderer.

@@ -1,13 +1,19 @@
 package com.denberg.beyondthefence;
 
 import android.graphics.Canvas;
+import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 
 /** Original Canvas bosses. Bounded geometry, no bitmap assets, particles or wall-clock timers. */
 final class BossArt {
-  private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final Paint p = new Paint();
+  private final Paint pixelPaint = new Paint();
+  private final Bitmap[] sprite = new Bitmap[BossRoster.COUNT];
+  private final Canvas[] spriteCanvas = new Canvas[BossRoster.COUNT];
+  private final RectF spriteBounds = new RectF();
   private final Path path = new Path();
   private final RectF rect = new RectF();
   private final FantasyArt fantasy = new FantasyArt();
@@ -30,7 +36,14 @@ final class BossArt {
     box(c,x-4,y+2,8,3,0xff322e36);
     if(tusks) {tri(c,x-5,y+5,x-5,y-1,x-2,y+4,0xfff3e5bf);tri(c,x+2,y+4,x+5,y-1,x+5,y+5,0xfff3e5bf);}
   }
-  void draw(Canvas c, int kind, float x, float y, float scale, float phase, boolean attacking, float heading) {
+  void draw(Canvas c,int kind,float x,float y,float scale,float phase,boolean attacking,float heading) {
+    if(sprite[kind]==null) {sprite[kind]=Bitmap.createBitmap(128,128,Bitmap.Config.ARGB_8888);spriteCanvas[kind]=new Canvas(sprite[kind]);}
+    spriteCanvas[kind].drawColor(0,PorterDuff.Mode.CLEAR);
+    drawSprite(spriteCanvas[kind],kind,64,82,1,phase,attacking,heading);
+    spriteBounds.set(x-64*scale,y-82*scale,x+64*scale,y+46*scale);
+    c.drawBitmap(sprite[kind],null,spriteBounds,pixelPaint);
+  }
+  private void drawSprite(Canvas c, int kind, float x, float y, float scale, float phase, boolean attacking, float heading) {
     c.save();c.translate(x,y);c.scale(scale,scale);
     float gait=(float)Math.sin(phase), lift=attacking?-5:0;
     oval(c,0,14,22,5,0x6630272b);

@@ -1,3 +1,7 @@
+## 0.20.0-rc.1 — Dread at dusk candidate
+
+Gradual dusk, nightfall warnings and blended original music accompany new medieval pixel characters. Raid victory now pauses at dawn for repair/replanting; choose Play or deliberately start Raid. Phase boundaries save immediately and paused scenes remain frozen. Combat/economy, touch targets, package/certificate and schema12 progress are preserved. Candidate checks and handset limits are in docs/TESTING.md; use a verified original-certificate Release.apk for updates and export .btfs first.
+
 ## 0.19.0-rc.1 — Torchlit haven candidate
 
 Published [signed candidate](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.19.0-rc.1):125 JVM tests per variant,2730 installed checks plus two4-check upgrade stages per API26/35 PASS. Physical-phone validation remains pending; details in docs/TESTING.md.

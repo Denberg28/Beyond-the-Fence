@@ -75,14 +75,20 @@ public final class MainActivity extends Activity {
           boolean running = !paused && !storageBlocked && !ioBusy;
           if (running) {
             float dt = Math.min(.1f, (now - lastFrame) / 1000f);
-            boolean arenaWasActive = game.arenaActive;
+            boolean arenaWasActive = game.arenaActive, wasNight = game.night;
+            int previousDay = game.day;
             game.tick(dt);
-            if (arenaWasActive && !game.arenaActive) { paused = true; save(); refresh(); }
-            updateAudio(dt);
-            if (game.defeated) {
-              paused = true;
-              save();
+            boolean phaseChanged = wasNight != game.night || previousDay != game.day
+                || arenaWasActive != game.arenaActive;
+            boolean dawn = wasNight && !game.night && !game.defeated;
+            if (dawn || arenaWasActive && !game.arenaActive || game.defeated) paused = true;
+            if (phaseChanged || game.defeated) {
+              save();refresh();lastUi = now;
+              gameShell.announceForAccessibility(dawn ? "Dawn. Game paused. Repair and replant before continuing."
+                  : game.defeated ? "Haven overrun. Recover when ready."
+                  : arenaWasActive ? "Arena ended. Return to the haven when ready." : "Nightfall. The horde is approaching.");
             }
+            updateAudio(dt);
             if (now - lastSave >= 3000) save();
           }
           lastFrame = now;
@@ -369,7 +375,7 @@ public final class MainActivity extends Activity {
       if (storageBlocked || ioBusy || buildOpen) return;
       if (game.worldComplete) { portalShown = false; showAdventure(); return; }
       if (game.defeated) { game.recover(); paused = true; }
-      else { game.startNight(); paused = false; lastFrame = SystemClock.elapsedRealtime(); }
+      else { game.startNight(); if (!game.night) return; paused = false; lastFrame = SystemClock.elapsedRealtime(); }
       changed();
     });
     phase.setTag("night");
@@ -586,6 +592,8 @@ public final class MainActivity extends Activity {
 
   private void showAdventure() {
     if (adventureDialog || storageBlocked || ioBusy) return;
+    // A posted event can outlive a decline, reset or world crossing.
+    if (!game.arenaActive && game.arenaOfferDay == 0 && !game.worldComplete) return;
     if (game.arenaActive) { showArena(); return; }
     paused = true; adventureDialog = true;
     if (game.arenaOfferDay > 0) {
@@ -964,9 +972,9 @@ public final class MainActivity extends Activity {
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
     label(survived, "Survived " + (game.worldComplete ? 100 : game.day - 1) + (game.day == 2 ? " day" : " days") + (game.world > 1 ? " · World " + game.world : ""));
     label(stats, game.coins + " coins · " + game.wood + " timber");
-    label(status, "Day " + game.day + " · " + (game.night ? "Night raid" : "Daylight") + " · " + game.weatherName() + " · " + game.seasonName() + (!game.night && game.bossDay() ? " · Boss tonight" : ""));
+    label(status, "Day " + game.day + " · " + RaidPresentation.label(game) + " · " + game.weatherName() + " · " + game.seasonName() + (!game.night && game.bossDay() ? " · Boss tonight" : ""));
     status.setContentDescription(game.worldName() + ", " + game.settlementName() + ", day " + game.day
-        + ", " + (game.night ? "Night raid" : "Daylight") + ", " + game.weatherName() + ", " + game.seasonName()
+        + ", " + RaidPresentation.label(game) + ", " + game.weatherName() + ", " + game.seasonName()
         + (game.boss() != null ? ", " + game.bossName() : game.bossDay() ? ", Boss tonight" : ""));
     fortressMeters.update(game);
     stats.setContentDescription(game.coins + " coins, " + game.wood + " timber");
@@ -1146,7 +1154,7 @@ public final class MainActivity extends Activity {
       label(costButton, costText);
       if (costButton == fenceUpgrade) costButton.setTextSize(getResources().getConfiguration().fontScale >= 1.5f ? 7 : 10);
     }
-    terrain.phase(game.night, game.ashenWorld());
+    terrain.phase(RaidPresentation.darkness(game), game.ashenWorld());
     board.refreshSettlement();
     updateAudio(0);
     if (!game.arenaActive) scene.invalidate();

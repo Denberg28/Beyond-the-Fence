@@ -13,6 +13,7 @@ final class SurvivalMusic {
   private final AudioFocusRequest request;
   private final SoundPool effects;
   private final AudioCues cues = new AudioCues();
+  private final ScoreBlend blend = new ScoreBlend();
   private final int[] sounds = new int[4], streams = new int[6];
   private final MediaPlayer[] players = new MediaPlayer[2];
   private boolean focused, blocked, closed;
@@ -51,16 +52,23 @@ final class SurvivalMusic {
     }
     int desired = game.night || game.arenaActive ? 1 : 0;
     if (!musicOn) stopMusic();
-    else if (activeTrack != desired) {
-      stopMusic(); activeTrack = desired;
-      if (players[desired] != null) players[desired].start();
+    else {
+      activeTrack = desired;
+      blend.advance(game.arenaActive ? 1 : RaidPresentation.darkness(game), dt);
+      for (int i=0;i<2;i++) if(players[i]!=null) {
+        float gain = i==0 ? blend.day*.38f : blend.night*.45f;
+        players[i].setVolume(gain,gain);
+        if(i==desired || gain>0) {if(!players[i].isPlaying())players[i].start();}
+        else if(players[i].isPlaying())players[i].pause();
+      }
     }
     if (!effectsOn) stopEffects();
     else if (loaded == 4) {
       for (int i = 0; i < 4; i++) if ((events & (1 << i)) != 0) {
         if (streams[nextStream] != 0) effects.stop(streams[nextStream]);
         float volume = i == 0 ? .40f : i == 1 ? .28f : .22f;
-        int stream = effects.play(sounds[i], volume, volume, i == 0 ? 2 : 1, 0, 1);
+        float pitch = i==1 && (game.night || RaidPresentation.dusk(game)) ? .8f : 1;
+        int stream = effects.play(sounds[i], volume, volume, i == 0 ? 2 : 1, 0, pitch);
         streams[nextStream] = stream; nextStream = (nextStream + 1) % streams.length;
         if (stream != 0) {
           if (i == 0) shotSounds++; else if (i == 1) zombieSounds++;
@@ -75,7 +83,7 @@ final class SurvivalMusic {
   int effectStreams() { int count = 0; for (int stream : streams) if (stream != 0) count++; return count; }
   private void stopMusic() {
     for (MediaPlayer player : players) if (player != null && player.isPlaying()) player.pause();
-    activeTrack = -1;
+    activeTrack = -1;blend.reset();
   }
   private void stopEffects() {
     for (int i = 0; i < streams.length; i++) { if (streams[i] != 0) effects.stop(streams[i]); streams[i] = 0; }

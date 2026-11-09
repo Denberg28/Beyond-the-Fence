@@ -2,6 +2,7 @@ package com.denberg.beyondthefence;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Bitmap;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -12,7 +13,12 @@ import android.view.View;
 final class ArenaView extends View {
   long renderedFrames;
   private final Game game;
-  private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
+  private final Bitmap stage=Bitmap.createBitmap(300,164,Bitmap.Config.ARGB_8888);
+  private final Canvas stageCanvas=new Canvas(stage);
+  private final Paint pixelPaint=new Paint();
+  private final PixelCharacters pixels=new PixelCharacters();
+  private final RectF stageBounds=new RectF();
+  private final Paint p=new Paint();
   private final RectF rect=new RectF();
   private final Path path=new Path();
   ArenaView(Context context,Game game) {
@@ -38,9 +44,15 @@ final class ArenaView extends View {
   }
   @Override protected void onDraw(Canvas c) {
     super.onDraw(c);renderedFrames++;
+    drawStage(stageCanvas);
     c.drawColor(0xff121923);
     float scale=Math.min(getWidth()/300f,getHeight()/164f);
-    c.save();c.translate((getWidth()-300*scale)/2,(getHeight()-164*scale)/2);c.scale(scale,scale);
+    float left=(getWidth()-300*scale)/2, top=(getHeight()-164*scale)/2;
+    stageBounds.set(left,top,left+300*scale,top+164*scale);
+    c.drawBitmap(stage,null,stageBounds,pixelPaint);
+  }
+  private void drawStage(Canvas c) {
+    c.save();
     backdrop(c);
     float pulse=game.reducedMotion?0:(float)Math.sin(game.arenaElapsed*3);
     float playerInterval=(game.enhancerTime>0?.8f:1)/(1+game.equipmentBonus(3));
@@ -112,22 +124,7 @@ final class ArenaView extends View {
     line(c,x,y-8,x,y+7,2,rim);line(c,x-5,y-2,x+5,y-2,2,rim);
   }
   private void vanguard(Canvas c,float swing) {
-    boolean relic=game.gear[0]>=0;int trim=relic?0xffe6c071:0xffb2bcae;
-    triangle(c,-12,-68,-30,-13,5,-20,0xff802f42);triangle(c,-9,-64,-23,-18,0,-24,0xffaf4454);
-    boots(c,0xff84969e);
-    box(c,-18,-62,35,38,5,0xff364954);box(c,-13,-58,26,29,4,0xff829da9);
-    triangle(c,-13,-56,0,-61,13,-56,0xffc2d0cb);line(c,0,-53,0,-31,2,trim);
-    box(c,-25,-62,15,11,4,0xffa7b5b2);box(c,10,-62,15,11,4,0xffa7b5b2);
-    line(c,18,-49,27,-36-swing*10,8,0xff5f7884);box(c,22,-42-swing*10,9,10,2,0xffd2b18d);
-    sword(c,29,-40-swing*10,27+swing*48,false);
-    box(c,-16,-30,31,5,1,0xff624a39);box(c,-3,-31,7,7,1,trim);
-    oval(c,0,-73,12,13,0xffddb58e);box(c,-12,-84,24,10,4,0xff544532);
-    if(relic) {
-      box(c,-14,-87,28,17,6,0xff9aafb1);box(c,-10,-78,20,7,1,0xff2d414a);
-      line(c,-12,-78,12,-78,2,trim);line(c,0,-87,0,-71,2,trim);
-      triangle(c,-5,-87,0,-97,5,-87,0xffad5352);
-    } else {line(c,-7,-74,-3,-74,1.6f,0xff28343a);line(c,4,-74,7,-74,1.6f,0xff28343a);}
-    shield(c,-24,-43,0xff3a6077,trim);
+    pixels.hero(c,swing*3,-38,2.6f,0,game.enhancerTime>0,game.gear[0]>=0);
   }
   private void hollowKnight(Canvas c,float swing) {
     triangle(c,-13,-69,-30,-8,11,-14,0xff392c40);boots(c,0xff687783);

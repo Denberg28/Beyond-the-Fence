@@ -1,3 +1,11 @@
+# 0.20 transition and character candidate gates
+
+Required automated checks: full JVM suite plus RaidTransitionTest (dusk/save continuity, no RNG/persistence mutation, single scout conversion and dawn rewards, audio ramps/edge cues); debug/release APK/test builds, lint/package/audio audits; complete API26/35 native tests including real-frame dusk-to-night, immediate phase checkpoint, dawn pause/reward/save, manual raid/resume,18-character lineup and existing wolf/boss/arena/pause/orientation/200% font checks. Review dusk/nightfall/dawn and lineup screenshots on both APIs. Final signed delivery must compare every compiled entry and pinned certificate, rerun native suites and both install-over checkpoint stages. No gate is waived.
+
+Self-review scope:phase refresh/checkpoint/focus handling, delayed modal callbacks, lighting and audio lifecycles, Canvas allocation bounds and sprite geometry. Physical-phone audio comfort, atmosphere/fun, performance/endurance, TalkBack and install-over are NOT TESTED; stable blocked. External HIL N/A:offline game. Record actual commit/run/count/digest only after completion; do not treat implementation as verification.
+
+---
+
 # Published 0.19.0-rc.1 — verified signed candidate
 
 Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.19.0-rc.1

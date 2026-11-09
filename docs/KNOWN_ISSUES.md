@@ -1,3 +1,9 @@
+# 0.20 candidate limits
+
+Physical-phone sense of dread, audio comfort, readability/TalkBack, measured performance/endurance and upgrade remain NOT TESTED. Automated tests cannot establish human fear or fun; stable promotion is pending. Raid victory intentionally pauses at dawn; choose Play to continue preparation or Raid to begin deliberately. Common characters use original pixel geometry; large bosses/arena reuse existing silhouettes through cached low-resolution rendering. Crossbows retain existing projectile/combat rules; no new melee or player movement is implied. Save schema12 is retained.
+
+---
+
 # 0.19 candidate limits
 
 Physical-phone contrast, TalkBack, endurance, audio and performance remain NOT TESTED. This blocks stable promotion. Farm HP and fence integrity bars represent existing state; they add no mechanics. Environment is procedural native artwork with no new free placement, camera or direct hero control. Source CI preview is debug-key signed; only a verified retained-certificate Release.apk can upgrade the existing signed game.

@@ -5,24 +5,28 @@ final class AudioCues {
   static final int SHOT = 1, ZOMBIE = 2, OWL = 4, CRICKET = 8;
   private Game source;
   private long lastShots;
-  private boolean wasNight;
+  private boolean wasNight, wasDusk;
   private float growl = 2, animal = 2;
   private int animalIndex;
 
   int poll(Game game, boolean active, float dt) {
     if (source != game) {
-      source = game; lastShots = game.shots; wasNight = game.night;
+      source = game; lastShots = game.shots; wasNight = game.night; wasDusk = RaidPresentation.dusk(game);
       growl = game.night ? .5f : 5; animal = 2; animalIndex = 0;
     }
     if (!active) { lastShots = game.shots; return 0; }
-    if (wasNight != game.night) {
-      wasNight = game.night; growl = .5f; animal = 2; animalIndex = 0;
-    }
     int events = game.shots != lastShots ? SHOT : 0; lastShots = game.shots;
+    boolean dusk=RaidPresentation.dusk(game);
+    if ((!wasNight && game.night) || (!wasDusk && dusk)) {
+      if (!(game.night ? game.enemies.isEmpty() : game.roamers.isEmpty())) events |= ZOMBIE;
+      growl = game.night ? 4 : 3;
+    }
+    if (wasNight != game.night) {animal = 2;animalIndex = 0;}
+    wasNight=game.night;wasDusk=dusk;
     dt = Float.isFinite(dt) ? Math.max(0, Math.min(.1f, dt)) : 0;
     growl -= dt;
     if (growl <= 0) {
-      growl = game.night ? 4 : 9;
+      growl = game.night ? 4 : dusk ? 3 : 9;
       if (!(game.night ? game.enemies.isEmpty() : game.roamers.isEmpty())) events |= ZOMBIE;
     }
     if (game.night) {

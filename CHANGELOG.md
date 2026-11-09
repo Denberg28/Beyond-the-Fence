@@ -1,3 +1,10 @@
+# 0.20.0-rc.1 — Dread at dusk
+
+- Smooth12-second dusk, blended day/night music, lowered warning growls and nonblocking nightfall cues.
+- Immediate phase UI/checkpoints; dawn pauses for repairs; stale adventure prompts no longer pause a fresh farm.
+- Medieval pixel characters, crossbow guards/foley, shared arena hero and pixel-scaled boss/arena stages.
+- Simulation-clock rain stays frozen on pause; preserve schema12, combat/economy and saved progress.
+
 # 0.19.0-rc.1 — Torchlit haven
 
 - Broken stone, moss/ash and pine scenery, separate day/night courtyards and cached warm torchlight; enemies draw above scenery.

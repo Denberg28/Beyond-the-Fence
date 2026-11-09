@@ -2,7 +2,6 @@ package com.denberg.beyondthefence;
 
 import android.content.Context;
 import android.graphics.*;
-import android.os.SystemClock;
 import android.view.View;
 import java.util.function.Supplier;
 
@@ -13,16 +12,15 @@ final class FarmView extends View {
   long renderedFrames;
   private final HomesteadArt homestead = new HomesteadArt();
   private final FantasyArt fantasy = new FantasyArt();
+  private final PixelCharacters pixels = new PixelCharacters();
   private final BossArt bosses = new BossArt();
   private final MedievalPixelArt medieval = new MedievalPixelArt();
   private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
   private final RectF rect = new RectF();
   private final Path woods = new Path(), courtyard = new Path();
-  private static final int[] UNIFORM_COLORS = {0xff897b60, 0xff4d774b, 0xffb6a36f, 0xff687f8c, 0xff315b42, 0xff303d48};
   private final Supplier<Game> model;
   private final Supplier<Boolean> paused;
   private final BoardGeometry geometry;
-  private static final int[] COATS = {0xff8a6246, 0xffa64e3c, 0xff687d8b, 0xff9a933f, 0xff66527e, 0xff505b63, 0xff668889, 0xff652e42};
 
   FarmView(Context context, Supplier<Game> model, Supplier<Boolean> paused, BoardGeometry geometry) {
     super(context);
@@ -42,8 +40,9 @@ final class FarmView extends View {
     renderedFrames++;
     Game g = model.get(); float d = geometry.density;
     if (g == null || d == 0 || getHeight() == 0) return;
+    float dark = RaidPresentation.darkness(g);
     // Deterministic pixel masonry stays beneath all native clickable tiles.
-    medieval.ground(c, getWidth(), getHeight(), d, g.night, g.ashenWorld());
+    medieval.ground(c, getWidth(), getHeight(), d, dark, g.ashenWorld());
     float l = geometry.fortLeft, t = geometry.fortTop;
     float r = geometry.fortRight, b = geometry.fortBottom;
     courtyard.reset();
@@ -51,7 +50,7 @@ final class FarmView extends View {
       float px = geometry.worldX(g.ringXAt(step / 20f, 0)), py = geometry.worldY(g.ringYAt(step / 20f, 0));
       if (step == 0) courtyard.moveTo(px, py); else courtyard.lineTo(px, py);
     }
-    courtyard.close(); medieval.courtyard(c, courtyard, getWidth(), getHeight(), d, g.night, g.ashenWorld());
+    courtyard.close(); medieval.courtyard(c, courtyard, getWidth(), getHeight(), d, dark, g.ashenWorld());
     if (g.settlementStyle() > 0) {
       for (int paving = 0; paving < 18; paving++) {
         float px = l + (r - l) * (.14f + paving % 3 * .35f), py = t + (b - t) * (.12f + paving / 3 * .14f);
@@ -64,7 +63,7 @@ final class FarmView extends View {
         line(c, hx + 10 * d, hy - 7 * d, hx + 21 * d, hy, 0xffb58c5d, 4 * d);
       }
     }
-    medieval.architecture(c, l, t, r, b, d, g.night);
+    medieval.architecture(c, l, t, r, b, d, dark);
     for (int i = 0; i < 9; i++) {
       BoardGeometry.Box tile = geometry.plots[i];
       boolean open = g.farmPlot(i);
@@ -96,7 +95,13 @@ final class FarmView extends View {
     }
     pond(c, geometry.pond, d, g);
     for (int side = 0; side < 4; side++) fenceSide(c, g, side, d);
-    medieval.atmosphere(c, getWidth(), getHeight(), d, g.night, g.ashenWorld());
+    medieval.atmosphere(c, getWidth(), getHeight(), d, dark, g.ashenWorld());
+    String omen=RaidPresentation.banner(g);
+    if(!omen.isEmpty() && g.boss()==null) {
+      box(c,8*d,4*d,getWidth()-16*d,23*d,0,0xe6171c27);
+      color(g.defeated?0xffdf9b8c:0xffdfbc87);p.setTextSize(10*d);p.setTypeface(Typeface.DEFAULT_BOLD);
+      c.drawText(omen,(getWidth()-p.measureText(omen))/2,19*d,p);
+    }
     for (Game.Roamer roamer : g.roamers) {
       float x = geometry.worldX(g.ringXAt(roamer.progress, roamer.distance));
       float y = geometry.worldY(g.ringYAt(roamer.progress, roamer.distance));
@@ -141,7 +146,7 @@ final class FarmView extends View {
         line(c, x - 4 * size, y - 6 * size, x + 3 * size, y + 2 * size, 0xffe5a35a, 2 * size);
         circle(c, x + 4 * size, y - 7 * size, 2 * size, 0xffffcc7d);
       }
-      float healthY = y - (enemy.type == Campaign.BOSS ? 65 : 22) * d;
+      float healthY = y - (enemy.type == Campaign.BOSS ? 65 : enemy.type>=Bestiary.KOBOLD ? 35 : 24) * d;
       box(c, x - 8 * d, healthY, 16 * d, 2 * d, 0, 0xff172e26);
       box(c, x - 8 * d, healthY, 16 * d * enemy.hp / enemy.maxHp, 2 * d, 0, 0xffefad5a);
     }
@@ -165,15 +170,15 @@ final class FarmView extends View {
       if (merc.shotClock > g.guardInterval() - .16f && !paused.get() && !g.reducedMotion)
         line(c, x, y, geometry.worldX(merc.targetX), geometry.worldY(merc.targetY), 0xb3ffe48c, d);
       if (hero) medieval.hero(c, x, y, 1.2f * d, angle, g.enhancerTime > 0);
-      else fighter(c, x, y, d, true, Math.min(5, g.weapon), angle);
+      else pixels.guard(c, x, y, d, g.weapon, (float)Math.toDegrees(angle), g.reducedMotion?0:g.elapsed*4);
       if (g.enhancerTime > 0) circle(c, x + 8 * d, y, 2 * d, 0xffe5bcff);
-      box(c, x - 7 * d, y - 15 * d, 14 * d, 2 * d, 0, 0xff302f2b);
-      box(c, x - 7 * d, y - 15 * d, 14 * d * merc.health / (hero ? g.heroMaxHealth() : g.guardMaxHealth()), 2 * d, 0, 0xff7ecddd);
+      box(c, x - 7 * d, y - 24 * d, 14 * d, 2 * d, 0, 0xff302f2b);
+      box(c, x - 7 * d, y - 24 * d, 14 * d * merc.health / (hero ? g.heroMaxHealth() : g.guardMaxHealth()), 2 * d, 0, 0xff7ecddd);
     }
     if (g.weather == 1)
       for (int i = 0; i < 30; i++) {
         float x = (i * 79 * d) % getWidth();
-        float y = (i * 53 * d + (g.reducedMotion || paused.get() ? 0 : SystemClock.uptimeMillis() / 14)) % getHeight();
+        float y = (i * 53 * d + (g.reducedMotion ? 0 : g.elapsed * 70 * d)) % getHeight();
         line(c, x, y, x - 3 * d, y + 8 * d, 0x449fced8, d);
       }
     if (g.weather == 2) {
@@ -204,47 +209,9 @@ final class FarmView extends View {
     }
   }
 
-  private void zombie(Canvas c, float x, float y, float d, int type, float phase, boolean attacking, float heading) {
-    if (type >= Bestiary.KOBOLD) {
-      fantasy.enemy(c, type, x, y, d, phase, attacking, heading); return;
-    }
-    c.save(); c.translate(x, y); c.scale(d, d);
-    float gait = (float) Math.sin(phase), bulk = type == Campaign.BOSS ? 11 : type == 2 ? 10 : type == 1 ? 5 : type == 3 ? 8 : 7;
-    int skin = type == Campaign.BOSS ? 0xffc4a9b2 : type == 6 ? 0xff9fd3ca : type == 2 ? 0xff91a286 : type == 3 ? 0xffbdc768 : 0xffa8bd82;
-    color(0x55302b23); rect.set(-11, 5, 11, 13); c.drawOval(rect, p);
-    // Uneven trouser legs and a shuffling gait keep the silhouette recognizably undead.
-    line(c, -3, 5, -5 - gait * 2, 12, 0xff44483a, 4);
-    line(c, 3, 5, 5 + gait * 2, 12, 0xff353b33, 4);
-    box(c, -bulk, -6, bulk * 2, type == 2 ? 18 : 15, 3, COATS[type]);
-    box(c, -bulk + 2, -5, 3, 13, 1, 0x447b862f);
-    float armY = attacking ? -10 : -1;
-    line(c, -bulk + 1, -3, -bulk - 5, armY + gait * 2, COATS[type], type == 2 ? 5 : 3);
-    line(c, bulk - 1, -3, bulk + 5, armY - gait * 2, COATS[type], type == 2 ? 5 : 3);
-    circle(c, -bulk - 5, armY + gait * 2, 2.4f, skin);
-    circle(c, bulk + 5, armY - gait * 2, 2.4f, skin);
-    if (type == 5) { box(c, -8, -6, 16, 12, 2, 0xff677580); line(c,-6,-5,6,7,0xffa4afb5,2); }
-    if (type == 4) line(c,-5,-7,5,9,0xffb5a0d1,2);
-    if (type == 6) { line(c,-6,8,0,13,0xff9dd5cb,2); line(c,0,13,6,8,0xff9dd5cb,2); }
-    if (type == Campaign.BOSS) { box(c,-10,-6,20,12,2,0xff522734); line(c,-7,-15,0,-21,0xffcbb675,3); line(c,0,-21,7,-15,0xffcbb675,3); }
-    if (type == 1) line(c, -3, -4, 4, 7, 0xffe1b88b, 2); // Torn runner jersey.
-    if (type == 2) {
-      box(c, -10, -7, 5, 7, 1, 0xff67717a); box(c, 5, -7, 5, 7, 1, 0xff67717a);
-      box(c, -8, 4, 16, 3, 0, 0xff4d4540); box(c, -2, 4, 4, 3, 0, 0xffbda578);
-    }
-    if (type == 3) {
-      circle(c, 0, 2, 7, 0xff9fac4e);
-      circle(c, -3, 1, 2, 0xffccd879); circle(c, 3, 4, 2, 0xff7e933c);
-    }
-    circle(c, type == 1 ? 2 : 0, -10, type == 2 ? 7 : 6, skin);
-    line(c, -4, -14, -1, -16, 0xff414c35, 2);
-    line(c, 0, -14, 4, -15, 0xff414c35, 2);
-    circle(c, -2, -10, 1.4f, 0xffefe6c5); circle(c, 3, -10, 1.4f, 0xffefe6c5);
-    circle(c, -2, -10, .6f, 0xff302e27); circle(c, 3, -10, .6f, 0xff302e27);
-    box(c, -2, -6, 5, 2.5f, .4f, 0xff4b4735);
-    box(c, -1, -6, 1, 1, 0, 0xffeee0b2); box(c, 1, -6, 1, 1, 0, 0xffeee0b2);
-    line(c, 4, -14, 5, -12, 0xff6a7751, 1);
-    if (type == 3) { line(c, 2, -4, 5, 1, 0xffbfe875, 1.5f); circle(c, 6, 2, 1.5f, 0xffd3ed8d); }
-    c.restore();
+  private void zombie(Canvas c,float x,float y,float d,int type,float phase,boolean attacking,float heading) {
+    if(type>=Bestiary.KOBOLD) fantasy.enemy(c,type,x,y,d,phase,attacking,heading);
+    else pixels.undead(c,type,x,y,d,phase,attacking,heading);
   }
 
   private void building(Canvas c, BoardGeometry.Box tile, int kind, boolean built, boolean ruined, float d) {
@@ -298,19 +265,5 @@ final class FarmView extends View {
     if (type >= 6) { circle(c, -5, -2, 3, Game.CROP_COLOR[type]); circle(c, 5, -2, 3, Game.CROP_COLOR[type]); circle(c, 0, -4, 3, 0xfff1df9b); }
     box(c, -6, -8, 5, 7, 1, 0xff9fca61); box(c, 0, -9, 6, 8, 1, 0xffbbd978);
     c.restore();
-  }
-  private void fighter(Canvas c, float x, float y, float d, boolean friendly, int type, float angle) {
-    circle(c, x, y + 4 * d, 8 * d, 0x44302922);
-    box(c, x - 6 * d, y - 2 * d, 12 * d, 11 * d, 2 * d, UNIFORM_COLORS[type]);
-    circle(c, x, y - 5 * d, 5 * d, friendly ? 0xffe2b878 : 0xffa5c06e);
-    box(c, x - 5 * d, y - 10 * d, 10 * d, 4 * d, 1, type >= 3 ? 0xff354952 : 0xff596345);
-    if (friendly) {
-      if (type >= 2) box(c, x - 4 * d, y - d, 8 * d, 7 * d, d, type >= 4 ? 0xff263d34 : 0xff6a7269);
-      for (int stripe = 0; stripe < Math.min(type, 3); stripe++)
-        line(c, x - 5 * d, y + stripe * 2 * d, x - 2 * d, y + stripe * 2 * d, 0xffe3cc83, d);
-      line(c, x + 3 * d, y, x + (float) Math.cos(angle) * 12 * d,
-          y + (float) Math.sin(angle) * 12 * d, 0xff2c3029, 3 * d);
-      box(c, x - d, y - 8 * d, 2 * d, 2 * d, 0, 0xfff4d26e);
-    }
   }
 }

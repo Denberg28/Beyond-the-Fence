@@ -8,18 +8,19 @@ import android.view.View;
 @android.annotation.SuppressLint("ViewConstructor")
 final class TerrainBackdrop extends View {
   private final MedievalPixelArt art = new MedievalPixelArt();
-  private boolean night, ashen;
+  private float dark;
+  private boolean ashen;
   TerrainBackdrop(Context context) {
     super(context);setTag("terrain");
     setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
-  void phase(boolean value, boolean biome) {
-    if(night!=value || ashen!=biome) {night=value;ashen=biome;invalidate();}
+  void phase(float value, boolean biome) {
+    if(dark!=value || ashen!=biome) {dark=value;ashen=biome;invalidate();}
   }
   @Override protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
     float d=getResources().getDisplayMetrics().density;
-    art.ground(canvas,getWidth(),getHeight(),d,night,ashen);
-    art.atmosphere(canvas,getWidth(),getHeight(),d,night,ashen);
+    art.ground(canvas,getWidth(),getHeight(),d,dark,ashen);
+    art.atmosphere(canvas,getWidth(),getHeight(),d,dark,ashen);
   }
 }

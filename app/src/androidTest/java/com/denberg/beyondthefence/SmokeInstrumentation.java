@@ -750,6 +750,8 @@ public final class SmokeInstrumentation extends Instrumentation {
       testMedieval(reopened);
       testGardenFishing(reopened);
       testBossArt(reopened);
+      testRaidFlow(reopened);
+      testCharacterPixels();
       testStoreRecovery();
       result.putString("stream", "\nOK (" + checks + " checks)\n");
       finish(Activity.RESULT_OK, result);
@@ -943,6 +945,53 @@ public final class SmokeInstrumentation extends Instrumentation {
       screenshot("smoke-atmosphere-"+world+(night?"-night":"-day")+".png");
     }
     runOnMainSync(() -> {farm.world=originalWorld;farm.night=originalNight;a.refresh();});awaitIdle();
+  }
+
+  private void testRaidFlow(MainActivity a) throws Exception {
+    Game raid=new Game();raid.day=4;raid.tutorialDone=true;raid.revision=10000;
+    raid.roamers.clear();raid.populateRoamers();raid.elapsed=raid.preparationSeconds()-8;
+    int scouts=raid.roamers.size();long revision=raid.revision;
+    runOnMainSync(() -> {a.game=raid;a.paused=true;a.refresh();});awaitIdle();
+    check(onUi(() -> RaidPresentation.label(raid).contains("Dusk")),"Approaching raid has an explicit dusk warning");
+    screenshot("smoke-dusk.png");
+    runOnMainSync(() -> {raid.elapsed=raid.preparationSeconds()-.025f;a.refresh();});
+    touch(a,"play");awaitUi(() -> raid.night,"Real Android frames enter the raid from dusk");
+    check(onUi(() -> raid.spawned==scouts && raid.enemies.size()==scouts),"Automatic night preserves and converts existing scouts once");
+    check(onUi(() -> raid.revision>revision),"Nightfall immediately requests a checkpoint");
+    awaitUi(() -> ((FarmApp)getTargetContext().getApplicationContext()).store.load().game.night,"Nightfall checkpoint reaches actual storage");
+    screenshot("smoke-nightfall.png");
+    int coins=raid.coins;
+    runOnMainSync(() -> {raid.spawned=raid.quota();raid.enemies.clear();});
+    awaitUi(() -> !raid.night && raid.day==5 && a.paused,"Raid victory pauses at dawn before preparation resumes");
+    check(onUi(() -> raid.elapsed==0 && raid.coins==coins+32),"Dawn gives its reward once and does not consume daylight while paused");
+    SystemClock.sleep(250);
+    check(onUi(() -> raid.elapsed==0 && !a.music.isPlaying() && a.music.effectStreams()==0),"Dawn remains quiet and frozen until explicit play");
+    awaitUi(() -> ((FarmApp)getTargetContext().getApplicationContext()).store.load().game.day==5,"Dawn checkpoint retains the actual won day");
+    screenshot("smoke-dawn.png");
+    touch(a,"night");check(onUi(() -> raid.night && !a.paused),"Manual raid still begins immediately after the dawn breather");
+    touch(a,"play");check(onUi(() -> a.paused && raid.night),"Pausing a raid never changes its phase");
+  }
+
+  private void testCharacterPixels() throws IOException {
+    PixelCharacters art=new PixelCharacters();
+    Bitmap sheet=Bitmap.createBitmap(1020,720,Bitmap.Config.ARGB_8888);Canvas canvas=new Canvas(sheet);canvas.drawColor(0xff17232e);
+    android.graphics.Paint label=new android.graphics.Paint();label.setColor(0xffe9dec4);label.setTextSize(16);label.setTextAlign(android.graphics.Paint.Align.CENTER);
+    Bitmap[] portraits=new Bitmap[18];
+    try {
+      for(int i=0;i<18;i++) {
+        portraits[i]=Bitmap.createBitmap(128,128,Bitmap.Config.ARGB_8888);Canvas tile=new Canvas(portraits[i]);
+        String name;
+        if(i<7) {art.undead(tile,i,64,72,1.8f,0,false,0);name=Game.FOES[i];}
+        else if(i<13) {art.guard(tile,64,72,1.8f,i-7,0,0);name=Game.UNIFORMS[i-7];}
+        else if(i<17) {art.fantasy(tile,Bestiary.KOBOLD+i-13,64,72,1.8f,0,false,0);name=Game.FOES[Bestiary.KOBOLD+i-13];}
+        else {art.hero(tile,64,72,1.8f,0,false,true);name="Vanguard";}
+        for(int other=0;other<i;other++)check(!portraits[i].sameAs(portraits[other]),"Every pixel character/tier has a distinct silhouette or palette");
+        canvas.drawBitmap(portraits[i],21+i%6*170,18+i/6*240,null);canvas.drawText(name,85+i%6*170,177+i/6*240,label);
+      }
+      try(FileOutputStream out=new FileOutputStream(new File(getTargetContext().getFilesDir(),"smoke-character-lineup.png"))) {
+        check(sheet.compress(Bitmap.CompressFormat.PNG,100,out),"Pixel character lineup evidence saved");
+      }
+    } finally {for(Bitmap b:portraits)if(b!=null)b.recycle();sheet.recycle();}
   }
 
   private void testBossArt(MainActivity a) throws Exception {

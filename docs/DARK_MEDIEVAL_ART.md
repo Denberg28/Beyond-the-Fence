@@ -25,3 +25,6 @@ install a test-key Preview.apk over a fixed-signature Release.apk.
 
 ## 0.19 torchlight and terrain pass
 Broken slab clusters replace uniform outdoor masonry. Moss/ash, edge pines and stepped border darkness establish foreground separation; dusk courtyard tones stay readable. Cached radial amber lights replace green circles. All decoration draws before roaming/combat actors. The HUD uses an inset charcoal frame, gold resources and read-only farm/fence bars. Original geometry, pale build surfaces, simulation and save data are preserved.
+
+## 0.20 character/phase integration
+Original integer-grid sprites replace round human/undead/fantasy units; tier colours, armour, cloaks, crossbows and narrow eye lights provide identity. Hero artwork is shared with the arena. Bosses use lazy128-square canvases per species; arena uses one300x164 stage, both scaled without filtering. No per-frame sprite/shader allocation after cache creation.12-second dusk interpolates ground/courtyard/edge tones and torch opacity without darkening actors. All motion/phase cues derive from simulation time; paused rain no longer reads wall clock.

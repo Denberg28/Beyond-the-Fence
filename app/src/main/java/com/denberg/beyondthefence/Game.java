@@ -17,7 +17,7 @@ public final class Game {
   public static final float[] GROW = {16, 29, 43, 24, 37, 54, 64, 76, 84};
   public static final String[] WEATHER = {"Clear", "Rain", "Fog", "Heat"};
   public static final String[] FOES = {"Walker", "Runner", "Brute", "Spitter", "Ghoul", "Ironhide", "Wraith", "Grave Warden", "Kobold skirmisher", "Orc raider", "Dire wolf", "Goblin hexer"};
-  public static final String[] UNIFORMS = {"Workwear", "Scout green", "Desert kit", "Urban armor", "Ranger kit", "Black ops"};
+  public static final String[] UNIFORMS = {"Padded coat", "Warden green", "Bronze mail", "Steel plate", "Ranger cloak", "Blackened plate"};
   public static final String[] FENCE_MATERIALS = {"Gap", "Palisade", "Stone wall", "Ironbound"};
   private static final float[] FOE_HP = {42, 30, 125, 65, 90, 190, 80, 400, 38, 145, 36, 70}, FOE_SPEED = {.105f, .21f, .065f, .085f, .15f, .055f, .185f, .048f, .18f, .063f, .245f, .08f}, FOE_DAMAGE = {10, 7, 25, 13, 18, 32, 16, 38, 8, 24, 8, 12};
   public static final float GUARD_RANGE = .28f;
