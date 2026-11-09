@@ -973,6 +973,10 @@ public final class SmokeInstrumentation extends Instrumentation {
     runOnMainSync(() -> {raid.elapsed=raid.preparationSeconds()-.025f;a.refresh();});
     awaitUi(() -> raid.night && !a.paused,"The next night starts automatically without a Play tap after dawn");
     touch(a,"play");check(onUi(() -> a.paused),"Explicit pause still stops the automatic cycle");
+    touch(a,"play");check(onUi(() -> !a.paused && raid.night),"Play resumes the same ongoing raid");
+    runOnMainSync(() -> {raid.spawned=raid.quota();raid.enemies.clear();});
+    awaitUi(() -> !raid.night && raid.day==6 && !a.paused,"A second victory also flows directly into daylight");
+    touch(a,"play");
     touch(a,"night");check(onUi(() -> raid.night && !a.paused),"Manual raid still begins immediately after continuous dawn");
     touch(a,"play");check(onUi(() -> a.paused && raid.night),"Pausing a raid never changes its phase");
   }
