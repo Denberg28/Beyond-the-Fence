@@ -628,7 +628,7 @@ public final class Game {
 
   /** Spread newly hired guards to the least covered point without consuming combat RNG. */
   private float recruitPatrolPosition() {
-    if (mercenaries.isEmpty() && hero == null) return .5f;
+    if (mercenaries.isEmpty() && hero == null) return 0f; // Retain lone replacement guard baseline.
     int seed = randomState ^ (day * 0x45d9f3b) ^ (world * 0x119de1f3)
         ^ ((mercenaries.size() + (hero == null ? 0 : 1)) * 0x27d4eb2d);
     int start = (seed >>> 1) & 31;
