@@ -19,7 +19,10 @@ public final class MainActivity extends Activity {
       GREEN = 0xff657989,
       CREAM = 0xffe9e2d1,
       MUTED = 0xff54616e,
-      GOLD = 0xffd8ac68;
+      GOLD = 0xffd8ac68,
+      PANEL_PAPER = 0xfff3ead9,
+      PANEL_SELECTED = 0xfff2d394,
+      PANEL_BORDER = 0xffb69b70;
   Game game;
   SurvivalMusic music;
   boolean musicEnabled, effectsEnabled;
@@ -524,22 +527,26 @@ public final class MainActivity extends Activity {
 
   private void addEquipment() {
     int found = 0; for (boolean owned : game.collected) if (owned) found++;
-    TextView summary = text(found + "/45 relics · " + game.directorDescription()
-        + "\nAttack +" + Math.round(game.equipmentBonus(0) * 100) + "% · Protection +" + Math.round(game.equipmentBonus(1) * 100)
-        + "%\nMagic +" + Math.round(game.equipmentBonus(2) * 100) + "% · Speed +" + Math.round(game.equipmentBonus(3) * 100) + "%", 13, INK);
+    TextView summary = text(found + "/45 relics"
+        + "\nATK +" + Math.round(game.equipmentBonus(0) * 100) + "% · DEF +" + Math.round(game.equipmentBonus(1) * 100)
+        + "% · MAG +" + Math.round(game.equipmentBonus(2) * 100) + "% · SPD +" + Math.round(game.equipmentBonus(3) * 100) + "%", 12, INK);
+    summary.setContentDescription(found + " of 45 relics, " + game.directorDescription() + ". Attack, defense, magic and speed bonuses.");
     summary.setPadding(dp(4), dp(8), dp(4), dp(8)); buildItems.addView(summary);
     if (game.lastDrop >= 0) buildItems.addView(text("Latest find · " + Equipment.name(game.lastDrop), 12, MUTED));
     GameButton best = button("Equip best", () -> { if (canAct()) { game.equipBest(); rebuildBuildItems(); changed(); } });
     best.setTag("equipBest"); best.setEnabled(!game.arenaActive && !game.defeated); addBuildAction(best);
     for (int i = 0; i < game.gear.length; i++) {
       final int slot = i; int code = game.gear[i];
-      GameButton action = button(Equipment.SLOTS[i] + " · " + (code < 0 ? "Empty" : Equipment.RARITIES[Equipment.rarity(code)]
-          + "\n" + Equipment.name(code) + " · " + Equipment.effect(code)), () -> chooseEquipment(slot));
+      GameButton action = button(Equipment.SLOTS[i] + " · " + (code < 0 ? "Empty"
+          : Equipment.RARITIES[Equipment.rarity(code)] + "\n" + Equipment.name(code)), () -> chooseEquipment(slot));
+      action.setContentDescription(Equipment.SLOTS[i] + ", " + (code < 0 ? "Empty"
+          : Equipment.RARITIES[Equipment.rarity(code)] + ", " + Equipment.name(code) + ", " + Equipment.effect(code)));
       action.setTag("gear" + i); action.setEnabled(!game.arenaActive && !game.defeated);
       action.setCompoundDrawablesRelativeWithIntrinsicBounds(new EquipmentIcon(i, code < 0 ? -1 : Equipment.rarity(code), dp(32)), null, null, null);
       action.setCompoundDrawablePadding(dp(8)); addBuildAction(action);
     }
-    TextView rarity = text("Common · Uncommon · Rare · Epic · Legendary\nScarce zombie finds. Bosses may carry relics. Arena wins can reveal higher tiers. Duplicate relics never stack.\nMaximum bonuses: attack12%, protection12%, magic10%, speed6%.", 12, MUTED);
+    TextView rarity = text("Common · Uncommon · Rare · Epic · Legendary", 11, MUTED);
+    rarity.setContentDescription("Rare zombie, boss or arena finds. Duplicates never stack.");
     rarity.setPadding(dp(4), dp(12), dp(4), dp(8)); buildItems.addView(rarity);
     if (game.arenaOfferDay > 0) {
       GameButton arena = button("Day " + game.arenaOfferDay + " · Arena invitation", () -> { closeBuild(); showAdventure(); });
@@ -699,19 +706,19 @@ public final class MainActivity extends Activity {
 
   private void createBuildOverlay() {
     buildOverlay = new SwipeDismissLayout(this, this::closeBuild);
-    buildOverlay.setBackgroundColor(0xe00e131d);
+    buildOverlay.setBackgroundColor(0xa00e131d);
     buildOverlay.setClickable(true);
     buildOverlay.setVisibility(View.GONE);
     buildOverlay.setPadding(dp(20), dp(16), dp(20), dp(16));
     LinearLayout card = column();
-    card.setBackgroundResource(R.drawable.panel_parchment);
-    card.setPadding(dp(16), dp(12), dp(16), dp(16));
+    card.setBackgroundResource(R.drawable.panel_build_light);
+    card.setPadding(dp(14), dp(12), dp(14), dp(14));
     LinearLayout bar = row();
-    buildTitle = text("FORTRESS", 20, INK);
+    buildTitle = text("FORTRESS", 18, INK);
     buildTitle.setTag("panelTitle"); buildTitle.setTypeface(Typeface.create("serif", Typeface.BOLD));
     bar.addView(buildTitle, new LinearLayout.LayoutParams(0, -2, 1));
     GameButton close = button("✕", this::closeBuild);
-    close.setTag("closeBuild");
+    close.setTag("closeBuild"); close.colors(PANEL_PAPER, PANEL_BORDER, INK);
     close.setContentDescription("Close upgrades and return to the paused game");
     bar.addView(close, new LinearLayout.LayoutParams(dp(48), -2));
     card.addView(bar);
@@ -719,14 +726,15 @@ public final class MainActivity extends Activity {
     buildResources.setPadding(dp(4), 0, 0, dp(6));
     card.addView(buildResources);
     // Task order is independent of retained page IDs (map taps and rotation use those IDs).
-    String[] labels = {"Fence", "Mill", "Farm", "Crew", "Equipment", "Supplies"};
+    String[] labels = {"Fence", "Mill", "Farm", "Crew", "Gear", "Items"};
+    String[] fullNames = {"Fence", "Mill", "Farm", "Crew", "Equipment", "Supplies"};
     int[] order = {0, 2, 1, 3, 5, 4};
     for (int line = 0; line < 2; line++) {
       LinearLayout navigation = row();
       for (int col = 0; col < 3; col++) {
         final int page = order[line * 3 + col];
         buildTabs[page] = button(labels[page], () -> selectBuildPage(page));
-        buildTabs[page].setTag("buildTab" + page);
+        buildTabs[page].setTag("buildTab" + page); buildTabs[page].setContentDescription(fullNames[page] + " build tab");
         buildTabs[page].setTextSize(compactTextSize(12, 16));
         buildTabs[page].setMaxLines(1);
         buildTabs[page].setPadding(dp(2), dp(4), dp(2), dp(4));
@@ -748,16 +756,21 @@ public final class MainActivity extends Activity {
   }
 
   private void buildSection(String title, String description) {
-    TextView heading = text(title, 16, INK);
+    TextView heading = text(title, 15, INK);
     heading.setTypeface(Typeface.create("serif", Typeface.BOLD));
-    heading.setPadding(dp(4), dp(14), dp(4), dp(4)); if (Build.VERSION.SDK_INT >= 28) heading.setAccessibilityHeading(true);
+    heading.setPadding(dp(4), dp(10), dp(4), dp(3));
+    heading.setContentDescription(title + ". " + description);
+    if (Build.VERSION.SDK_INT >= 28) heading.setAccessibilityHeading(true);
     buildItems.addView(heading);
-    TextView copy = text(description, 12, MUTED); copy.setPadding(dp(4), 0, dp(4), dp(6)); buildItems.addView(copy);
   }
 
   private void addBuildAction(GameButton action) {
     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
-    params.setMargins(0, dp(4), 0, 0);
+    params.setMargins(0, dp(3), 0, 0);
+    action.colors(PANEL_PAPER, PANEL_BORDER, INK);
+    action.setTextSize(compactTextSize(13, 20));
+    action.setMaxLines(2);
+    action.setPadding(dp(10), dp(6), dp(10), dp(6));
     buildItems.addView(action, params);
   }
 
@@ -802,7 +815,7 @@ public final class MainActivity extends Activity {
       heroBuy = button("", () -> { if (canAct()) { if (!game.buyHero()) showPrice(heroBuy, 360, 20); else clearHint(); changed(); } });
       heroBuy.setTag("buyHero"); addBuildAction(heroBuy); addAdvanced(2);
       buildSection("Orders", "Rally to a border or resume the perimeter patrol."); addOrders();
-      GameButton bestiary = button("Bestiary · foes & tactics", this::showBestiary);
+      GameButton bestiary = button("Bestiary", this::showBestiary);
       bestiary.setTag("bestiary"); addBuildAction(bestiary);
     } else if (buildTab == 4) {
       buildSection("Relic loadout", "Worn relics travel with you through the rift."); addEquipment();
@@ -845,7 +858,7 @@ public final class MainActivity extends Activity {
   }
 
   private void addTimber() {
-    materialsButton = button("Buy 10 timber · 12 coins", () -> { if (canAct()) { game.buyTimber(); changed(); } });
+    materialsButton = button("10 timber · 12 coins", () -> { if (canAct()) { game.buyTimber(); changed(); } });
     materialsButton.setTag("buyTimber"); addBuildAction(materialsButton);
   }
 
@@ -873,11 +886,11 @@ public final class MainActivity extends Activity {
       final int side = i;
       GameButton action = button(Game.SIDES[i].substring(0, 1), () -> { if (canAct()) { game.rally(side); changed(); } });
       action.setContentDescription("Move mercenaries to defend the " + Game.SIDES[i] + " fence");
-      rallyButtons[i] = action; action.setTag("rally" + i);
+      rallyButtons[i] = action; action.setTag("rally" + i); action.colors(PANEL_PAPER, PANEL_BORDER, INK);
       rally.addView(action, new LinearLayout.LayoutParams(0, -2, 1));
     }
     buildItems.addView(rally);
-    patrolButton = button("Resume perimeter patrol", () -> { if (canAct()) { game.resumePatrol(); changed(); } });
+    patrolButton = button("Resume patrol", () -> { if (canAct()) { game.resumePatrol(); changed(); } });
     patrolButton.setTag("patrol"); addBuildAction(patrolButton);
   }
 
@@ -987,10 +1000,13 @@ public final class MainActivity extends Activity {
       buildingButtons[i].colors(0x00583c28, game.buildings[i] ? GOLD : 0xffb6c68b, CREAM);
       if (construction[i] != null) {
         boolean damaged = game.buildings[i] && game.buildingHealth[i] < Game.BUILDING_HEALTH;
-        label(construction[i], Game.BUILDINGS[i] + (damaged ? " · REPAIR\n10 coins · 5 timber · +60 health"
-            : game.buildings[i] ? " · BUILT · 100 health" : (game.buildingRuins[i] ? " · REBUILD" : " · BUILD")
-                + "\n" + Game.BUILD_COINS[i] + " coins · " + Game.BUILD_WOOD[i] + " timber")
-            + "\n" + new String[] {"Produces " + game.millYield() + " timber /" + (int)game.millPeriod() + " active seconds", "+25% crop sale value", "Unlocks mercenary recruitment"}[i]);
+        String benefit = new String[] {"Timber production", "25 percent crop sale bonus", "Unlock mercenary recruitment"}[i];
+        label(construction[i], Game.BUILDINGS[i] + (damaged ? " · Repair\n10c · 5 timber"
+            : game.buildings[i] ? " · Built" : (game.buildingRuins[i] ? " · Rebuild" : " · Build")
+                + "\n" + Game.BUILD_COINS[i] + "c · " + Game.BUILD_WOOD[i] + " timber"));
+        construction[i].setContentDescription(Game.BUILDINGS[i] + ", " + benefit
+            + (damaged ? ", repair for 10 coins and 5 timber" : game.buildings[i] ? ", already built"
+            : ", costs " + Game.BUILD_COINS[i] + " coins and " + Game.BUILD_WOOD[i] + " timber"));
         construction[i].setEnabled(available && (damaged ? game.coins >= 10 && game.wood >= 5
             : !game.buildings[i] && game.coins >= Game.BUILD_COINS[i] && game.wood >= Game.BUILD_WOOD[i]));
       }
@@ -1007,21 +1023,24 @@ public final class MainActivity extends Activity {
       wallButtons[i].colors(Color.TRANSPARENT, selectedWall == i ? GOLD : Color.TRANSPARENT,
           breached ? 0xfff1a088 : damaged ? GOLD : CREAM);
       if (wallPurchase[i] != null) {
-        label(wallPurchase[i], Game.SIDES[i] + " · " + Game.FENCE_MATERIALS[tier] + " · " + Math.round(game.wallHealth[i]) + "/" + Math.round(game.maxWallHealth(i)) + "HP\n" + (damaged ? "REPAIR · " + Math.round(game.wallHealth[i]) + "/"
-            + Math.round(game.maxWallHealth(i)) + "HP\n8 coins · +50 health"
-            : tier == 0 ? "BUILD PALISADE\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber"
-            : tier >= 3 ? "Ironbound · reinforcement " + game.wallRanks[i] + "/" + game.wallRankCap() + "\n" + (game.borderMaxed(i) ? "MAX" : game.borderCoinCost(i) + " coins · " + game.borderWoodCost(i) + " timber")
-            : "UPGRADE " + Game.FENCE_MATERIALS[tier] + " → " + Game.FENCE_MATERIALS[tier + 1] + "\n" + game.wallCoinCost(i) + " coins · " + game.wallWoodCost(i) + " timber")
-            + "\n" + (damaged ? "Closes the breach for new zombies; fight intruders inside" : "Material kits strengthen fences; coins buy supplies and timber frames them"));
+        String wallAction = damaged ? "Repair" : tier == 0 ? "Build" : game.borderMaxed(i) ? "MAX" : "Upgrade";
+        int wallPrice = damaged ? 8 : tier == 0 ? game.wallCoinCost(i) : game.borderCoinCost(i);
+        int wallTimber = damaged ? 0 : tier == 0 ? game.wallWoodCost(i) : game.borderWoodCost(i);
+        label(wallPurchase[i], Game.SIDES[i] + " · " + wallAction + " · " + Game.FENCE_MATERIALS[tier]
+            + "\n" + (game.borderMaxed(i) && !damaged ? "MAX" : wallPrice + "c · " + wallTimber + " timber"));
+        wallPurchase[i].setContentDescription(Game.SIDES[i] + " " + Game.FENCE_MATERIALS[tier] + " fence, "
+            + Math.round(game.wallHealth[i]) + " of " + Math.round(game.maxWallHealth(i)) + " health, "
+            + wallAction + (damaged ? " for 8 coins, restore up to 50 health"
+            : " for " + wallPrice + " coins and " + wallTimber + " timber"));
         wallPurchase[i].setEnabled(available && (damaged || !game.borderMaxed(i)));
-        wallPurchase[i].colors(selectedWall == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
+        wallPurchase[i].colors(selectedWall == i ? PANEL_SELECTED : PANEL_PAPER, PANEL_BORDER, INK);
       }
       buildTabs[i].setSelected(buildTab == i);
-      buildTabs[i].colors(buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
+      buildTabs[i].colors(buildTab == i ? PANEL_SELECTED : PANEL_PAPER, PANEL_BORDER, INK);
     }
     for (int i = 4; i < buildTabs.length; i++) {
       buildTabs[i].setSelected(buildTab == i);
-      buildTabs[i].colors(buildTab == i ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
+      buildTabs[i].colors(buildTab == i ? PANEL_SELECTED : PANEL_PAPER, PANEL_BORDER, INK);
     }
     for (int i = 0; i < 9; i++) {
       boolean unlocked = game.farmPlot(i); int crop = game.crop[i]; boolean ripe = crop >= 0 && game.growth[i] >= 1;
@@ -1063,13 +1082,17 @@ public final class MainActivity extends Activity {
     }
     for (int item = 0; item < Game.ITEMS.length; item++) if (itemBuy[item] != null) {
       String[] detail = {"heals surviving crew/farm", "20s combat boost", "single target · nearest threat", "area blast · nearby group"};
-      label(itemBuy[item], Game.ITEMS[item] + " · " + detail[item] + "\n" + game.itemPrice(item) + " coins · " + game.itemStock(item) + "/9 owned");
+      label(itemBuy[item], Game.ITEMS[item] + " · " + game.itemPrice(item) + "c · " + game.itemStock(item) + "/9");
+       itemBuy[item].setContentDescription(Game.ITEMS[item] + ", " + detail[item] + ", price "
+           + game.itemPrice(item) + " coins, " + game.itemStock(item) + " of 9 owned");
       itemBuy[item].setEnabled(available && game.buildings[1] && game.itemStock(item) < Game.MAX_ITEMS);
     }
     for (int kind = 0; kind < 3; kind++) if (advanced[kind] != null) {
-      String title = kind == 0 ? "Mill output " + game.millLevel + "/" + game.advancedCap(0) + " · " + game.millYield() + " timber /" + (int)game.millPeriod() + "s"
-          : kind == 1 ? "Mercenary drills " + game.drill + "/" + game.advancedCap(1) + " · aim, armor and health" : "Hero training " + game.heroLevel + "/" + game.advancedCap(2);
-      label(advanced[kind], title + (game.advancedMaxed(kind) ? " · MAX" : "\n" + game.advancedCost(kind) + " coins · " + game.advancedWood(kind) + " timber"));
+      String title = kind == 0 ? "Mill " + game.millLevel + "/" + game.advancedCap(0)
+          : kind == 1 ? "Drills " + game.drill + "/" + game.advancedCap(1)
+          : "Hero " + game.heroLevel + "/" + game.advancedCap(2);
+      label(advanced[kind], title + (game.advancedMaxed(kind) ? " · MAX"
+          : "\n" + game.advancedCost(kind) + "c · " + game.advancedWood(kind) + " timber"));
       advanced[kind].setEnabled(available && !game.advancedMaxed(kind) && (kind == 0 ? game.buildings[0] : game.buildings[2]) && (kind != 2 || game.hero != null));
     }
     if (heroBuy != null) {
@@ -1091,19 +1114,26 @@ public final class MainActivity extends Activity {
     if (hireButton != null) {
       label(hireButton, !game.buildings[2] ? "Build Barracks first" : game.mercenaries.size() >= Game.MAX_MERCS ? "Squad full · 3 survivors" : "Hire mercenary · " + game.hireCost() + " coins · 6 timber");
       hireButton.setEnabled(available && game.buildings[2] && game.mercenaries.size() < Game.MAX_MERCS);
-      label(roster, "Mercenaries " + game.mercenaries.size() + "/3 · " + Game.UNIFORMS[Math.min(5, game.weapon)]
-          + "\n" + game.guardDamage() + " damage per shot · " + (game.lane < 0 ? "Patrolling" : "Rally: " + Game.SIDES[game.lane])
-          + "\nShort range: rally to threatened borders. Breached zombies can kill guards. Crew heals during preparation.");
+      label(roster, "Crew " + game.mercenaries.size() + "/3 · " + Game.UNIFORMS[Math.min(5, game.weapon)]
+          + "\n" + game.guardDamage() + " dmg · " + (game.lane < 0 ? "Patrol" : Game.SIDES[game.lane] + " rally"));
+      roster.setContentDescription("Short range mercenaries, rally to threatened fences. Crew heals during preparation.");
       for (int side = 0; side < 4; side++) if (rallyButtons[side] != null)
-        rallyButtons[side].colors(game.lane == side ? GOLD : 0xffe9e5d3, 0xffb6a274, INK);
+        rallyButtons[side].colors(game.lane == side ? PANEL_SELECTED : PANEL_PAPER, PANEL_BORDER, INK);
       if (patrolButton != null) patrolButton.setEnabled(available && game.lane >= 0);
     }
-    String[] upgrades = {"Uniform " + game.weapon + "/" + game.upgradeCap(0) + " · " + Game.UNIFORMS[Math.min(5, game.weapon)] + "\n+3 damage · +20 crew health · armor · faster fire", "Fortify · rank " + game.fence + "/" + game.upgradeCap(1) + "\n+50 farm health · +15 health per built fence", "Irrigation · tier " + game.irrigation + "\n+20% growth", "Expand farmland · open three more soil plots"};
+    String[] upgrades = {"Uniform " + game.weapon + "/" + game.upgradeCap(0),
+        "Fortify " + game.fence + "/" + game.upgradeCap(1),
+        "Irrigation " + game.irrigation, "Expand farm"};
+    String[] benefits = {"Crew attack, armor, health and fire rate", "Farm and fence health",
+        "Faster crop growth", "Three more farm plots"};
     for (int i = 0; i < 4; i++) if (upgradeButtons[i] != null) {
-      label(upgradeButtons[i], upgrades[i] + (game.maxed(i) ? " · MAX" : "\n" + game.cost(i) + " coins"));
+      label(upgradeButtons[i], upgrades[i] + (game.maxed(i) ? " · MAX" : "\n" + game.cost(i) + "c"));
+      upgradeButtons[i].setContentDescription(upgrades[i] + ", " + benefits[i]
+          + (game.maxed(i) ? ", max rank" : ", costs " + game.cost(i) + " coins"));
       upgradeButtons[i].setEnabled(available && !game.maxed(i));
     }
-    label(buildResources, game.coins + " coins · " + game.wood + " timber · game paused");
+    label(buildResources, game.coins + " coins · " + game.wood + " timber");
+    buildResources.setContentDescription("Game paused. " + game.coins + " coins, " + game.wood + " timber");
     if (costButton != null) {
       label(costButton, costText);
       if (costButton == fenceUpgrade) costButton.setTextSize(getResources().getConfiguration().fontScale >= 1.5f ? 7 : 10);

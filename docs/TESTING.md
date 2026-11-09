@@ -447,3 +447,6 @@ Source61583ad/run40493349440: build/lint/package/six WAV audits and63 JVM tests 
 ##0.10 build follow-up
 
 Source8ffe5ab/run40506458288 failed before compilation because compact Groovy multiplication followed by a leading-dot decimal was parsed as spread-dot syntax in the new score. Numeric literals now have explicit leading zeros and obsolete note tables are removed. Release was skipped; all Android/build/package/native gates must run on corrected source. Local gameplay/migration suite72 PASS.
+
+## Build panel light-theme gate (0.18.1-rc.1)
+Emulator API 26/35: tap through all six tabs, inspect `smoke-tabs.png` and other build captures for pale buttons and readable text; assert selected fill #F2D394, dark text, 48dp touch height, single-line tab text at 200% font and tab-scroll reset. Confirm dark game terrain, cost display, pause on build, rotation, market routing and saved state. Handset TalkBack/contrast, endurance and same-certificate signed upgrade are NOT TESTED and gate stable promotion.

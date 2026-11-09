@@ -697,6 +697,13 @@ public final class SmokeInstrumentation extends Instrumentation {
           return tab.getLineCount() == 1 && tab.getPaint().measureText(tab.getText().toString())
               <= tab.getWidth() - tab.getPaddingLeft() - tab.getPaddingRight();
         }), "Building tab label fits as a complete word at200 percent font");
+        check(onUi(() -> {
+          GameButton tab = (GameButton) control(reopened, "buildTab" + page);
+          android.graphics.drawable.RippleDrawable ripple = (android.graphics.drawable.RippleDrawable) tab.getBackground();
+          android.graphics.drawable.GradientDrawable shape = (android.graphics.drawable.GradientDrawable) ripple.getDrawable(0);
+          return shape.getColor() != null && shape.getColor().getDefaultColor() == 0xfff2d394
+              && tab.getCurrentTextColor() == MainActivity.INK;
+        }), "Active tab is light with readable dark text");
         check(onUi(() -> page == 0 ? control(reopened, "constructWall0") != null && control(reopened, "upgrade1") != null
                 && control(reopened, "buyTimber") == null && control(reopened, "buyHero") == null
             : page == 4 ? control(reopened, "gear8") != null && control(reopened, "buyItem0") == null
