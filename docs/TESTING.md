@@ -4,7 +4,7 @@ Baseline: published0.20.0-rc.1, main4ddc512. Scope: ordinary dawn continuity, re
 
 Required: full JVM debug/release suites, builds, lint, package/audio/zero-permission checks; complete API26/35 installed suites with real frames/storage, continuity, next automatic raid, explicit pause and HUD checks, existing rotation/large-font/combat/crop/crew/arena/world/recovery regressions; visual self-review of dawn and both-biome phase screenshots; original-key signature and exact compiled-entry comparison followed by repeated full native suites and actual non-debuggable install-over/save retention. Use existing bounded CI jobs/timeouts. Do not promote until all required candidate checks pass. Physical-phone validation NOT TESTED (stable blocked); external HIL N/A (offline game). Export schema12 .btfs before update and retain baseline APK/export for rollback; versionCode downgrade blocked by Android.
 
-Observed results: pending final-source CI. No implementation or local-only check establishes an emulator pass.
+Initial source run42630886450: build/lint/package and130 JVM tests per variant PASS; native suites stopped at the legacy continuous-green-stripe pixel assertion. The new design deliberately removes that stripe. Replace this check with actual-scene full/75%/25%/breached marker counts plus intact-versus-rubble image comparison, retaining health feedback coverage. All final-source candidate gates must repeat; no failed assertion is waived.
 
 ---
 

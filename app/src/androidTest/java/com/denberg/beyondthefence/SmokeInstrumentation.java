@@ -1127,21 +1127,28 @@ public final class SmokeInstrumentation extends Instrumentation {
       GameBoard map = (GameBoard) control(a, "field");
       Bitmap bitmap = Bitmap.createBitmap(map.getWidth(), map.getHeight(), Bitmap.Config.ARGB_8888);
       float original = a.game.wallHealth[0];
-      int[] filled = new int[3];
+      int[] filled = new int[4];
+      int[] intact = new int[bitmap.getWidth() * bitmap.getHeight()];
       try {
         float d = map.geometry.density;
-        float y = map.geometry.worldY(a.game.ringYAt(.4f, 0));
-        int fromX = (int)Math.ceil(map.geometry.worldX(a.game.ringXAt(.08f, 0)));
-        int toX = (int)Math.floor(map.geometry.worldX(a.game.ringXAt(.72f, 0)));
-        for (int phase = 0; phase < 3; phase++) {
-          a.game.wallHealth[0] = a.game.maxWallHealth(0) * (1 - phase * .5f);
+        float x = map.geometry.worldX(a.game.ringXAt(.5f, 0));
+        float y = map.geometry.worldY(a.game.ringYAt(.5f, 0));
+        float[] ratios = {1, .75f, .25f, 0};
+        for (int phase = 0; phase < ratios.length; phase++) {
+          a.game.wallHealth[0] = a.game.maxWallHealth(0) * ratios[phase];
           map.artwork.draw(new Canvas(bitmap));
-          for (int px = fromX; px < toX; px++)
-            for (int py = (int) (y - d); py < (int) (y + d); py++)
-              if (bitmap.getPixel(px, py) == 0xffb4d176) filled[phase]++;
+          if (phase == 0) bitmap.getPixels(intact,0,bitmap.getWidth(),0,0,bitmap.getWidth(),bitmap.getHeight());
+          for (int px = (int)(x-12*d); px < (int)(x+12*d); px++)
+            for (int py = (int)(y+8*d); py < (int)(y+11*d); py++) {
+              int color = bitmap.getPixel(px, py);
+              if (color == 0xff9b9568 || color == 0xffc47c5e) filled[phase]++;
+            }
         }
-        check(filled[0] > filled[1] && filled[1] > filled[2] && filled[2] == 0,
-            "Fence durability bar follows actual HP: full, half and breached");
+        check(filled[0]==0 && filled[1]>filled[2] && filled[2]>0 && filled[3]==0,
+            "Local wall damage marker appears only while damaged and follows actual HP");
+        int[] breached = new int[intact.length];
+        bitmap.getPixels(breached,0,bitmap.getWidth(),0,0,bitmap.getWidth(),bitmap.getHeight());
+        check(!java.util.Arrays.equals(intact,breached),"A breached side visibly replaces intact masonry with rubble");
       } finally { a.game.wallHealth[0] = original; bitmap.recycle(); a.refresh(); }
     });
   }
