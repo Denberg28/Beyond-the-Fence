@@ -1,3 +1,13 @@
+# 0.21.0-rc.1 — Unbroken dawn
+
+Winning an ordinary night raid now continues straight into daylight. Morning music, crop growth, crew recovery and the next raid countdown resume automatically. Phase checkpoints and one-time dawn rewards remain. Explicit pause, menus, focus/background loss, defeat, arena decisions and the Day100 rift keep their existing player-controlled stops.
+
+The two Farm/Fence meters are removed from the top HUD. Days survived, coins/timber and phase/weather/season remain. TalkBack can still read core and average fence health from the phase status; individual wall HP and repair actions remain in Fence and the direction controls. Crops and defenses remain playable.
+
+Weathered blue-grey pixel masonry, muted iron rivets, moss, low stone garden edges and dark soil replace bright pale walls, continuous lime durability stripes and gold plot/building frames. Courtyard paving follows the cool ruined environment and dusk lighting. Small local wall damage markers/cracks and amber ripe-plot borders retain useful feedback. Corner bastions follow the actual changing perimeter and disappear at breached sides. No new image assets or runtime dependencies.
+
+---
+
 # 0.20.0-rc.1 — Dread at dusk
 
 - Smooth12-second dusk, blended day/night music, lowered warning growls and nonblocking nightfall cues.

@@ -65,14 +65,14 @@ final class MedievalPixelArt {
 
   void courtyard(Canvas c,Path boundary,int width,int height,float d,float dark,boolean ashen) {
     c.save();c.clipPath(boundary);
-    tile(c,0,0,width,height,ashen?RaidPresentation.blend(0xff443a3e,0xff312d35,dark):RaidPresentation.blend(0xff4c504c,0xff343b40,dark));
-    float size=20*d;
+    tile(c,0,0,width,height,ashen?RaidPresentation.blend(0xff443a3e,0xff312d35,dark):RaidPresentation.blend(0xff36454a,0xff293741,dark));
+    float size=18*d;
     for(int row=0;row*size<height;row++) for(int col=0;col*size<width;col++) {
       float x=col*size+(row%2)*size/2,y=row*size;
       int h=(row*13+col*7)%7;
-      int stone=ashen ? RaidPresentation.blend(h<3?0xff4d4146:0xff413b42,h<3?0xff3b333d:0xff342f38,dark) : RaidPresentation.blend(h<3?0xff5b5c53:0xff51554f,h<3?0xff41464a:0xff394044,dark);
+      int stone=ashen ? RaidPresentation.blend(h<3?0xff4d4146:0xff413b42,h<3?0xff3b333d:0xff342f38,dark) : RaidPresentation.blend(h<3?0xff46565c:0xff3e4e53,h<3?0xff344650:0xff2e3d46,dark);
       tile(c,x+d,y+d,size-2*d,size-2*d,stone);
-      line(c,x+3*d,y+2*d,x+size-4*d,y+2*d,d,RaidPresentation.blend(0xff6e6c5e,0xff515456,dark));
+      line(c,x+3*d,y+2*d,x+size-4*d,y+2*d,d,RaidPresentation.blend(0xff5c696b,0xff465a63,dark));
       if(h==2) {
         line(c,x+9*d,y+4*d,x+7*d,y+10*d,d,0xff303639);
         line(c,x+7*d,y+10*d,x+11*d,y+14*d,d,0xff303639);
@@ -107,14 +107,16 @@ final class MedievalPixelArt {
     tile(c,x-d,y+4*d,2*d,6*d,0xffc59c5e);
     tile(c,x-3*d,y+6*d,6*d,2*d,0xffc59c5e);
   }
-  void architecture(Canvas c,float left,float top,float right,float bottom,float d,float dark) {
+  void architecture(Canvas c,Game game,BoardGeometry geometry,float d,float dark) {
+    float left=geometry.fortLeft,top=geometry.fortTop,right=geometry.fortRight,bottom=geometry.fortBottom;
     // Decorative corner bastions are inside the existing fort perimeter.
     for(int corner=0;corner<4;corner++) {
-      float x=corner%2==0?left:right, y=corner<2?top:bottom;
+      float x=geometry.worldX(game.ringXAt(corner,0)), y=geometry.worldY(game.ringYAt(corner,0));
+      if(game.wallHealth[corner]<=0) continue;
       tile(c,x-7*d,y-7*d,14*d,14*d,0xff171e27);
-      tile(c,x-5*d,y-5*d,10*d,10*d,0xff758087);
+      tile(c,x-5*d,y-5*d,10*d,10*d,RaidPresentation.blend(0xff63757b,0xff475b68,dark));
       tile(c,x-3*d,y-3*d,6*d,6*d,0xff404850);
-      for(int b=0;b<3;b++) tile(c,x+(b-1)*5*d,y-8*d,3*d,2*d,0xff9a9990);
+      for(int b=0;b<3;b++) tile(c,x+(b-1)*5*d,y-8*d,3*d,2*d,RaidPresentation.blend(0xff8b9690,0xff63777b,dark));
     }
     if(right-left>75*d && bottom-top>75*d) {
       banner(c,(left+right)*.5f,top+10*d,d);

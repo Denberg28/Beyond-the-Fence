@@ -928,9 +928,10 @@ public final class SmokeInstrumentation extends Instrumentation {
       final int biome=world;
       runOnMainSync(() -> {farm.world=biome;farm.night=night;a.refresh();});awaitIdle();
       checkBoard(a);checkDock(a);
-      check(onUi(() -> control(a,"fortressMeters").getContentDescription().toString()
-          .equals("Farm health "+Math.round(farm.health)+" of "+farm.maxHealth()+", fence integrity 75 percent")),
-          "HUD exposes actual core and four-side fence health in both phases/biomes");
+      check(onUi(() -> a.findViewById(android.R.id.content).findViewWithTag("fortressMeters")==null),"Top farm and fence bars are removed");
+      check(onUi(() -> control(a,"phaseStatus").getContentDescription().toString()
+          .startsWith("Farm health "+Math.round(farm.health)+" of "+farm.maxHealth()+", fence integrity 75 percent")),
+          "Compact status retains accessible core and perimeter health without top meters");
       byte[] before=SaveCodec.encode(farm);
       runOnMainSync(() -> {
         FarmView view=((GameBoard)control(a,"field")).artwork;
@@ -963,13 +964,16 @@ public final class SmokeInstrumentation extends Instrumentation {
     screenshot("smoke-nightfall.png");
     int coins=raid.coins;
     runOnMainSync(() -> {raid.spawned=raid.quota();raid.enemies.clear();});
-    awaitUi(() -> !raid.night && raid.day==5 && a.paused,"Raid victory pauses at dawn before preparation resumes");
-    check(onUi(() -> raid.elapsed==0 && raid.coins==coins+32),"Dawn gives its reward once and does not consume daylight while paused");
-    SystemClock.sleep(250);
-    check(onUi(() -> raid.elapsed==0 && !a.music.isPlaying() && a.music.effectStreams()==0),"Dawn remains quiet and frozen until explicit play");
+    awaitUi(() -> !raid.night && raid.day==5 && !a.paused,"Raid victory continues into daylight without pressing Play");
+    check(onUi(() -> raid.coins==coins+32),"Dawn gives its reward once during continuous play");
+    awaitUi(() -> raid.elapsed>.2f,"Daylight countdown advances automatically after a won raid");
+    check(onUi(() -> !a.paused && a.music.isPlaying()),"Morning music continues without an explicit resume");
     awaitUi(() -> ((FarmApp)getTargetContext().getApplicationContext()).store.load().game.day==5,"Dawn checkpoint retains the actual won day");
     screenshot("smoke-dawn.png");
-    touch(a,"night");check(onUi(() -> raid.night && !a.paused),"Manual raid still begins immediately after the dawn breather");
+    runOnMainSync(() -> {raid.elapsed=raid.preparationSeconds()-.025f;a.refresh();});
+    awaitUi(() -> raid.night && !a.paused,"The next night starts automatically without a Play tap after dawn");
+    touch(a,"play");check(onUi(() -> a.paused),"Explicit pause still stops the automatic cycle");
+    touch(a,"night");check(onUi(() -> raid.night && !a.paused),"Manual raid still begins immediately after continuous dawn");
     touch(a,"play");check(onUi(() -> a.paused && raid.night),"Pausing a raid never changes its phase");
   }
 

@@ -54,7 +54,7 @@ final class FarmView extends View {
     if (g.settlementStyle() > 0) {
       for (int paving = 0; paving < 18; paving++) {
         float px = l + (r - l) * (.14f + paving % 3 * .35f), py = t + (b - t) * (.12f + paving / 3 * .14f);
-        box(c, px, py, 6 * d, 3 * d, d, g.settlementStyle() == 2 ? 0xff727f72 : 0xffb4a15f);
+        box(c, px, py, 6 * d, 3 * d, d, g.settlementStyle() == 2 ? 0xff46555b : 0xff505b55);
       }
       for (int hut = 0; hut < 2; hut++) {
         float hx = hut == 0 ? 9 * d : getWidth() - 29 * d, hy = t + (hut == 0 ? .35f : .65f) * (b - t);
@@ -63,11 +63,11 @@ final class FarmView extends View {
         line(c, hx + 10 * d, hy - 7 * d, hx + 21 * d, hy, 0xffb58c5d, 4 * d);
       }
     }
-    medieval.architecture(c, l, t, r, b, d, dark);
+    medieval.architecture(c, g, geometry, d, dark);
     for (int i = 0; i < 9; i++) {
       BoardGeometry.Box tile = geometry.plots[i];
       boolean open = g.farmPlot(i);
-      homestead.plot(c, tile, open, g.scorched[i], d);
+      homestead.plot(c, tile, open, g.scorched[i], d, dark, g.ashenWorld());
       if (!open) continue;
       if (g.scorched[i]) {
         line(c, tile.left + 10 * d, tile.top + 8 * d, tile.right - 10 * d, tile.top + 20 * d, 0xffb56a46, 3 * d);
@@ -191,14 +191,15 @@ final class FarmView extends View {
       float at = part / 20f, next = (part + 1) / 20f;
       float x = geometry.worldX(g.ringXAt(side + at, 0)), y = geometry.worldY(g.ringYAt(side + at, 0));
       float xx = geometry.worldX(g.ringXAt(side + next, 0)), yy = geometry.worldY(g.ringYAt(side + next, 0));
-      homestead.wall(c, x, y, xx, yy, d, tier, part, g.settlementStyle());
+      homestead.wall(c, x, y, xx, yy, d, tier, part, g.settlementStyle(), RaidPresentation.darkness(g), g.ashenWorld());
       if (g.walls[side] > 0) {
-        line(c, x, y, xx, yy, 0xff6e3b2f, 3 * d);
-        float fill = Math.max(0, Math.min(1, (ratio - at) * 20));
-        if (fill > 0) line(c, x, y, x + (xx - x) * fill, y + (yy - y) * fill,
-            ratio < .5f ? 0xffe58d4e : 0xffb4d176, 3 * d);
-        if (ratio < .6f && part % 5 == 2) line(c, x - 4 * d, y - 5 * d, x + 3 * d, y + 5 * d, 0xff48352a, 2 * d);
-        if (g.wallRanks[side] > 0 && part % 4 == 0) circle(c, x, y, 2 * d, 0xfff0ce7c);
+        // Damage belongs to a small local marker, leaving masonry visually uninterrupted.
+        if (ratio < 1 && part == 10) {
+          box(c, x - 11*d, y + 8*d, 22*d, 3*d, 0, 0xff202b32);
+          box(c, x - 11*d, y + 8*d, 22*d*ratio, 3*d, 0, ratio < .5f ? 0xffc47c5e : 0xff9b9568);
+        }
+        if (ratio < .6f && part % 5 == 2) line(c, x - 4 * d, y - 5 * d, x + 3 * d, y + 5 * d, 0xff202c35, 2 * d);
+        if (g.wallRanks[side] > 0 && part % 4 == 0) box(c, x-d, y-d, 2*d, 2*d, 0, 0xff9a9e8b);
       }
     }
   }
@@ -209,7 +210,7 @@ final class FarmView extends View {
   }
 
   private void building(Canvas c, BoardGeometry.Box tile, int kind, boolean built, boolean ruined, float d) {
-    box(c, tile.left, tile.top, tile.width(), tile.height(), 2 * d, built ? 0xff666068 : 0xff414b4c);
+    box(c, tile.left, tile.top, tile.width(), tile.height(), 2 * d, built ? 0xff35434b : 0xff2d3b3d);
     float x = tile.left + tile.width() * .5f, y = tile.top + tile.height() * .32f;
     float size = Math.min(tile.width() / 50f, tile.height() / 65f);
     c.save(); c.translate(x, y); c.scale(size, size);

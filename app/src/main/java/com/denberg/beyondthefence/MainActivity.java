@@ -50,7 +50,6 @@ public final class MainActivity extends Activity {
   private GameBoard board;
   private FarmView scene;
   private TerrainBackdrop terrain;
-  private FortressMeters fortressMeters;
   private ScrollView buildScroll;
   private int panelRevision;
   private AlertDialog arenaDialog;
@@ -81,10 +80,10 @@ public final class MainActivity extends Activity {
             boolean phaseChanged = wasNight != game.night || previousDay != game.day
                 || arenaWasActive != game.arenaActive;
             boolean dawn = wasNight && !game.night && !game.defeated;
-            if (dawn || arenaWasActive && !game.arenaActive || game.defeated) paused = true;
+            if (arenaWasActive && !game.arenaActive || game.defeated) paused = true;
             if (phaseChanged || game.defeated) {
               save();refresh();lastUi = now;
-              gameShell.announceForAccessibility(dawn ? "Dawn. Game paused. Repair and replant before continuing."
+              gameShell.announceForAccessibility(dawn ? "Dawn. A new day begins. The haven continues."
                   : game.defeated ? "Haven overrun. Recover when ready."
                   : arenaWasActive ? "Arena ended. Return to the haven when ready." : "Nightfall. The horde is approaching.");
             }
@@ -259,11 +258,9 @@ public final class MainActivity extends Activity {
     resources.addView(survived);
     stats = text("", 12, GOLD);
     stats.setTypeface(null, Typeface.BOLD);
-    status = text("", 11, 0xffbecbd0);
+    status = text("", 11, 0xffbecbd0); status.setTag("phaseStatus");
     resources.addView(stats);
     resources.addView(status);
-    fortressMeters = new FortressMeters(this);
-    resources.addView(fortressMeters, new LinearLayout.LayoutParams(-1, -2));
     hud.addView(resources, new LinearLayout.LayoutParams(-1, -2));
     hud.addView(hudActions);
     repair = button("Squad", () -> showBuild(3));
@@ -973,12 +970,14 @@ public final class MainActivity extends Activity {
     label(survived, "Survived " + (game.worldComplete ? 100 : game.day - 1) + (game.day == 2 ? " day" : " days") + (game.world > 1 ? " · World " + game.world : ""));
     label(stats, game.coins + " coins · " + game.wood + " timber");
     label(status, "Day " + game.day + " · " + RaidPresentation.label(game) + " · " + game.weatherName() + " · " + game.seasonName() + (!game.night && game.bossDay() ? " · Boss tonight" : ""));
-    status.setContentDescription(game.worldName() + ", " + game.settlementName() + ", day " + game.day
+    float integrity = 0; for (int side = 0; side < 4; side++) integrity += game.wallRatio(side);
+    status.setContentDescription("Farm health " + Math.round(game.health) + " of " + game.maxHealth()
+        + ", fence integrity " + Math.round(integrity * 25) + " percent, " + game.worldName() + ", " + game.settlementName() + ", day " + game.day
         + ", " + RaidPresentation.label(game) + ", " + game.weatherName() + ", " + game.seasonName()
         + (game.boss() != null ? ", " + game.bossName() : game.bossDay() ? ", Boss tonight" : "")
         + (RaidPresentation.banner(game).isEmpty() ? "" : ", " + RaidPresentation.banner(game)));
     status.setTextColor(game.night || RaidPresentation.dusk(game) ? GOLD : 0xffbecbd0);
-    fortressMeters.update(game);
+
     stats.setContentDescription(game.coins + " coins, " + game.wood + " timber");
     label(play, game.defeated ? "Rebuild" : paused ? "Play" : "Pause");
     play.setContentDescription(game.defeated ? "Recover homestead free and resume" : paused ? "Resume game" : "Pause game");
@@ -1015,7 +1014,7 @@ public final class MainActivity extends Activity {
               ? "\n" + Math.round(game.buildingHealth[i]) + "HP" : ""));
       buildingButtons[i].setEnabled(available);
       buildingButtons[i].setContentDescription(Game.BUILDINGS[i] + (game.buildings[i] ? ", health " + Math.round(game.buildingHealth[i]) + " of100, tap to manage" : ", construction plot, tap to build for " + Game.BUILD_COINS[i] + " coins and " + Game.BUILD_WOOD[i] + " timber"));
-      buildingButtons[i].colors(0x00583c28, game.buildings[i] ? GOLD : 0xffb6c68b, CREAM);
+      buildingButtons[i].colors(Color.TRANSPARENT, game.buildings[i] ? 0xff596970 : 0xff46544f, CREAM);
       if (construction[i] != null) {
         boolean damaged = game.buildings[i] && game.buildingHealth[i] < Game.BUILDING_HEALTH;
         String benefit = new String[] {"Timber production", "25 percent crop sale bonus", "Unlock mercenary recruitment"}[i];
@@ -1067,7 +1066,7 @@ public final class MainActivity extends Activity {
       plotButtons[i].setContentDescription("Farm plot " + (i + 1) + ", " + (!unlocked ? "locked, tap for expansion" : crop < 0
           ? (game.scorched[i] ? "crop destroyed, replant " : "empty, plant ") + Game.CROPS[selectedCrop] + " for " + Game.SEED[selectedCrop] + " coins"
           : Game.CROPS[crop] + ", health " + Math.round(game.cropHealth[i]) + " of40" + (ripe ? ", tap to harvest " + game.sale(crop) + " coins and " + game.cropTimber(crop) + " timber" : ", growing, " + game.harvestSeconds(i) + " seconds")));
-      plotButtons[i].colors(0x00583c28, ripe ? GOLD : unlocked ? 0xffb9965c : 0xff8cb061, ripe ? GOLD : CREAM);
+      plotButtons[i].colors(Color.TRANSPARENT, ripe ? 0xffae925e : unlocked ? 0xff4c5b5b : 0xff3d4d48, ripe ? GOLD : CREAM);
     }
     label(pondButton, "Fish");
     pondButton.setEnabled(available && !game.night && !game.arenaActive && game.arenaOfferDay == 0 && !game.worldComplete);

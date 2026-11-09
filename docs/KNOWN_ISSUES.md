@@ -1,3 +1,9 @@
+# 0.21 candidate limits
+
+Physical-phone readability/TalkBack, performance/endurance, audio comfort, upgrade and playtesting remain NOT TESTED; stable promotion is blocked. Ordinary dawn no longer pauses. Explicit player pause, menus/background/focus loss, defeat and arena/rift decisions retain stops. Top health bars are removed; accessible phase status, Fence health/repair controls and small local damage markers remain. Rendering uses deterministic native Canvas without save/RNG changes.
+
+---
+
 # 0.20 candidate limits
 
 Physical-phone sense of dread, audio comfort, readability/TalkBack, measured performance/endurance and upgrade remain NOT TESTED. Automated tests cannot establish human fear or fun; stable promotion is pending. Raid victory intentionally pauses at dawn; choose Play to continue preparation or Raid to begin deliberately. Common characters use original pixel geometry; large bosses/arena reuse existing silhouettes through cached low-resolution rendering. Crossbows retain existing projectile/combat rules; no new melee or player movement is implied. Save schema12 is retained.

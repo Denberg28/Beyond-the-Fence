@@ -1,3 +1,7 @@
+## 0.21.0-rc.1 — Unbroken dawn candidate
+
+Ordinary raid victories flow into daylight and the next raid automatically. The top Farm/Fence bars are removed; accessible health and repair controls remain. Weathered pixel masonry, muted garden frames and cool courtyard paving now match the surrounding medieval ruins. Crops, economy, combat, save schema12 and signing identity are retained. Explicit pause/background, defeat, arena and rift choices still pause. See docs/TESTING.md for observed evidence and candidate limits.
+
 ## 0.20.0-rc.1 — Dread at dusk candidate
 
 Published [original-certificate signed candidate](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.20.0-rc.1):130 JVM tests per variant,2918 installed checks and two4-check upgrade stages on each API26/35 PASS. Phone playtesting remains pending; full evidence is in docs/TESTING.md.
