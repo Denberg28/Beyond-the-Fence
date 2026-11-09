@@ -1,3 +1,26 @@
+# Published 0.20.0-rc.1 — Dread at dusk
+
+Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.20.0-rc.1
+Reviewed game source `b0f780a410f59ad9d8c807e2320bc22bcb0e8643`; signed delivery/tag `32015a73685459b1484224b6f4354f89060d8e5f`. Source run42624998295 and signed delivery run42626283657 PASS, both on their first attempt. This documentation-only record changes no tested code or artifact.
+
+| Gate | Observed evidence |
+| --- | --- |
+| Source/build | PASS:130 JVM tests per debug/release variant; all APK/test builds, lint and package/audio/zero-permission audits |
+| Signing/provenance | PASS:original pinned certificate; every signed compiled entry equals fresh source build; saved download matches CI-installed and public release bytes |
+| Behavior/regression/integration | PASS:2918 installed checks on each API26/35, repeated with retained-certificate APKs; actual dusk/night entry, scout promotion, phase storage, dawn pause/reward/clock freeze, manual raid, crop/crew/combat, arena/world, rotation/font, focus/pause/recovery cases |
+| Upgrade retention | PASS:4 legacy-fixture-to-preview and4 preview-to-nondebuggable-release checks on each API26/35 |
+| Visual self-review | PASS:dusk/nightfall/dawn captures, fixed amber Dusk control with no field caption over creatures,18-character lineup and wolf/boss/arena captures sampled across both APIs; existing paused/reduced-motion/save-purity checks retained |
+| Physical handset | NOT TESTED:readability/TalkBack, measured performance/endurance, audio comfort, install-over and human atmosphere/fun; stable promotion pending |
+| External HIL | N/A:offline game controls no hardware |
+
+APK3,167,409 bytes; SHA256 `df67c8e48f2ee70af4426a467a190c0f722e9d897efff97b20b224e775816dfd`. Certificate SHA256 `b209ae0dfa9385838a4bc2bf3254a25c3d5a45dc9124379edc53caf4c4e3fd91`. Delivery candidate ZIP digest `98a53aadb4ab90959b2d7504081ab46747121497e7ab6cee9f7e12eab121050f`; published emulator evidence ZIP digest `e0afdca2066ee66189110b883e9bf50f2a020f58f0f51807530db94cc4b02778`. Release retains source, provenance, verification, unit XML, screenshots/logs and checksums. No signing secrets are published.
+
+Schema12 and combat/economy remain unchanged. Dawn now intentionally pauses; Play continues preparation and Raid begins immediately. Export .btfs before an original-certificate install-over and retain0.19 plus its export for rollback; Android blocks lower versionCodes.
+
+Evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/42626283657
+
+---
+
 # 0.20 visual-review follow-up
 
 Source4ccb727/run42623350474 passed130 JVM tests per variant and2917 installed checks on each API26/35. Screenshot self-review found the decorative field warning could be occluded by a north-side wolf. Warnings now use the existing native phase readout and fixed raid control (amber Dusk/countdown), with full accessible warning text; the battlefield remains clear of caption overlays. Add an actual fixed-control text assertion. This is a presentation adjustment; all final-source gates repeat. Original-certificate delivery is still pending.
