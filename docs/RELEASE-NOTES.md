@@ -1,24 +1,11 @@
-# 0.18.1-rc.1 — Light build tabs
+# 0.18.2-rc.1 — Dispersed crew patrols
 
-Build pages now use warm light limestone/parchment instead of dark padding and
-charcoal actions. Six compact tabs (Fence, Farm, Mill, Crew, Items, Gear)
-retain original IDs and ordering, 48dp touch targets and light-gold selection.
-Action rows prioritize costs/status while their accessible labels retain details.
-The dark pixel medieval battlefield and gameplay controls are unchanged.
+**Fix:** Mercenaries no longer simply move at identical speeds around the fence in a compact group. New hires enter the least-covered perimeter sector without consuming enemy or loot randomness. When a rally is cancelled, the squad walks naturally toward spaced patrol sectors with slight deterministic wandering. Rally commands still group the crew on the selected side, and regular guard damage, range, cooldown, recruitment limit, health and prices are unchanged.
 
-No economy, save or world mechanics changes. Schema 12, application identity,
-pausing during build, swipe-dismiss, rotation restoration and market routing stay
-the same.
+**Mechanics review:** Validated relevant code paths for hire/upgrade/repair, rally and resume, attack range and targeting, enemy spawns, day/night transitions and save-state patrol progress. Regression tests specifically cover three-guard spacing, hero interaction, unchanged RNG/economy, rally recovery, nonteleporting movement and deterministic save/reload. Wider survival/campaign and Android UI suites remain mandatory release gates.
 
-**Preview warning:** Automatic Preview.apk uses CI debug signing; it CANNOT
-upgrade an installed private-key Release.apk. Keep the original installation and
-export a .btfs backup. Unsigned APK is not installable. Same-key signing and
-physical handset verification remain blocked for stable release.
+The game still uses save schema 12 and the same application ID. This release only changes crew placement/movement, adds tests and bumps the APK version to 0.18.2-rc.1 (versionCode 26).
 
-Release gates: debug/release build, JVM tests, lint, APK audit, API 26 and API 35
-native emulator smoke with active light-tab color / readable text and high-font
-checks. Inspect the Actions result before installing. Physical phone, TalkBack,
-long-session performance and signed install-over are NOT TESTED.
+**IMPORTANT:** Automated Preview.apk is CI debug-key signed and **cannot install over an existing privately signed Release.apk** without an Android signature error. Do not uninstall a working game to try the preview. Export your .btfs backup and preserve your signed installation. The unsigned Release.apk is not an installable APK. A stable signed install-over upgrade requires the matching private signing certificate, verified source/payload, and physical Android phone install-over plus save-retention/playtest checks.
 
-VersionCode 25. API 26+. Previous preview: v0.18.0-rc.1.
-9 November 2026 (Asia/Manila).
+Android 8.0+ (API26). Verify unit tests, debug/release builds, lint, package audit and API26/35 emulator test status in the associated GitHub Actions run before installing. Physical phone and same-key upgrade validation are **NOT TESTED**.
