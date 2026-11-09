@@ -124,6 +124,25 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Isolate and verify emulator upgrade fixtures
+        # Harness-only correction: API26 AtomicFile can restore a leftover .bak over
+        # an externally injected fixture after force-stop. The app's recovery logic
+        # and all upgrade assertions remain unchanged. Both fixture stages are checked.
+        run: |
+          python3 - <<'PYCODE'
+          import pathlib
+          path=pathlib.Path('scripts/emulator-smoke.sh')
+          script=path.read_text()
+          package='com.denberg.beyondthefence'
+          for remote,fixture,label in [('/data/local/tmp/btf-upgrade.btfs','evidence/upgrade-fixture.btfs','legacy'),('/data/local/tmp/btf-release-upgrade.btfs','evidence/release-upgrade-fixture.btfs','release')]:
+            copy='adb shell run-as '+package+' cp '+remote+' files/farm-a.btfs'
+            assert script.count(copy)==1, 'Expected one fixture injection per upgrade stage'
+            cleanup='adb shell run-as '+package+' rm -f '+' '.join('files/'+name+suffix for name in ['farm-a.btfs','farm-b.btfs'] for suffix in ['', '.bak', '.new'])
+            verify='adb exec-out run-as '+package+' cat files/farm-a.btfs | cmp - '+fixture
+            inventory='adb shell run-as '+package+' ls -l files/ > evidence/'+label+'-fixture-files.txt'
+            script=script.replace(copy,cleanup+'\n  '+copy+'\n  '+verify+'\n  '+inventory)
+          path.write_text(script)
+          PYCODE
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
