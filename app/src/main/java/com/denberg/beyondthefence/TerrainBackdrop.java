@@ -26,13 +26,13 @@ final class TerrainBackdrop extends View {
     float d = getResources().getDisplayMetrics().density;
     canvas.drawColor(World.ground(ashen ? 2 : 1, night));
     // Quiet low-contrast ground detail keeps native labels readable over the world.
-    paint.setColor(ashen ? night ? 0xff39333e : 0xff786b5a : night ? 0xff2a4637 : 0xff507c3e);
+    paint.setColor(ashen ? night ? 0xff292731 : 0xff45383b : night ? 0xff26313a : 0xff394b52);
     for (int i = 0; i < 90; i++) {
       float x = (i * 137 + 17) * d % getWidth();
       float y = (i * 83 + 41) * d % getHeight();
       canvas.drawCircle(x, y, (2 + i % 3) * d, paint);
     }
-    paint.setColor(night ? 0x204c5140 : 0x20a39b70);
+    paint.setColor(night ? 0x185c6570 : 0x227c7f83);
     paint.setStrokeWidth(27 * d);
     canvas.drawLine(getWidth() * .5f, 0, getWidth() * .46f, getHeight(), paint);
   }

@@ -1,0 +1,24 @@
+# Dark medieval pixel-art integration — candidate
+
+This art pass redraws Greenhaven and Ashen March as low-saturation masonry landscapes.
+The fortress courtyard uses clipped stone tiles, corner bastions, heraldic flags and
+static torchlight; the existing hero entity receives a red cloak, steel plates and
+blue spell light. Arena masonry and combat-banner tones, board underlay and common
+buttons share the same muted palette. Art is rendered by native Canvas at runtime,
+so no downloaded or copyrighted third-party asset is used.
+
+**Scope:** Rendering only. Game rules, mercenary capacity, fence hitboxes, crop and
+building touch rectangles, resource costs, enemy AI, random streams, game tick, save
+schema, app identifier, and signing identity are unchanged. The hero retains the
+existing Barracks unlock and paid replacement mechanics. The generated visual
+reference is a side-scroller; this version intentionally remains top-down.
+
+**Verification required before promotion:** JVM tests including MedievalPaletteTest;
+both release/debug Android builds and lint; Android 26 and 35 emulator controls,
+rotation, pause/resume and checkpoint/reload smoke tests; signed-key upgrade and
+physical phone readability test at normal and 200% text scale. Confirm the
+new low-light colors preserve legibility and touch target affordances on both
+biomes. Static art is deterministic; reduced motion has no animated torches.
+
+**Rollback:** retain v0.17.0-rc.1 and export a .btfs backup before testing. Do not
+install a test-key Preview.apk over a fixed-signature Release.apk.
