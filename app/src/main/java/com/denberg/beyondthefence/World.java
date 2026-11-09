@@ -28,6 +28,6 @@ final class World {
     return ashen(world) && Campaign.bossDay(day) ? 2 : rolled;
   }
   static int ground(int world, boolean night) {
-    return ashen(world) ? night ? 0xff302c35 : 0xff706351 : night ? 0xff213e32 : 0xff4b793a;
+    return ashen(world) ? night ? 0xff15151f : 0xff2d2831 : night ? 0xff111b24 : 0xff27353b;
   }
 }

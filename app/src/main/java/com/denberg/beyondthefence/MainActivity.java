@@ -15,11 +15,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class MainActivity extends Activity {
-  static final int INK = 0xff203e36,
-      GREEN = 0xff356859,
-      CREAM = 0xfff5f2e9,
-      MUTED = 0xff52665b,
-      GOLD = 0xfff0cd7b;
+  static final int INK = 0xff242b35,
+      GREEN = 0xff657989,
+      CREAM = 0xffe9e2d1,
+      MUTED = 0xff54616e,
+      GOLD = 0xffd8ac68;
   Game game;
   SurvivalMusic music;
   boolean musicEnabled, effectsEnabled;
@@ -699,7 +699,7 @@ public final class MainActivity extends Activity {
 
   private void createBuildOverlay() {
     buildOverlay = new SwipeDismissLayout(this, this::closeBuild);
-    buildOverlay.setBackgroundColor(0xd010241e);
+    buildOverlay.setBackgroundColor(0xe00e131d);
     buildOverlay.setClickable(true);
     buildOverlay.setVisibility(View.GONE);
     buildOverlay.setPadding(dp(20), dp(16), dp(20), dp(16));

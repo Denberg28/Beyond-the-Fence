@@ -38,7 +38,7 @@ final class ArenaView extends View {
   }
   @Override protected void onDraw(Canvas c) {
     super.onDraw(c);renderedFrames++;
-    c.drawColor(0xff1d282c);
+    c.drawColor(0xff121923);
     float scale=Math.min(getWidth()/300f,getHeight()/164f);
     c.save();c.translate((getWidth()-300*scale)/2,(getHeight()-164*scale)/2);c.scale(scale,scale);
     backdrop(c);
@@ -65,25 +65,25 @@ final class ArenaView extends View {
     c.restore();
   }
   private void backdrop(Canvas c) {
-    box(c,0,0,300,164,10,0xff29383d);
+    box(c,0,0,300,164,0,0xff1b222e);
     for(int row=0;row<5;row++) for(int col=0;col<8;col++) {
       float x=col*42-(row%2)*21,y=28+row*19;
-      box(c,x+1,y+1,39,16,2,(row+col)%2==0?0xff354448:0xff3b4b4e);
-      line(c,x+3,y+2,x+37,y+2,.8f,0xff53615f);
+      box(c,x+1,y+1,39,16,2,(row+col)%2==0?0xff303944:0xff282f3b);
+      line(c,x+3,y+2,x+37,y+2,.8f,0xff47535e);
     }
     // Recessed gate, stone piers and heraldic banners frame the combat silhouettes.
-    box(c,119,34,62,90,24,0xff17272d);arc(c,113,28,74,83,180,180,6,0xff71817c);
+    box(c,119,34,62,90,24,0xff0f1723);arc(c,113,28,74,83,180,180,6,0xff79818b);
     for(int bar=0;bar<5;bar++) line(c,126+bar*12,46,126+bar*12,123,2,0xff4a6061);
     for(int side=0;side<2;side++) {
       float x=side==0?13:272;
       box(c,x,29,15,106,2,0xff697774);box(c,x-3,29,21,6,1,0xffa1aaa0);
       for(int j=0;j<5;j++) line(c,x,47+j*18,x+15,47+j*18,1,0xff3b4b4c);
       float flag=side==0?39:246;
-      box(c,flag,31,15,31,0,side==0?0xff806346:0xff684451);
+      box(c,flag,31,15,31,0,side==0?0xff692e3e:0xff692e3e);
       triangle(c,flag,62,flag+7.5f,68,flag+15,62,side==0?0xff806346:0xff684451);
       line(c,flag+7,37,flag+7,53,2,0xffd6b975);line(c,flag+3,44,flag+11,44,2,0xffd6b975);
     }
-    oval(c,150,145,143,20,0xff665e57);oval(c,150,141,122,15,0xff847664);
+    oval(c,150,145,143,20,0xff403a40);oval(c,150,141,122,15,0xff68605b);
     for(int i=0;i<7;i++) line(c,38+i*37,133,29+i*40,154,.8f,0xffb09b77);
     line(c,25,143,275,143,.7f,0xffb09b77);
     box(c,0,0,300,27,0,0xdd18282d);
@@ -113,7 +113,7 @@ final class ArenaView extends View {
   }
   private void vanguard(Canvas c,float swing) {
     boolean relic=game.gear[0]>=0;int trim=relic?0xffe6c071:0xffb2bcae;
-    triangle(c,-12,-68,-30,-13,5,-20,0xff873d40);triangle(c,-9,-64,-23,-18,0,-24,0xffb4544b);
+    triangle(c,-12,-68,-30,-13,5,-20,0xff802f42);triangle(c,-9,-64,-23,-18,0,-24,0xffaf4454);
     boots(c,0xff84969e);
     box(c,-18,-62,35,38,5,0xff364954);box(c,-13,-58,26,29,4,0xff829da9);
     triangle(c,-13,-56,0,-61,13,-56,0xffc2d0cb);line(c,0,-53,0,-31,2,trim);
