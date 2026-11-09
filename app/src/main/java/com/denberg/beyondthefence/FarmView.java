@@ -96,12 +96,6 @@ final class FarmView extends View {
     pond(c, geometry.pond, d, g);
     for (int side = 0; side < 4; side++) fenceSide(c, g, side, d);
     medieval.atmosphere(c, getWidth(), getHeight(), d, dark, g.ashenWorld());
-    String omen=RaidPresentation.banner(g);
-    if(!omen.isEmpty() && g.boss()==null) {
-      box(c,8*d,4*d,getWidth()-16*d,23*d,0,0xe6171c27);
-      color(g.defeated?0xffdf9b8c:0xffdfbc87);p.setTextSize(10*d);p.setTypeface(Typeface.DEFAULT_BOLD);
-      c.drawText(omen,(getWidth()-p.measureText(omen))/2,19*d,p);
-    }
     for (Game.Roamer roamer : g.roamers) {
       float x = geometry.worldX(g.ringXAt(roamer.progress, roamer.distance));
       float y = geometry.worldY(g.ringYAt(roamer.progress, roamer.distance));

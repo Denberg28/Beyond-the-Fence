@@ -1,3 +1,9 @@
+# 0.20 visual-review follow-up
+
+Source4ccb727/run42623350474 passed130 JVM tests per variant and2917 installed checks on each API26/35. Screenshot self-review found the decorative field warning could be occluded by a north-side wolf. Warnings now use the existing native phase readout and fixed raid control (amber Dusk/countdown), with full accessible warning text; the battlefield remains clear of caption overlays. Add an actual fixed-control text assertion. This is a presentation adjustment; all final-source gates repeat. Original-certificate delivery is still pending.
+
+---
+
 # 0.20 transition and character candidate gates
 
 Required automated checks: full JVM suite plus RaidTransitionTest (dusk/save continuity, no RNG/persistence mutation, single scout conversion and dawn rewards, audio ramps/edge cues); debug/release APK/test builds, lint/package/audio audits; complete API26/35 native tests including real-frame dusk-to-night, immediate phase checkpoint, dawn pause/reward/save, manual raid/resume,18-character lineup and existing wolf/boss/arena/pause/orientation/200% font checks. Review dusk/nightfall/dawn and lineup screenshots on both APIs. Final signed delivery must compare every compiled entry and pinned certificate, rerun native suites and both install-over checkpoint stages. No gate is waived.
