@@ -984,7 +984,7 @@ public final class MainActivity extends Activity {
               ? "\n" + Math.round(game.buildingHealth[i]) + "HP" : ""));
       buildingButtons[i].setEnabled(available);
       buildingButtons[i].setContentDescription(Game.BUILDINGS[i] + (game.buildings[i] ? ", health " + Math.round(game.buildingHealth[i]) + " of100, tap to manage" : ", construction plot, tap to build for " + Game.BUILD_COINS[i] + " coins and " + Game.BUILD_WOOD[i] + " timber"));
-      buildingButtons[i].colors(0x00583c28, game.buildings[i] ? GOLD : 0xffb6c68b, INK);
+      buildingButtons[i].colors(0x00583c28, game.buildings[i] ? GOLD : 0xffb6c68b, CREAM);
       if (construction[i] != null) {
         boolean damaged = game.buildings[i] && game.buildingHealth[i] < Game.BUILDING_HEALTH;
         label(construction[i], Game.BUILDINGS[i] + (damaged ? " · REPAIR\n10 coins · 5 timber · +60 health"

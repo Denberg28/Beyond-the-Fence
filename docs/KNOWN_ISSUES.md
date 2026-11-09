@@ -1,3 +1,17 @@
+# 0.18.0-rc.1 — Dark medieval candidate limitations
+
+- Current CI Preview.apk uses a debug key. It does not install over existing
+  fixed-signature v0.12+ release installations. A verified signed Release.apk for
+  this new version is not available via the standard CI-only process.
+- Physical-phone dark scene contrast, TalkBack, large text, endurance and
+  performance remain NOT TESTED. The user reference is a side-scroller, while
+  Beyond the Fence intentionally retains its original top-down fortress behavior.
+- The red-cloaked hero retains existing recruitment and autonomous combat rules.
+  Torch glows are static and require no new animation clock.
+- Keep v0.17.0-rc.1 and export a .btfs backup before testing.
+
+---
+
 # 0.17 candidate limitations
 
 Physical-phone frame timing, endurance, TalkBack, audio comfort and boss readability/playtesting are NOT TESTED. Boss variants currently share the existing scheduled-boss combat stats/AI; elemental effects illustrate contact damage and add no elemental status effects. No new arena champions are added. These are presentation choices, not undisclosed combat changes. Candidate gates and observed results are in TESTING.md/CI evidence.

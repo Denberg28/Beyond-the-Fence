@@ -35,7 +35,7 @@ final class GameButton extends Button {
     // Restyle parchment-colored action surfaces; preserve transparent hit overlays.
     if (fill == 0xffe9e5d3) fill = 0xff303541;
     if (fill == 0xff536f48 || fill == 0xff314e40) fill = 0xff33434d;
-    if (text == 0xff203e36 && (fill == 0xff303541 || fill == 0xff33434d)) text = 0xfff0e5cf;
+    if ((text == 0xff203e36 || text == MainActivity.INK) && (fill == 0xff303541 || fill == 0xff33434d)) text = 0xfff0e5cf;
     shape.setColor(fill);
     shape.setStroke(Math.round(2 * getResources().getDisplayMetrics().density), stroke);
     int disabled = text == 0xff203e36 ? 0xff65717a : 0xffa8a7a0;
