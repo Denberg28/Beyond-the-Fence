@@ -16,7 +16,7 @@ final class RaidPresentation {
     if(g.arenaActive) return "Arena";
     if(g.arenaOfferDay>0) return "Champion awaits";
     if(g.worldComplete) return "Rift open";
-    return g.night?"Night raid":dusk(g)?"Dusk · "+g.raidInSeconds()+"s":"Daylight";
+    return g.night?(g.elapsed<3?"Nightfall":"Night raid"):dusk(g)?"Dusk · "+g.raidInSeconds()+"s":"Daylight";
   }
   static String banner(Game g) {
     if(g.defeated) return "OVERRUN · RECLAIM YOUR HAVEN";

@@ -1,6 +1,6 @@
 # 0.20.0-rc.1 — Dread at dusk
 
-The final12 seconds before each automatic raid now darken the courtyard gradually. Torchlight grows against the cold terrain, the daytime score blends into the night score, and a lower growl warns when dusk and night begin. Nightfall has a brief nonblocking warning. Existing enemies stay visible and scouts retain their positions as they become attackers. Choosing Raid now still starts immediately.
+The final12 seconds before each automatic raid now darken the courtyard gradually. Torchlight grows against the cold terrain, the daytime score blends into the night score, and a lower growl warns when dusk and night begin. The HUD marks nightfall briefly; the fixed raid control turns amber during dusk, keeping warnings clear of creatures. Existing enemies stay visible and scouts retain their positions as they become attackers. Choosing Raid now still starts immediately.
 
 Raid boundaries now refresh and checkpoint immediately. Victory pauses at dawn so players can repair and replant before pressing Play or deliberately starting another raid. Arena outcomes and defeat also checkpoint promptly; stale adventure callbacks cannot pause a fresh farm. Paused rain now uses simulation time, keeping the scene frozen across redraws. Background/focus loss retains explicit resume.
 

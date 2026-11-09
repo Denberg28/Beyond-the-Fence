@@ -975,7 +975,9 @@ public final class MainActivity extends Activity {
     label(status, "Day " + game.day + " · " + RaidPresentation.label(game) + " · " + game.weatherName() + " · " + game.seasonName() + (!game.night && game.bossDay() ? " · Boss tonight" : ""));
     status.setContentDescription(game.worldName() + ", " + game.settlementName() + ", day " + game.day
         + ", " + RaidPresentation.label(game) + ", " + game.weatherName() + ", " + game.seasonName()
-        + (game.boss() != null ? ", " + game.bossName() : game.bossDay() ? ", Boss tonight" : ""));
+        + (game.boss() != null ? ", " + game.bossName() : game.bossDay() ? ", Boss tonight" : "")
+        + (RaidPresentation.banner(game).isEmpty() ? "" : ", " + RaidPresentation.banner(game)));
+    status.setTextColor(game.night || RaidPresentation.dusk(game) ? GOLD : 0xffbecbd0);
     fortressMeters.update(game);
     stats.setContentDescription(game.coins + " coins, " + game.wood + " timber");
     label(play, game.defeated ? "Rebuild" : paused ? "Play" : "Pause");
@@ -990,11 +992,11 @@ public final class MainActivity extends Activity {
     label(harvest, "Harvest\n" + game.readyPlots() + " ready");
     harvest.setEnabled(available && game.readyPlots() > 0);
     harvest.colors(game.readyPlots() > 0 ? GOLD : 0xffe9e5d3, 0xffd2cba9, INK);
-    label(phase, game.defeated ? "Rebuild\nFree" : game.night ? "Raid " + game.day + "\n" + game.enemies.size() + " foes" : "Raid in\n" + game.raidInSeconds() + "s");
+    label(phase, game.defeated ? "Rebuild\nFree" : game.night ? "Raid " + game.day + "\n" + game.enemies.size() + " foes" : (RaidPresentation.dusk(game) ? "Dusk\n" : "Raid in\n") + game.raidInSeconds() + "s");
     phase.setContentDescription(game.defeated ? "Rebuild fortress free" : game.night ? "Raid in progress" : "Start the next zombie raid now, automatic raid in " + game.raidInSeconds() + " seconds");
     phase.setEnabled(!storageBlocked && !ioBusy && !game.arenaActive && game.arenaOfferDay == 0 && (!game.night || game.defeated));
     if (game.worldComplete) label(phase, "Rift\nOpen");
-    phase.colors(0xff536f48, 0xffa8bc87, CREAM);
+    phase.colors(RaidPresentation.dusk(game) ? 0xff604238 : 0xff536f48, RaidPresentation.dusk(game) ? GOLD : 0xffa8bc87, CREAM);
     for (int i = 0; i < Game.CROPS.length; i++) {
       boolean unlocked = i < game.unlockedCrops(), selected = selectedCrop == i;
       label(cropButtons[i], Game.CROPS[i] + "\n" + (unlocked

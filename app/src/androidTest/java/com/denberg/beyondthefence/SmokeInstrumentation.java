@@ -953,6 +953,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     int scouts=raid.roamers.size();long revision=raid.revision;
     runOnMainSync(() -> {a.game=raid;a.paused=true;a.refresh();});awaitIdle();
     check(onUi(() -> RaidPresentation.label(raid).contains("Dusk")),"Approaching raid has an explicit dusk warning");
+    check(onUi(() -> ((android.widget.TextView)control(a,"night")).getText().toString().startsWith("Dusk")),"Fixed raid control exposes dusk without overlaying creatures");
     screenshot("smoke-dusk.png");
     runOnMainSync(() -> {raid.elapsed=raid.preparationSeconds()-.025f;a.refresh();});
     touch(a,"play");awaitUi(() -> raid.night,"Real Android frames enter the raid from dusk");
