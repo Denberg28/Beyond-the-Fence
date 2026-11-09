@@ -174,4 +174,18 @@ jobs:
             exit 0
           fi
           printf 'PASS: unit tests, debug/release builds, lint, package audit, APK signature\nPASS: native tile touch, orientation/font, lifecycle/checkpoint tests on API 26 and 35 emulators; actual signed release install-r upgrade\nBLOCKED: physical handset endurance, TalkBack/font/device performance, physical-phone playtesting\nEvidence: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > artifacts/VERIFICATION.txt
+          cp release/publish.json artifacts/PROVENANCE.json
+          python3 - <<'PYCODE'
+          import json,pathlib,zipfile
+          with zipfile.ZipFile('artifacts/EMULATOR-EVIDENCE.zip','w',zipfile.ZIP_DEFLATED) as out:
+            for path in sorted(pathlib.Path('evidence').rglob('*')):
+              if path.is_file():out.write(path,str(path))
+          data=json.loads(pathlib.Path('release/publish.json').read_text())
+          with open('artifacts/VERIFICATION.txt','a') as out:
+            out.write('Source commit: '+data['source_sha']+'\n'+data['delivery_notes']+'\n')
+          PYCODE
+          cd artifacts
+          rm SHA256SUMS.txt
+          sha256sum ./* > SHA256SUMS.txt
+          cd ..
           gh release create v0.19.0-rc.1 artifacts/* --target "$GITHUB_SHA" --prerelease --title 'TAG 0.19.0-rc.1 — Torchlit Haven (Signed candidate)' --notes-file docs/RELEASE-NOTES.md

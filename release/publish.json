@@ -1,18 +1,17 @@
 {
-  "source_sha": "9387092786d4ec52450cb2f4a7a445758a45f93b",
-  "source_run_id": 40813734581,
+  "source_sha": "807569eeccc66a857bce7a22da0aad70e2aa2846",
+  "source_run_id": 42616426366,
   "signer_sha256": "b209ae0dfa9385838a4bc2bf3254a25c3d5a45dc9124379edc53caf4c4e3fd91",
-  "version": "0.17.0-rc.1",
-  "version_code": 23,
-  "payload_ref": "delivery/0.17.0-rc.1",
-  "apk_blob": "262f4945f32ff3f83edd0b5732804d670c76cd47",
-  "apk_sha256": "f6c60d72ecad6a9cd1edbb56ebb83b342fdfb4272c01059ad4e9ec4b5718df13",
-  "tests_blob": "863ce5df0116d6c47d1e993e5162725f16d76625",
-  "tests_sha256": "ed98dd05dd34a3ca3038aa8a4cec929f5d5ee6ce069e372774bfd05fae32a33c",
-  "release_blob": "3d712e8e131d28605772cf2986eee374b3b53d36",
-  "release_sha256": "516a412477244b7b39a205044e3feb0026efe7f16e2a8163b0c73321a5be4f1e",
+  "version": "0.19.0-rc.1",
+  "version_code": 27,
+  "payload_ref": "delivery/0.19.0-rc.1",
+  "apk_blob": "7ccbad687ba443fbdb6e10f57921d8f26bedf45c",
+  "apk_sha256": "a8a45d9a156ca1a8e248ca1820ea1b5c36bf8af8d2641a91a9bf0aa34660709c",
+  "tests_blob": "c80355a5457ef5cc1c4af8c2ebb9da7c636217dc",
+  "tests_sha256": "ba732b4680b15cdebc28a7d74157bc7d61daab25b87cfc31b5104a3cb62385dc",
+  "release_blob": "35181ee9ff1766ec15f48c7c7f8af63bfb677799",
+  "release_sha256": "4c93db6e4307e7da9b1a28f6f6b17804dcebce3f141c96ab0aa83657e623ecbb",
   "baseline_blob": "b6be9af17151e314707001ea2ca5a9bed529e7c7",
   "baseline_sha256": "8bb18bc0c84869ff918d2ac54a67c1cd2c6b2ea2da40f47afc6924e172736b5a",
-  "delivery_notes": "Boss art/effects source9387092:120 JVM tests per variant, builds/lint/package/audio checks and2360 installed-app checks on each API26/35 PASS (run40813734581). Eight silhouettes, attack poses, all three effects, paused/reduced-motion frame identity and rendering checkpoint purity passed. Candidate/source and both emulator ZIP digests verified. Complete source archive matches the reviewed commit. Boss procession/contact screenshots self-reviewed on both APIs. Fixed-key payloads retain every compiled entry and pinned certificate. Delivery must repeat fresh-source comparison, signed native suites and actual non-debuggable install-r/checkpoint retention before publication. Physical-phone validation pending."
+  "delivery_notes": "Reviewed source 807569e: 125 JVM tests per debug/release variant, builds, lint, package/audio/zero-permission audits and 2730 installed-app checks on each API26/35 PASS in source run42616426366. API35 attempt1 was blocked by a confirmed Pixel Launcher ANR before welcome; unchanged-source attempt2 passed. All four biome/phase screenshots plus normal/200% font, panels and night captures were visually self-reviewed on both APIs. Candidate ZIP digest775cbc649bccb451aa6db8298689f2da4eeb10d90729a7e59c7d8779684496e0; API26 ZIPff4b1d43490992eaf80bbfcb503e4dc109a0032e8a84c4a1b3053571762dc9dd; API35 ZIPa6bb150706e01095474bad5e0d49565023b15c0f6b1c1313d8de382c65ec63b8. Complete app source archive matched reviewed files. Fixed-certificate signed payloads preserve every compiled entry; final delivery must recompare fresh builds and repeat both full native suites plus actual non-debuggable release install-r/checkpoint retention. No private keys/passwords are included. Physical phone/endurance/TalkBack/performance/human playtesting remain NOT TESTED; prerelease only. Schema12 and gameplay rules retained."
 }
-
