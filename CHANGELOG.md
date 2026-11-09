@@ -1,3 +1,10 @@
+## 0.18.2-rc.1 — Crew patrol distribution (candidate)
+
+- Hire selects the least-covered fence sector instead of placing all three guards near each other.
+- Patrol resumes a sector-spread formation after rallies, with gradual movement and slight deterministic variation; combat/rally authority is unchanged.
+- Added regression tests for recruitment coverage, maximum crew and costs, enemy/loot RNG isolation, hero spacing, save replay and rally recovery.
+- Game save schema 12 and application ID unchanged. Automated emulator and package checks gate the prerelease. Stable signed upgrade requires same signing certificate and physical-phone validation.
+
 # 0.17.0-rc.1 — Boss procession and elemental effects
 
 Seven original boss designs join the Grave Warden: Ember dragon, two-headed ogre, great frost wolf, mountain yeti, ancient serpent, storm lich and giant zombie. Each fifth-night event advances the eight-boss procession; later worlds shift its starting point. Dragon/serpent attacks show fire, ogre/yeti/zombie attacks throw rock debris, and wolf/lich/Warden attacks show lightning. Effects are short, local illustrations of existing contact damage, with no extra attack range, damage or rewards.
