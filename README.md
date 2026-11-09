@@ -1,5 +1,7 @@
 ## 0.19.0-rc.1 — Torchlit haven candidate
 
+Published [signed candidate](https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.19.0-rc.1):125 JVM tests per variant,2730 installed checks plus two4-check upgrade stages per API26/35 PASS. Physical-phone validation remains pending; details in docs/TESTING.md.
+
 UI/environment update: organic dark stone scenery, moss/ash and pine framing, warm torchlight and a compact accessible farm/fence HUD. Retains the light build tabs, crew patrol fix, touch geometry and schema12 save data. No gameplay or economy changes. Build and check with the existing commands below; observed evidence and handset limits are in docs/TESTING.md. Use only a verified original-certificate Release.apk for an install-over update; export your .btfs backup first.
 
 # 0.17.0-rc.1 — Boss procession and elemental effects

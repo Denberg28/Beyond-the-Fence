@@ -1,3 +1,26 @@
+# Published 0.19.0-rc.1 — verified signed candidate
+
+Release: https://github.com/Denberg28/Beyond-the-Fence/releases/tag/v0.19.0-rc.1
+Reviewed game source807569eeccc66a857bce7a22da0aad70e2aa2846; signed delivery/tagcb1c520460f5d6f21d282c1857473c88ee7485e7. Source run42616426366 and signed delivery run42618296654 PASS. This documentation-only record does not change the tested source or published artifacts.
+
+| Gate | Observed evidence |
+| --- | --- |
+| Source/build | PASS:125 JVM tests per debug/release variant, APK/test builds, lint, package/audio/zero-permission audits |
+| Signing/provenance | PASS:pinned original certificate, every signed compiled entry equals fresh source build; published APK equals saved deliverable byte for byte |
+| Behavior/regression/integration | PASS:2730 installed checks on each API26/35, repeated using original-certificate APKs; all control, crop, crew, combat, rotation, large-text, lifecycle and checkpoint checks retained |
+| Upgrade retention | PASS:4 legacy-fixture-to-preview plus4 preview-to-nondebuggable-release checks on each API26/35 |
+| Visual self-review | PASS:both biomes/day-night, normal/200% text, light build tabs and readable threats; paused rendering and unchanged checkpoint bytes verified |
+| Physical handset | NOT TESTED:endurance, measured performance, TalkBack, audio comfort, install-over and human playtesting; stable promotion pending |
+| External HIL | N/A:offline game controls no hardware |
+
+Source API35 attempt1 was blocked by a confirmed Pixel Launcher ANR over welcome, with no game crash; unchanged-source attempt2 passed. Earlier flat-corner test correction is recorded below. No gate was waived. Signed delivery passed both APIs on its first attempt.
+
+APK3163313 bytes; SHA2564c93db6e4307e7da9b1a28f6f6b17804dcebce3f141c96ab0aa83657e623ecbb. Certificate SHA256b209ae0dfa9385838a4bc2bf3254a25c3d5a45dc9124379edc53caf4c4e3fd91. Release retains source, build metadata, provenance, test XML, checksums and EMULATOR-EVIDENCE.zip. Delivery candidate ZIP digestdfd863562a28f8453153caf0ad589e091ded0e2e61bc31b667c499156a6d9565. Schema12, package ID and game mechanics remain unchanged. Export a .btfs backup before a same-key install-over; keep the old APK and export for rollback. Android blocks lower versionCode installation.
+
+Evidence: https://github.com/Denberg28/Beyond-the-Fence/actions/runs/42618296654
+
+---
+
 # 0.19 source verification follow-up
 
 Source507e5af / run42615653424 passed125 JVM tests per variant, debug/test/release builds, lint and package audits. API35 stopped in checkDock: its legacy exact corner-color assertion assumed the previous flat TerrainBackdrop, while the new edge shading intentionally changes that corner. This is a test contract update for the requested art, not a game crash: the stack is an instrumentation AssertionError. The replacement requires an opaque readable dark corner, nonflat detail across the bottom strip and retains both transparent command/action-container checks, geometry, font, touch and all gameplay checks. Full API26/35 reruns remain blocking. No gate is waived. Original-certificate signed payloads match source compiled entries; signing and install-over checks must repeat on final source.
