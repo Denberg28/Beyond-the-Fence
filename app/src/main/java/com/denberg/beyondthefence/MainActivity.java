@@ -964,7 +964,7 @@ public final class MainActivity extends Activity {
     boolean available = !storageBlocked && !ioBusy && !game.defeated;
     label(survived, "Survived " + (game.worldComplete ? 100 : game.day - 1) + (game.day == 2 ? " day" : " days") + (game.world > 1 ? " · World " + game.world : ""));
     label(stats, game.coins + " coins · " + game.wood + " timber");
-    label(status, "Day " + game.day + " · " + (game.night ? "Night raid" : "Daylight") + " · " + game.weatherName() + " · " + game.seasonName());
+    label(status, "Day " + game.day + " · " + (game.night ? "Night raid" : "Daylight") + " · " + game.weatherName() + " · " + game.seasonName() + (!game.night && game.bossDay() ? " · Boss tonight" : ""));
     status.setContentDescription(game.worldName() + ", " + game.settlementName() + ", day " + game.day
         + ", " + (game.night ? "Night raid" : "Daylight") + ", " + game.weatherName() + ", " + game.seasonName()
         + (game.boss() != null ? ", " + game.bossName() : game.bossDay() ? ", Boss tonight" : ""));

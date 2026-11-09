@@ -167,21 +167,10 @@ jobs:
             exit 0
           fi
           if [ '${{ needs.build.outputs.publish }}' != true ]; then
-            # CI preview uses the debug key, never the fixed upgrade certificate.
-            printf 'PREVIEW ONLY — debug key, NOT an upgrade over any signed Release.apk.\nPASS: source/tests/lint and API 26/35 emulator jobs.\nBLOCKED: private-key signed release, signed upgrade retention and physical handset QA.\nEvidence: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > artifacts/VERIFICATION.txt
-            cd artifacts
-            rm -f SHA256SUMS.txt
-            sha256sum ./* > SHA256SUMS.txt
-            cd ..
-            gh release create v0.19.0-rc.1 \
-              artifacts/TAG-Zombie-Survival-Fantasy-0.19.0-rc.1-Preview.apk \
-              artifacts/TAG-Zombie-Survival-Fantasy-0.19.0-rc.1-Tests.apk \
-              artifacts/TAG-Zombie-Survival-Fantasy-0.19.0-rc.1-Source.zip \
-              artifacts/BUILD-INFO.txt artifacts/RELEASE-NOTES.md \
-              artifacts/VERIFICATION.txt artifacts/SHA256SUMS.txt \
-              --target "$GITHUB_SHA" --prerelease \
-              --title 'TAG 0.19.0-rc.1 — Torchlit Haven (Preview only)' \
-              --notes-file docs/RELEASE-NOTES.md
+            # Keep the immutable version available for the original-certificate candidate.
+            # Source previews remain downloadable as CI artifacts, without publishing
+            # an incompatible debug-key APK under the intended signed release tag.
+            echo 'Source verification complete; release waits for verified signed payload.'
             exit 0
           fi
           printf 'PASS: unit tests, debug/release builds, lint, package audit, APK signature\nPASS: native tile touch, orientation/font, lifecycle/checkpoint tests on API 26 and 35 emulators; actual signed release install-r upgrade\nBLOCKED: physical handset endurance, TalkBack/font/device performance, physical-phone playtesting\nEvidence: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > artifacts/VERIFICATION.txt
