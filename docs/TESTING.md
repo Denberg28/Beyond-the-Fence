@@ -450,3 +450,11 @@ Source8ffe5ab/run40506458288 failed before compilation because compact Groovy mu
 
 ## Build panel light-theme gate (0.18.1-rc.1)
 Emulator API 26/35: tap through all six tabs, inspect `smoke-tabs.png` and other build captures for pale buttons and readable text; assert selected fill #F2D394, dark text, 48dp touch height, single-line tab text at 200% font and tab-scroll reset. Confirm dark game terrain, cost display, pause on build, rotation, market routing and saved state. Handset TalkBack/contrast, endurance and same-certificate signed upgrade are NOT TESTED and gate stable promotion.
+
+## 0.18.2-rc.1 crew perimeter distribution — release gates
+
+- JVM tests: recruit two mercenaries with funded barracks (verify exactly three distinct sectors, maximum squad, 185 coins + 12 timber spent, unchanged combat/loot RNG streams).
+- Rally all three to East; resume free patrol and verify continuous motion, no teleport and recovered separation. Test a hero alongside recruits.
+- Compare save schema 12 bytes after replay from a serialized checkpoint to ensure identical patrol, enemy spawns, resource economy, and combat. Repeat legacy fixture and survival economy/combat cases.
+- Android emulator API 26/35: native smoke, farm/camp/barracks navigation, pause/resume, large font, rotation/reload, save upgrade and scene captures.
+- **Stable BLOCKED** until production certificate signed install-over and physical Android phone gameplay, extended survival, save integrity and accessibility verification have passed. CI preview is a debug-signing-key candidate only.
