@@ -62,6 +62,48 @@ public class GuardDefenseTest {
     assertTrue(g.mercenaries.get(0).progress > before); assertEquals(-1, g.lane);
   }
 
+  private float gap(Game.Mercenary a, Game.Mercenary b) {
+    float delta = Math.abs(a.progress - b.progress);
+    return Math.min(delta, 4 - delta);
+  }
+
+  @Test public void hiringSpreadsCrewAndKeepsEconomyAndEnemyRandomness() throws Exception {
+    Game g = new Game(); g.coins = 1000; g.wood = 100; g.buildings[2] = true;
+    int seed = g.randomState, loot = g.lootState;
+    assertTrue(g.hire()); assertTrue(g.hire());
+    assertEquals(3, g.mercenaries.size());
+    assertEquals(815, g.coins); assertEquals(88, g.wood);
+    assertEquals(seed, g.randomState); assertEquals(loot, g.lootState);
+    for (int i = 0; i < 3; i++) for (int j = i + 1; j < 3; j++)
+      assertTrue("Spread across perimeter", gap(g.mercenaries.get(i), g.mercenaries.get(j)) >= .85f);
+    assertFalse(g.hire()); assertEquals(815, g.coins);
+    Game copy = SaveCodec.decode(SaveCodec.encode(g));
+    seconds(g, 18); seconds(copy, 18);
+    assertArrayEquals("Save resumes identical patrols", SaveCodec.encode(g), SaveCodec.encode(copy));
+  }
+
+  @Test public void rallyThenPatrolRedistributesWithoutTeleporting() {
+    Game g = new Game(); g.coins = 1000; g.wood = 100; g.buildings[2] = true;
+    assertTrue(g.hire()); assertTrue(g.hire());
+    assertTrue(g.rally(1)); seconds(g, 14);
+    for (Game.Mercenary m : g.mercenaries) assertTrue(m.progress >= 1 && m.progress < 2);
+    g.resumePatrol();
+    float before = g.mercenaries.get(1).progress;
+    g.tick(.1f);
+    float travel = Math.abs(g.mercenaries.get(1).progress - before);
+    assertTrue("No teleport on resume", Math.min(travel, 4 - travel) <= .036f);
+    seconds(g, 18);
+    for (int i = 0; i < 3; i++) for (int j = i + 1; j < 3; j++)
+      assertTrue("Return to sectors", gap(g.mercenaries.get(i), g.mercenaries.get(j)) >= .65f);
+  }
+
+  @Test public void heroDoesNotOverlapRecruitedSquad() {
+    Game g = new Game(); g.coins = 1000; g.wood = 100; g.buildings[2] = true;
+    assertTrue(g.buyHero()); assertTrue(g.hire()); assertTrue(g.hire());
+    for (Game.Mercenary m : g.mercenaries)
+      assertTrue("Hero coverage", gap(g.hero, m) >= .45f);
+  }
+
   @Test public void releasedSchema4PreservesDamageAndTrainingAndGrantsVolunteerOnlyOnce() throws Exception {
     Game g = SaveCodec.decode(Base64.getDecoder().decode("QlRGUwAAAAQAAAAAAAAAMwAAAAEAAAG+AAAAZAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQABGuNCyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/////AAAAAP////8AAAAA/////wAAAAD/////AAAAAP////8AAAAA/////wAAAAD/////AAAAAP////8AAAAAAAAAAAAAAEsAAAABAAAAAAAAAAEAAAAAAQAAAAAAAAAAAAAAAAAEAAAAAD5rhR8/JmZmAAAAAEAs7ZE/QAAAAAAAAD+WRaA/WZmZAAAAAEBpWA4/JmZmQfAAAAAAAABCoAAAAAAAAEGQAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEIgAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAJ6NJTU="));
     assertEquals(51, g.revision); assertEquals(446, g.coins); assertEquals(75, g.wood);
