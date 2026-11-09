@@ -626,11 +626,36 @@ public final class Game {
 
   public int hireCost() { return 55 + mercenaries.size() * 25; }
 
+  /** Spread newly hired guards to the least covered point without consuming combat RNG. */
+  private float recruitPatrolPosition() {
+    if (mercenaries.isEmpty() && hero == null) return .5f;
+    int seed = randomState ^ (day * 0x45d9f3b) ^ (world * 0x119de1f3)
+        ^ ((mercenaries.size() + (hero == null ? 0 : 1)) * 0x27d4eb2d);
+    int start = (seed >>> 1) & 31;
+    float best = .5f, bestDistance = -1;
+    for (int step = 0; step < 32; step++) {
+      float candidate = (((start + step) & 31) + .5f) / 8f;
+      float separation = 4;
+      for (Mercenary guard : mercenaries)
+        separation = Math.min(separation, ringSeparation(candidate, guard.progress));
+      if (hero != null) separation = Math.min(separation, ringSeparation(candidate, hero.progress));
+      if (separation > bestDistance + .00001f) { bestDistance = separation; best = candidate; }
+    }
+    return best;
+  }
+
+  private static float ringSeparation(float a, float b) {
+    float gap = Math.abs(a - b);
+    return Math.min(gap, 4 - gap);
+  }
+
   public boolean hire() {
     if (defeated || !buildings[2] || mercenaries.size() >= MAX_MERCS) return false;
     if (coins < hireCost() || wood < 6) { notice = "Recruitment needs " + hireCost() + " coins and 6 timber."; return false; }
     money(-hireCost()); timber(-6);
-    Mercenary recruit = new Mercenary((mercenaries.size() * .65f) % 4, 0, .5f, .5f);
+    // Choose the least-covered sector; preserve enemy/loot RNG and persisted save schema.
+    float position = recruitPatrolPosition();
+    Mercenary recruit = new Mercenary(position, 0, .5f, .5f);
     recruit.health = guardMaxHealth(); mercenaries.add(recruit);
     notice = "Mercenary hired. Patrols roam the fence and fire at nearby zombies.";
     return true;
@@ -930,9 +955,19 @@ public final class Game {
       Mercenary merc = index < mercenaries.size() ? mercenaries.get(index) : hero;
       boolean champion = merc == hero;
       if (!night) merc.health = Math.min(champion ? heroMaxHealth() : guardMaxHealth(), merc.health + dt * (champion ? 2.5f : 1.5f));
-      if (lane < 0) merc.progress = (merc.progress + dt * .14f) % 4;
-      else {
-        float destination = lane + (count == 1 ? .5f : .15f + .7f * index / (count - 1));
+      if (lane < 0 && index == 0) {
+        // Lead scout completes the perimeter circuit, including the lone-hero case.
+        merc.progress = (merc.progress + dt * .14f) % 4;
+      } else {
+        float destination;
+        if (lane < 0) {
+          // Separate the squad into equal patrol sectors; gentle deterministic variation.
+          float leader = mercenaries.isEmpty() ? hero.progress : mercenaries.get(0).progress;
+          float wander = .12f * (float)Math.sin(elapsed * .12f + day * .37f + index * 2.2f);
+          destination = (leader + 4f * index / count + wander) % 4;
+        } else {
+          destination = lane + (count == 1 ? .5f : .15f + .7f * index / (count - 1));
+        }
         float delta = destination - merc.progress;
         if (delta > 2) delta -= 4;
         if (delta < -2) delta += 4;
