@@ -68,7 +68,7 @@ public class GuardDefenseTest {
   }
 
   @Test public void hiringSpreadsCrewAndKeepsEconomyAndEnemyRandomness() throws Exception {
-    Game g = new Game(); g.coins = 1000; g.wood = 100; g.buildings[2] = true;
+    Game g = new Game(); g.coins = 1000; g.wood = 100; g.buildings[2] = true; g.buildingHealth[2] = Game.BUILDING_HEALTH;
     int seed = g.randomState, loot = g.lootState;
     assertTrue(g.hire()); assertTrue(g.hire());
     assertEquals(3, g.mercenaries.size());
@@ -83,7 +83,7 @@ public class GuardDefenseTest {
   }
 
   @Test public void rallyThenPatrolRedistributesWithoutTeleporting() {
-    Game g = new Game(); g.coins = 1000; g.wood = 100; g.buildings[2] = true;
+    Game g = new Game(); g.coins = 1000; g.wood = 100; g.buildings[2] = true; g.buildingHealth[2] = Game.BUILDING_HEALTH;
     assertTrue(g.hire()); assertTrue(g.hire());
     assertTrue(g.rally(1)); seconds(g, 14);
     for (Game.Mercenary m : g.mercenaries) assertTrue(m.progress >= 1 && m.progress < 2);
@@ -98,7 +98,7 @@ public class GuardDefenseTest {
   }
 
   @Test public void heroDoesNotOverlapRecruitedSquad() {
-    Game g = new Game(); g.coins = 1000; g.wood = 100; g.buildings[2] = true;
+    Game g = new Game(); g.coins = 1000; g.wood = 100; g.buildings[2] = true; g.buildingHealth[2] = Game.BUILDING_HEALTH;
     assertTrue(g.buyHero()); assertTrue(g.hire()); assertTrue(g.hire());
     for (Game.Mercenary m : g.mercenaries)
       assertTrue("Hero coverage", gap(g.hero, m) >= .45f);
